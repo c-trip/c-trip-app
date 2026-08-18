@@ -60,7 +60,9 @@ export default function PhoneInput({
     onChange(`+${getCountryCallingCode(selectedCountry)}${digits}`)
   }
 
-  const localNumber = value?.replace(/^\+\d+/, '') || ''
+  const callingCode = getCountryCallingCode(selectedCountry)
+  const prefix = `+${callingCode}`
+  const localNumber = value?.startsWith(prefix) ? value.slice(prefix.length) : ''
   const flagUrl = FLAGS_URL.replace('{XX}', selectedCountry)
 
   return (
