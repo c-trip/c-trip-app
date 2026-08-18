@@ -16,7 +16,7 @@ export default function LoginPage() {
         </div>
       </header>
       <section className="w-full max-w-sm text-left mt-8">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-gray-700 mb-2 font-outfit">
           Introduza o seu número de telefone
         </label>
         <PhoneInput
@@ -25,6 +25,42 @@ export default function LoginPage() {
           defaultCountry="AO"
           placeholder="Número de telefone"
         />
+      <button
+        type="button"
+        style={{
+          height: 48,
+          borderRadius: 14,
+          background: 'linear-gradient(90deg, #6B9E8C 0%, #3A6356 100%)',
+          fontFamily: "'Outfit', sans-serif",
+          fontWeight: 700,
+        }}
+        className="w-full mt-8 px-6 text-base text-white 
+         transition-opacity hover:opacity-90 active:opacity-80"
+      >
+        Continuar com Telefone
+      </button>
+
+      <div className="flex items-center gap-3 w-full mt-6">
+        <div className="h-px flex-1 bg-gray-300" />
+        <span className="text-sm text-gray-400 whitespace-nowrap">ou continuar com</span>
+        <div className="h-px flex-1 bg-gray-300" />
+      </div>
+
+      <button
+        type="button"
+        style={{
+          height: 48,
+          borderRadius: 14,
+          border: '1.5px solid #3A6356',
+          background: 'transparent',
+          fontFamily: "'Outfit', sans-serif",
+          fontWeight: 700,
+        }}
+        className="w-full mt-6 px-6 text-base text-[#3A6356] 
+         transition-colors hover:bg-[#3A6356]/5 active:bg-[#3A6356]/10"
+      >
+        Entrar com Google
+      </button>
       </section>
     </div>
   )
