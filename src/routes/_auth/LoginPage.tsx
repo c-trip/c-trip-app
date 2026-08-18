@@ -2,7 +2,7 @@ import { useState } from 'react'
 import PhoneInput from '../../components/PhoneInput'
 
 export default function LoginPage() {
-  const [phone, setPhone] = useState('')
+  const [phone, setPhone] = useState<string | undefined>()
 
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center
@@ -22,7 +22,7 @@ export default function LoginPage() {
         <PhoneInput
           value={phone}
           onChange={setPhone}
-          defaultCountry="ao"
+          defaultCountry="AO"
           placeholder="Número de telefone"
         />
       </section>

@@ -1,9 +1,10 @@
-import PhoneInputLib from 'react-phone-input-2/lib/lib.js'
-import 'react-phone-input-2/lib/style.css'
+import PhoneInputLib from 'react-phone-number-input'
+import 'react-phone-number-input/style.css'
+import pt from 'react-phone-number-input/locale/pt'
 
 type PhoneInputProps = {
-  value: string
-  onChange: (value: string) => void
+  value: string | undefined
+  onChange: (value: string | undefined) => void
   defaultCountry?: string
   placeholder?: string
 }
@@ -11,44 +12,18 @@ type PhoneInputProps = {
 export default function PhoneInput({
   value,
   onChange,
-  defaultCountry = 'ao',
+  defaultCountry = 'AO',
   placeholder = 'Número de telefone',
 }: PhoneInputProps) {
   return (
     <PhoneInputLib
-      country={defaultCountry}
+      defaultCountry={defaultCountry}
       value={value}
-      onChange={(phone) => onChange(phone)}
-      enableSearch
-      searchPlaceholder="Procurar país"
+      onChange={onChange}
+      labels={pt}
       placeholder={placeholder}
-      inputProps={{
-        required: true,
-        inputMode: 'numeric',
-      }}
-      containerStyle={{ width: '100%' }}
-      inputStyle={{
-        width: '100%',
-        height: 48,
-        borderRadius: 14,
-        fontFamily: "'Outfit', sans-serif",
-        fontSize: 16,
-        border: '1px solid #d1d5db',
-        paddingLeft: 52,
-      }}
-      buttonStyle={{
-        height: 48,
-        border: '1px solid #d1d5db',
-        borderRight: 'none',
-        borderRadius: '14px 0 0 14px',
-        backgroundColor: '#f9fafb',
-      }}
-      dropdownStyle={{
-        fontFamily: "'Outfit', sans-serif",
-        borderRadius: 12,
-        border: '1px solid #d1d5db',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-      }}
+      international
+      withCountryCallingCode
     />
   )
 }
