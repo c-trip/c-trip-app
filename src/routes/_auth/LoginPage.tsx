@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import PhoneInput from '../../components/PhoneInput'
 
 export default function LoginPage() {
@@ -62,13 +63,19 @@ export default function LoginPage() {
           Entrar com Google
         </button>
       </section>
+      <p className="text-sm text-gray-500 font-outfit">
+        Não tem conta?{' '}
+        <Link to="/auth/register" className="text-[#3A6356] font-semibold underline">
+          Criar conta
+        </Link>
+      </p>
       </main>
       <footer className="w-full max-w-sm py-4 text-center">
         <p className="text-xs text-gray-400 font-outfit leading-relaxed">
           Ao continuar, concorda com os nossos{' '}
-          <span className="underline cursor-pointer">Termos de Serviço</span>
+          <span className="underline cursor-pointer font-normal">Termos de Serviço</span>
           {' '}e{' '}
-          <span className="underline cursor-pointer">Política de Privacidade</span>.
+          <span className="underline cursor-pointer font-semibold">Política de Privacidade</span>.
         </p>
       </footer>
     </div>
