@@ -28,7 +28,7 @@ export default function WelcomePage() {
         <div className="mt-10 flex flex-col gap-[14px]">
           <button
             type="button"
-            onClick={() => navigate('/search')}
+            onClick={() => navigate('/auth/login')}
             style={{
               height: 48,
               borderRadius: 14,
@@ -48,7 +48,7 @@ export default function WelcomePage() {
 
           <button
             type="button"
-            onClick={() => navigate('/login')}
+            onClick={() => navigate('/auth/login')}
             style={{
               height: 48,
               borderRadius: 14,
