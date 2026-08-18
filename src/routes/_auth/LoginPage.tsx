@@ -62,6 +62,14 @@ export default function LoginPage() {
           Entrar com Google
         </button>
       </section>
+      <footer className="w-full max-w-sm mt-8 text-center">
+        <p className="text-xs text-gray-400 font-outfit leading-relaxed">
+          Ao continuar, concorda com os nossos{' '}
+          <span className="underline cursor-pointer">Termos de Serviço</span>
+          {' '}e{' '}
+          <span className="underline cursor-pointer">Política de Privacidade</span>.
+        </p>
+      </footer>
     </div>
   )
 }
