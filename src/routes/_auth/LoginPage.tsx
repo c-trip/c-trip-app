@@ -7,7 +7,7 @@ export default function LoginPage() {
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center
      px-6 overflow-hidden font-outfit">
-      <header className="relative z-10 w-full max-w-sm text-center flex flex-col items-center 
+      <header className="relative z-10 w-full max-w-sm text-center flex flex-col items-center
        justify-center gap-8 ">
         <div className="w-16 h-16 bg-[#1B7A3D] rounded-full"></div>
         <div className="flex flex-col items-center justify-center gap-2">
@@ -25,42 +25,42 @@ export default function LoginPage() {
           defaultCountry="AO"
           placeholder="Número de telefone"
         />
-      <button
-        type="button"
-        style={{
-          height: 48,
-          borderRadius: 14,
-          background: 'linear-gradient(90deg, #6B9E8C 0%, #3A6356 100%)',
-          fontFamily: "'Outfit', sans-serif",
-          fontWeight: 700,
-        }}
-        className="w-full mt-8 px-6 text-base text-white 
-         transition-opacity hover:opacity-90 active:opacity-80"
-      >
-        Continuar com Telefone
-      </button>
+        <button
+          type="button"
+          style={{
+            height: 48,
+            borderRadius: 14,
+            background: 'linear-gradient(90deg, #6B9E8C 0%, #3A6356 100%)',
+            fontFamily: "'Outfit', sans-serif",
+            fontWeight: 700,
+          }}
+          className="w-full mt-8 px-6 text-base text-white
+           transition-opacity hover:opacity-90 active:opacity-80"
+        >
+          Continuar com Telefone
+        </button>
 
-      <div className="flex items-center gap-3 w-full mt-6">
-        <div className="h-px flex-1 bg-gray-300" />
-        <span className="text-sm text-gray-400 whitespace-nowrap">ou continuar com</span>
-        <div className="h-px flex-1 bg-gray-300" />
-      </div>
+        <div className="flex items-center gap-3 w-full mt-6">
+          <div className="h-px flex-1 bg-gray-300" />
+          <span className="text-sm text-gray-400 whitespace-nowrap">ou continuar com</span>
+          <div className="h-px flex-1 bg-gray-300" />
+        </div>
 
-      <button
-        type="button"
-        style={{
-          height: 48,
-          borderRadius: 14,
-          border: '1.5px solid #3A6356',
-          background: 'transparent',
-          fontFamily: "'Outfit', sans-serif",
-          fontWeight: 700,
-        }}
-        className="w-full mt-6 px-6 text-base text-[#3A6356] 
-         transition-colors hover:bg-[#3A6356]/5 active:bg-[#3A6356]/10"
-      >
-        Entrar com Google
-      </button>
+        <button
+          type="button"
+          style={{
+            height: 48,
+            borderRadius: 14,
+            border: '1.5px solid #3A6356',
+            background: 'transparent',
+            fontFamily: "'Outfit', sans-serif",
+            fontWeight: 700,
+          }}
+          className="w-full mt-6 px-6 text-base text-[#3A6356]
+           transition-colors hover:bg-[#3A6356]/5 active:bg-[#3A6356]/10"
+        >
+          Entrar com Google
+        </button>
       </section>
     </div>
   )

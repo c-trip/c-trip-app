@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { getCountries, getCountryCallingCode, parsePhoneNumber, isPossiblePhoneNumber } from 'react-phone-number-input'
 import pt from 'react-phone-number-input/locale/pt'
 
@@ -65,7 +65,7 @@ export default function PhoneInput({
   const localNumber = value?.startsWith(prefix) ? value.slice(prefix.length) : ''
   const displayNumber = formatDigits(localNumber, selectedCountry)
   const flagUrl = FLAGS_URL.replace('{XX}', selectedCountry)
-  const maxLength = getMaxLength(selectedCountry)
+  const maxLength = useMemo(() => getMaxLength(selectedCountry), [selectedCountry])
 
   const parsed = value ? parsePhoneNumber(value) : null
   const formatted = parsed?.formatInternational() || ''
@@ -95,7 +95,7 @@ export default function PhoneInput({
     setSelectedCountry(country)
     setOpen(false)
     setSearch('')
-    const local = value?.replace(/^\+\d+/, '') || ''
+    const local = value?.startsWith(prefix) ? value.slice(prefix.length) : ''
     const newNumber = `+${getCountryCallingCode(country)}${local}`
     onChange(newNumber || undefined)
   }
