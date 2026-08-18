@@ -42,9 +42,9 @@ export default function Router() {
       <Route path="/search/results" element={<ResultsPage />} />
       <Route path="/schedules/:scheduleId" element={<SchedulePage />} />
 
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
-      <Route path="/register/company" element={<RegisterCompanyPage />} />
+      <Route path="/auth/login" element={<LoginPage />} />
+      <Route path="/auth/register" element={<RegisterPage />} />
+      <Route path="/auth/register/company" element={<RegisterCompanyPage />} />
 
       <Route path="/checkout/:scheduleId" element={<CheckoutPage />} />
       <Route path="/payment/:bookingId" element={<PaymentPage />} />
