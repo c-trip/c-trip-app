@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
-import { getCountries, getCountryCallingCode, parsePhoneNumber, isPossiblePhoneNumber } from 'react-phone-number-input'
+import { getCountries, getCountryCallingCode, parsePhoneNumber, isPossiblePhoneNumber, type Country } from 'react-phone-number-input'
 import pt from 'react-phone-number-input/locale/pt'
 
 type PhoneInputProps = {
   value: string | undefined
   onChange: (value: string | undefined) => void
-  defaultCountry?: string
+  defaultCountry?: Country
   placeholder?: string
 }
 
@@ -25,7 +25,7 @@ const PATTERNS: Record<string, number[]> = {
   GB: [4, 3, 3],
 }
 
-function formatDigits(digits: string, country: string): string {
+function formatDigits(digits: string, country: Country): string {
   const pattern = PATTERNS[country] ?? [3, 3, 3]
   const grouped = []
   let remaining = digits
@@ -38,7 +38,7 @@ function formatDigits(digits: string, country: string): string {
   return grouped.join(' ')
 }
 
-function getMaxLength(country: string): number {
+function getMaxLength(country: Country): number {
   const code = getCountryCallingCode(country)
   let max = 0
   for (let i = 1; i <= 15; i++) {
@@ -54,7 +54,7 @@ export default function PhoneInput({
   defaultCountry = 'AO',
   placeholder = 'Número de telefone',
 }: PhoneInputProps) {
-  const [selectedCountry, setSelectedCountry] = useState(defaultCountry)
+  const [selectedCountry, setSelectedCountry] = useState<Country>(defaultCountry)
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -91,7 +91,7 @@ export default function PhoneInput({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  function handleSelect(country: string) {
+  function handleSelect(country: Country) {
     setSelectedCountry(country)
     setOpen(false)
     setSearch('')
