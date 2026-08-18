@@ -11,6 +11,33 @@ type PhoneInputProps = {
 
 const FLAGS_URL = 'https://purecatamphetamine.github.io/country-flag-icons/3x2/{XX}.svg'
 
+const PATTERNS: Record<string, number[]> = {
+  AO: [3, 3, 3],
+  MZ: [3, 3, 3],
+  CV: [3, 2, 2],
+  GW: [3, 3, 3],
+  ST: [3, 2, 2],
+  BR: [2, 5, 4],
+  PT: [3, 3, 3],
+  ZA: [3, 3, 4],
+  CD: [3, 3, 4],
+  US: [3, 3, 4],
+  GB: [4, 3, 3],
+}
+
+function formatDigits(digits: string, country: string): string {
+  const pattern = PATTERNS[country] ?? [3, 3, 3]
+  const grouped = []
+  let remaining = digits
+  for (const len of pattern) {
+    if (remaining.length === 0) break
+    grouped.push(remaining.slice(0, len))
+    remaining = remaining.slice(len)
+  }
+  if (remaining) grouped.push(remaining)
+  return grouped.join(' ')
+}
+
 function getMaxLength(country: string): number {
   const code = getCountryCallingCode(country)
   let max = 0
@@ -36,6 +63,7 @@ export default function PhoneInput({
   const callingCode = getCountryCallingCode(selectedCountry)
   const prefix = `+${callingCode}`
   const localNumber = value?.startsWith(prefix) ? value.slice(prefix.length) : ''
+  const displayNumber = formatDigits(localNumber, selectedCountry)
   const flagUrl = FLAGS_URL.replace('{XX}', selectedCountry)
   const maxLength = getMaxLength(selectedCountry)
 
@@ -152,10 +180,9 @@ export default function PhoneInput({
           <input
             type="tel"
             inputMode="numeric"
-            value={localNumber}
+            value={displayNumber}
             onChange={handleNumberChange}
             placeholder={placeholder}
-            maxLength={maxLength}
             className={`w-full rounded-xl border ${borderColor} bg-gray-50 px-4 h-12 pr-16 text-sm font-outfit text-gray-800 outline-none transition-colors ${
               isError ? 'focus:border-red-500' : 'focus:border-green-500'
             }`}
