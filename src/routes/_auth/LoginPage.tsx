@@ -5,17 +5,17 @@ export default function LoginPage() {
   const [phone, setPhone] = useState<string | undefined>()
 
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-center
-     px-6 overflow-hidden font-outfit">
-      <header className="relative z-10 w-full max-w-sm text-center flex flex-col items-center
-       justify-center gap-8 ">
-        <div className="w-16 h-16 bg-[#1B7A3D] rounded-full"></div>
-        <div className="flex flex-col items-center justify-center gap-2">
-         <h1 className="text-3xl font-bold font-outfit">C-trip Angola</h1>
-         <p className="text-[#4B5563] text-sm">Bilhetes de autocarro na ponta dos dedos</p>
-        </div>
-      </header>
-      <section className="w-full max-w-sm text-left mt-8">
+    <div className="relative min-h-screen flex flex-col items-center px-6 overflow-hidden font-outfit">
+      <main className="flex-1 flex flex-col items-center justify-center w-full">
+        <header className="relative z-10 w-full max-w-sm text-center flex flex-col items-center
+         justify-center gap-8 ">
+          <div className="w-16 h-16 bg-[#1B7A3D] rounded-full"></div>
+          <div className="flex flex-col items-center justify-center gap-2">
+           <h1 className="text-3xl font-bold font-outfit">C-trip Angola</h1>
+           <p className="text-[#4B5563] text-sm">Bilhetes de autocarro na ponta dos dedos</p>
+          </div>
+        </header>
+        <section className="w-full max-w-sm text-left mt-8">
         <label className="block text-sm font-medium text-gray-700 mb-2 font-outfit">
           Introduza o seu número de telefone
         </label>
@@ -62,7 +62,8 @@ export default function LoginPage() {
           Entrar com Google
         </button>
       </section>
-      <footer className="w-full max-w-sm mt-8 text-center">
+      </main>
+      <footer className="w-full max-w-sm py-4 text-center">
         <p className="text-xs text-gray-400 font-outfit leading-relaxed">
           Ao continuar, concorda com os nossos{' '}
           <span className="underline cursor-pointer">Termos de Serviço</span>
