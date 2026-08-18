@@ -1,4 +1,4 @@
-import PhoneInputLib from 'react-phone-input-2'
+import PhoneInputLib from 'react-phone-input-2/lib/lib.js'
 import 'react-phone-input-2/lib/style.css'
 
 type PhoneInputProps = {
