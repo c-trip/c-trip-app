@@ -1,10 +1,29 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
-import PhoneInput from '../../components/PhoneInput'
+import { IconUser, IconMail, IconLock, IconEye, IconEyeOff } from '@tabler/icons-react'
 
 export default function RegisterPage() {
   const [name, setName] = useState('')
-  const [phone, setPhone] = useState<string | undefined>()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [errors, setErrors] = useState<{ name?: string; email?: string; password?: string }>({})
+
+  const validate = () => {
+    const newErrors: { name?: string; email?: string; password?: string } = {}
+    if (!name || name.length < 2) newErrors.name = 'Nome deve ter pelo menos 2 caracteres'
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) newErrors.email = 'Email inválido'
+    if (!password || password.length < 6) newErrors.password = 'Palavra-passe deve ter pelo menos 6 caracteres'
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const handleSubmit = () => {
+    if (validate()) {
+      // TODO: Call API POST /auth/register with { name, email, password }
+      console.log('Register:', { name, email, password })
+    }
+  }
 
   return (
     <div className="relative min-h-screen flex flex-col items-center px-6 overflow-hidden font-outfit">
@@ -21,28 +40,69 @@ export default function RegisterPage() {
           <label className="block text-sm font-medium text-gray-700 mb-2 font-outfit">
             Nome completo
           </label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Introduza o seu nome"
-            className="w-full rounded-xl border border-gray-300 bg-gray-50 px-4 h-12
-             text-sm font-outfit text-gray-800 outline-none transition-colors
-             focus:border-green-500"
-          />
+          <div className="relative">
+            <IconUser className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Introduza o seu nome"
+              className={`w-full rounded-xl border ${errors.name ? 'border-red-500' : 'border-gray-300'} bg-gray-50 pl-10 pr-4 h-12
+               text-sm font-outfit text-gray-800 outline-none transition-colors
+               focus:border-green-500`}
+            />
+          </div>
+          {errors.name && <p className="text-red-500 text-xs mt-1 font-outfit">{errors.name}</p>}
 
           <label className="block text-sm font-medium text-gray-700 mb-2 mt-4 font-outfit">
-            Número de telefone
+            Email
           </label>
-          <PhoneInput
-            value={phone}
-            onChange={setPhone}
-            defaultCountry="AO"
-            placeholder="Número de telefone"
-          />
+          <div className="relative">
+            <IconMail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Introduza o seu email"
+              className={`w-full rounded-xl border ${errors.email ? 'border-red-500' : 'border-gray-300'} bg-gray-50 pl-10 pr-4 h-12
+               text-sm font-outfit text-gray-800 outline-none transition-colors
+               focus:border-green-500`}
+            />
+          </div>
+          {errors.email && <p className="text-red-500 text-xs mt-1 font-outfit">{errors.email}</p>}
+
+          <label className="block text-sm font-medium text-gray-700 mb-2 mt-4 font-outfit">
+            Palavra-passe
+          </label>
+          <div className="relative">
+            <IconLock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Crie uma palavra-passe"
+              className={`w-full rounded-xl border ${errors.password ? 'border-red-500' : 'border-gray-300'} bg-gray-50 pl-10 pr-12 h-12
+               text-sm font-outfit text-gray-800 outline-none transition-colors
+               focus:border-green-500`}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400
+               hover:text-gray-600 transition-colors"
+            >
+              {showPassword ? (
+                <IconEyeOff className="w-5 h-5" />
+              ) : (
+                <IconEye className="w-5 h-5" />
+              )}
+            </button>
+          </div>
+          {errors.password && <p className="text-red-500 text-xs mt-1 font-outfit">{errors.password}</p>}
 
           <button
             type="button"
+            onClick={handleSubmit}
             style={{
               height: 48,
               borderRadius: 14,
