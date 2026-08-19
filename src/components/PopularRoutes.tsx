@@ -1,21 +1,21 @@
 import { IconChevronRight } from '@tabler/icons-react'
 import DestinationCard from './DestinationCard'
 
-const destinations = [
-  { city: 'Luanda', price: '4 500 Kz', gradient: 'from-[#6B9E8C] to-[#3A6356]' },
-  { city: 'Benguela', price: '3 200 Kz', gradient: 'from-[#3A6356] to-[#1B3D2F]' },
-  { city: 'Huambo', price: '3 800 Kz', gradient: 'from-[#4A7A6A] to-[#2A4A3D]' },
-  { city: 'Lubango', price: '4 100 Kz', gradient: 'from-[#5C8E7C] to-[#2E5446]' },
-  { city: 'Lobito', price: '3 500 Kz', gradient: 'from-[#7BAF9C] to-[#4A6B5E]' },
-  { city: 'Namibe', price: '5 000 Kz', gradient: 'from-[#2A4A3D] to-[#1B3D2F]' },
+const routes = [
+  { origin: 'Luanda', destination: 'Bengo', price: '4 500 Kz', gradient: 'from-[#6B9E8C] to-[#3A6356]' },
+  { origin: 'Benguela', destination: 'Huambo', price: '3 200 Kz', gradient: 'from-[#3A6356] to-[#1B3D2F]' },
+  { origin: 'Huambo', destination: 'Lubango', price: '3 800 Kz', gradient: 'from-[#4A7A6A] to-[#2A4A3D]' },
+  { origin: 'Luanda', destination: 'Benguela', price: '4 100 Kz', gradient: 'from-[#5C8E7C] to-[#2E5446]' },
+  { origin: 'Lobito', destination: 'Namibe', price: '3 500 Kz', gradient: 'from-[#7BAF9C] to-[#4A6B5E]' },
+  { origin: 'Luanda', destination: 'Huambo', price: '5 000 Kz', gradient: 'from-[#2A4A3D] to-[#1B3D2F]' },
 ]
 
 interface PopularRoutesProps {
   onViewAll?: () => void
-  onSelectCity?: (city: string) => void
+  onSelectRoute?: (origin: string, destination: string) => void
 }
 
-export default function PopularRoutes({ onViewAll, onSelectCity }: PopularRoutesProps) {
+export default function PopularRoutes({ onViewAll, onSelectRoute }: PopularRoutesProps) {
   return (
     <section className="mt-8">
       <div className="mb-4 flex items-center justify-between px-1">
@@ -30,13 +30,14 @@ export default function PopularRoutes({ onViewAll, onSelectCity }: PopularRoutes
       </div>
 
       <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
-        {destinations.map((dest) => (
+        {routes.map((route) => (
           <DestinationCard
-            key={dest.city}
-            city={dest.city}
-            price={dest.price}
-            gradient={dest.gradient}
-            onClick={() => onSelectCity?.(dest.city)}
+            key={`${route.origin}-${route.destination}`}
+            origin={route.origin}
+            destination={route.destination}
+            price={route.price}
+            gradient={route.gradient}
+            onClick={() => onSelectRoute?.(route.origin, route.destination)}
           />
         ))}
       </div>

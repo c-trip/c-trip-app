@@ -1,15 +1,17 @@
 import { Card, CardContent } from '@/components/ui/card'
-import { IconMapPin } from '@tabler/icons-react'
+import { IconArrowsRight } from '@tabler/icons-react'
 
 interface DestinationCardProps {
-  city: string
+  origin: string
+  destination: string
   price?: string
   gradient?: string
   onClick?: () => void
 }
 
 export default function DestinationCard({
-  city,
+  origin,
+  destination,
   price,
   gradient = 'from-green-gradient-start to-green-gradient-end',
   onClick,
@@ -17,12 +19,13 @@ export default function DestinationCard({
   return (
     <Card
       onClick={onClick}
-      className="min-w-[160px] cursor-pointer overflow-hidden rounded-2xl border-none p-0 shadow-md transition-transform hover:scale-[1.02]"
+      className="min-w-[180px] cursor-pointer overflow-hidden rounded-2xl border-none p-0 shadow-md transition-transform hover:scale-[1.02]"
     >
       <div className={`flex h-28 w-full items-end bg-gradient-to-br ${gradient} p-3`}>
         <div className="flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 backdrop-blur-sm">
-          <IconMapPin className="h-3.5 w-3.5 text-white" />
-          <span className="text-xs font-semibold text-white">{city}</span>
+          <span className="text-xs font-semibold text-white">{origin}</span>
+          <IconArrowsRight className="h-3 w-3 text-white" />
+          <span className="text-xs font-semibold text-white">{destination}</span>
         </div>
       </div>
       {price && (
