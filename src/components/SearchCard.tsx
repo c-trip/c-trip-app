@@ -33,62 +33,59 @@ export default function SearchCard({
   onSearch,
 }: SearchCardProps) {
   return (
-    <Card className="w-full rounded-[20px] border border-gray-200 bg-white shadow-md px-5 py-5 gap-0">
+    <Card className="w-full gap-0 rounded-[20px] border border-gray-200 bg-white px-5 py-5 shadow-md">
       <CardContent className="px-0 py-0">
-        {/* Origem → Destino */}
         <div className="flex items-center justify-between">
           <div className="flex-1">
-            <p className="text-xs text-gray-400 font-medium">Origem</p>
-            <h1 className="text-base font-semibold text-gray-900">{origin}</h1>
+            <p className="text-xs font-medium text-gray-400">Origem</p>
+            <p className="text-base font-semibold text-gray-900">{origin}</p>
           </div>
 
-          <div className="mx-4 flex items-center justify-center w-10 h-10 rounded-full bg-[#3A6356]/10">
-            <IconArrowsLeftRight className="w-5 h-5 text-[#3A6356]" />
+          <div className="mx-4 flex h-10 w-10 items-center justify-center rounded-full bg-green-gradient-end/10">
+            <IconArrowsLeftRight className="h-5 w-5 text-green-gradient-end" />
           </div>
 
           <div className="flex-1 text-right">
-            <p className="text-xs text-gray-400 font-medium">Destino</p>
-            <h1 className="text-base font-semibold text-gray-900">{destination}</h1>
+            <p className="text-xs font-medium text-gray-400">Destino</p>
+            <p className="text-base font-semibold text-gray-900">{destination}</p>
           </div>
         </div>
 
-        {/* Separador */}
         <div className="my-4 border-t border-gray-200" />
 
-        {/* Partida + Passageiros */}
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-2.5">
-            <div className="mt-0.5 flex items-center justify-center w-8 h-8 rounded-full bg-[#3A6356]/10">
-              <IconCalendar className="w-4 h-4 text-[#3A6356]" />
+            <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full bg-green-gradient-end/10">
+              <IconCalendar className="h-4 w-4 text-green-gradient-end" />
             </div>
             <div>
-              <p className="text-xs text-gray-400 font-medium">Partida</p>
-              <h1 className="text-sm font-semibold text-gray-900 capitalize">{formatDate(date)}</h1>
+              <p className="text-xs font-medium text-gray-400">Partida</p>
+              <p className="text-sm font-semibold capitalize text-gray-900">
+                {formatDate(date)}
+              </p>
             </div>
           </div>
 
           <div className="flex items-start gap-2.5">
-            <div className="mt-0.5 flex items-center justify-center w-8 h-8 rounded-full bg-[#3A6356]/10">
-              <IconUser className="w-4 h-4 text-[#3A6356]" />
+            <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full bg-green-gradient-end/10">
+              <IconUser className="h-4 w-4 text-green-gradient-end" />
             </div>
             <div>
-              <p className="text-xs text-gray-400 font-medium">Passageiros</p>
-              <h1 className="text-sm font-semibold text-gray-900">
+              <p className="text-xs font-medium text-gray-400">Passageiros</p>
+              <p className="text-sm font-semibold text-gray-900">
                 {passengers === 1 ? '1 pessoa' : `${passengers} pessoas`}
-              </h1>
+              </p>
             </div>
           </div>
         </div>
 
-        {/* Separador */}
         <div className="my-4 border-t border-gray-200" />
 
-        {/* Botão */}
         <Button
           onClick={onSearch}
-          className="w-full h-12 rounded-2xl bg-gradient-to-r from-[#6B9E8C] to-[#3A6356] text-white font-semibold text-sm hover:opacity-90 transition-opacity cursor-pointer"
+          className="h-12 w-full cursor-pointer rounded-2xl bg-gradient-to-r from-green-gradient-start to-green-gradient-end font-semibold text-sm text-white hover:opacity-90 transition-opacity"
         >
-          <IconSearch className="w-5 h-5" />
+          <IconSearch className="h-5 w-5" />
           Pesquisar bilhetes
         </Button>
       </CardContent>
