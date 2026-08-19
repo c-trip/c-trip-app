@@ -1,4 +1,5 @@
 import HeaderCarousel from '../../components/HeaderCarousel'
+import SearchCard from '../../components/SearchCard'
 
 export default function SearchPage() {
   return (
@@ -6,6 +7,9 @@ export default function SearchPage() {
       <header className="relative w-full">
         <HeaderCarousel />
       </header>
+      <div className="px-4 -mt-8 relative z-10">
+        <SearchCard />
+      </div>
     </div>
   )
 }
