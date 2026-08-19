@@ -1,5 +1,11 @@
-import Placeholder from '../../components/Placeholder'
+import HeaderCarousel from '../../components/HeaderCarousel'
 
 export default function SearchPage() {
-  return <Placeholder title="Pesquisa de Viagens" note="/search" />
+  return (
+    <div className="min-h-screen bg-gray-50 font-outfit">
+      <header className="relative w-full">
+        <HeaderCarousel />
+      </header>
+    </div>
+  )
 }
