@@ -22,19 +22,29 @@ describe('LoginPage', () => {
     expect(screen.getByText('Bilhetes de autocarro na ponta dos dedos')).toBeInTheDocument()
   })
 
-  it('mostra label do campo de telefone', () => {
+  it('mostra label do campo de email', () => {
     renderLoginPage()
-    expect(screen.getByText('Introduza o seu número de telefone')).toBeInTheDocument()
+    expect(screen.getByText('Email')).toBeInTheDocument()
   })
 
-  it('mostra input de telefone', () => {
+  it('mostra input de email', () => {
     renderLoginPage()
-    expect(screen.getByPlaceholderText('Número de telefone')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('Introduza o seu email')).toBeInTheDocument()
   })
 
-  it('mostra botão Continuar com Telefone', () => {
+  it('mostra label do campo de palavra-passe', () => {
     renderLoginPage()
-    expect(screen.getByText('Continuar com Telefone')).toBeInTheDocument()
+    expect(screen.getByText('Palavra-passe')).toBeInTheDocument()
+  })
+
+  it('mostra input de palavra-passe', () => {
+    renderLoginPage()
+    expect(screen.getByPlaceholderText('Introduza a sua palavra-passe')).toBeInTheDocument()
+  })
+
+  it('mostra botão Entrar', () => {
+    renderLoginPage()
+    expect(screen.getByText('Entrar')).toBeInTheDocument()
   })
 
   it('mostra botão Entrar com Google', () => {
