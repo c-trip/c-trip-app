@@ -35,7 +35,7 @@ export default function BottomTabBar() {
               key={tab.path}
               onClick={() => navigate(tab.path)}
               className={`flex flex-col items-center gap-1 rounded-full transition-all ${
-                active ? 'bg-green-gradient-end px-8 py-2.5' : 'px-3 py-2'
+                active ? 'bg-[#bddbcf] px-8 py-2' : 'px-3 py-2'
               }`}
             >
               <Icon className={`h-6 w-6 ${active ? 'text-white' : 'text-gray-400'}`} />
