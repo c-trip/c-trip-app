@@ -10,65 +10,59 @@ import {
 interface SearchCardProps {
   origin?: string
   destination?: string
-  date?: string
   passengers?: number
   onSearch?: () => void
-}
-
-function formatDate(dateStr?: string): string {
-  if (!dateStr) return '—'
-  const date = new Date(dateStr + 'T00:00:00')
-  return date.toLocaleDateString('pt-PT', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  })
 }
 
 export default function SearchCard({
   origin = 'Luanda',
   destination = 'Benguela',
-  date = '2026-08-15',
   passengers = 1,
   onSearch,
 }: SearchCardProps) {
   return (
-    <Card className="w-full gap-0 rounded-[20px] border border-gray-200 bg-white px-5 py-5 shadow-md">
+    <Card className="w-full gap-4 rounded-[20px] border border-gray-200 font-outfit
+    bg-white p-6 shadow-md mt-12 ">
       <CardContent className="px-0 py-0">
-        <div className="flex items-center justify-between">
-          <div className="flex-1">
+        <div className="flex items-center justify-between  bg-[#eaecf0] border-2 
+        border-[#E5E7EB] p-4 rounded-xl">
+          <div className="flex-1 border p-4 border-gray-200 rounded-lg bg-white">
             <p className="text-xs font-medium text-gray-400">Origem</p>
             <p className="text-base font-semibold text-gray-900">{origin}</p>
+            <p className="text-base font-semibold text-gray-900">(terminal)</p>
           </div>
 
-          <div className="mx-4 flex h-10 w-10 items-center justify-center rounded-full bg-green-gradient-end/10">
-            <IconArrowsLeftRight className="h-5 w-5 text-green-gradient-end" />
+          <div className="mx-4 flex h-10 w-10 p-2 items-center justify-center rounded-full bg-white border 
+          border-[#E5E7EB]">
+            <IconArrowsLeftRight className=" text-green-gradient-end border rounded-full 
+            p-1 border-[#E5E7EB]" />
           </div>
 
-          <div className="flex-1 text-right">
+          <div className="flex-1 text-left border p-4 border-gray-200 rounded-lg bg-white">
             <p className="text-xs font-medium text-gray-400">Destino</p>
             <p className="text-base font-semibold text-gray-900">{destination}</p>
+             <p className="text-base font-semibold text-gray-900">(Terminal)</p>
           </div>
         </div>
 
         <div className="my-4 border-t border-gray-200" />
 
-        <div className="flex items-start justify-between">
-          <div className="flex items-start gap-2.5">
-            <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full bg-green-gradient-end/10">
-              <IconCalendar className="h-4 w-4 text-green-gradient-end" />
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex items-start gap-2.5 border border-[#E5E7EB] p-3.5 rounded-2xl">
+            <div className="mt-0.5 flex h-8 w-12 items-center justify-center rounded-full">
+              <IconCalendar className="size-6 text-green-gradient-end" />
             </div>
             <div>
               <p className="text-xs font-medium text-gray-400">Partida</p>
               <p className="text-sm font-semibold capitalize text-gray-900">
-                {formatDate(date)}
+                15 Ago 2026
               </p>
             </div>
           </div>
 
-          <div className="flex items-start gap-2.5">
-            <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full bg-green-gradient-end/10">
-              <IconUser className="h-4 w-4 text-green-gradient-end" />
+          <div className="flex items-start gap-2.5 border border-[#E5E7EB] p-3.5 rounded-2xl">
+            <div className="mt-0.5 flex h-8 w-12 items-center justify-center rounded-full">
+              <IconUser className="size-6 text-green-gradient-end" />
             </div>
             <div>
               <p className="text-xs font-medium text-gray-400">Passageiros</p>
@@ -79,7 +73,6 @@ export default function SearchCard({
           </div>
         </div>
 
-        <div className="my-4 border-t border-gray-200" />
 
         <Button
           onClick={onSearch}
