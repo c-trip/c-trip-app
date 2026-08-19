@@ -1,5 +1,5 @@
 import { Card, CardContent } from '@/components/ui/card'
-import { IconArrowsRight } from '@tabler/icons-react'
+import { IconArrowRight } from '@tabler/icons-react'
 
 interface DestinationCardProps {
   origin: string
@@ -24,7 +24,7 @@ export default function DestinationCard({
       <div className={`flex h-28 w-full items-end bg-gradient-to-br ${gradient} p-3`}>
         <div className="flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 backdrop-blur-sm">
           <span className="text-xs font-semibold text-white">{origin}</span>
-          <IconArrowsRight className="h-3 w-3 text-white" />
+          <IconArrowRight className="h-3 w-3 text-white" />
           <span className="text-xs font-semibold text-white">{destination}</span>
         </div>
       </div>
