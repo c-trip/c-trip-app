@@ -2,8 +2,7 @@ import { useLocation, useNavigate } from 'react-router'
 import {
   IconHome,
   IconHomeFilled,
-  IconRoute,
-  IconRoute2,
+  IconBrandSafari,
   IconTicket,
   IconTicketFilled,
   IconUser,
@@ -12,7 +11,7 @@ import {
 
 const tabs = [
   { path: '/search', label: 'Inicio', icon: IconHome, iconActive: IconHomeFilled },
-  { path: '/bookings', label: 'Viagens', icon: IconRoute, iconActive: IconRoute2 },
+  { path: '/bookings', label: 'Viagens', icon: IconBrandSafari, iconActive: IconBrandSafari },
   { path: '/tickets', label: 'Bilhetes', icon: IconTicket, iconActive: IconTicketFilled },
   { path: '/profile', label: 'Perfil', icon: IconUser, iconActive: IconUserFilled },
 ]
@@ -24,7 +23,7 @@ export default function BottomTabBar() {
   const isActive = (path: string) => location.pathname === path
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200/50 bg-white/80 backdrop-blur-xl safe-area-pb">
+    <nav className="fixed bottom-2 left-4 right-4 z-50 border-t border-gray-200/50 bg-white/80 backdrop-blur-xl safe-area-pb rounded-4xl">
       <div className="mx-auto flex max-w-lg items-center justify-around py-2">
         {tabs.map((tab) => {
           const active = isActive(tab.path)
@@ -34,12 +33,14 @@ export default function BottomTabBar() {
             <button
               key={tab.path}
               onClick={() => navigate(tab.path)}
-              className={`flex flex-col items-center gap-0.5 px-4 py-1 transition-colors ${
-                active ? 'text-green-gradient-end' : 'text-gray-400'
+              className={`flex flex-col items-center gap-0.5 rounded-full px-3 py-1.5 transition-all ${
+                active ? 'bg-green-gradient-end' : 'px-3 py-1.5'
               }`}
             >
-              <Icon className="h-6 w-6" />
-              <span className="text-[10px] font-medium">{tab.label}</span>
+              <Icon className={`h-6 w-6 ${active ? 'text-white' : 'text-gray-400'}`} />
+              <span className={`text-[10px] font-medium ${active ? 'text-white' : 'text-gray-400'}`}>
+                {tab.label}
+              </span>
             </button>
           )
         })}
