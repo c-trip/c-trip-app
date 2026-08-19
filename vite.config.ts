@@ -6,7 +6,7 @@ import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/c-trip-app/',
+  base: process.env.NODE_ENV === 'production' ? '/c-trip-app/' : '/',
   plugins: [
     react(),
     babel({ presets: [reactCompilerPreset()] }),
