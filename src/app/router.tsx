@@ -16,6 +16,7 @@ import BookingsPage from '../routes/_passenger/BookingsPage'
 import BookingDetailPage from '../routes/_passenger/BookingDetailPage'
 import ProfilePage from '../routes/_passenger/ProfilePage'
 import NotificationsPage from '../routes/_passenger/NotificationsPage'
+import TicketsPage from '../routes/_passenger/TicketsPage'
 
 import GestorDashboard from '../routes/_gestor/GestorDashboard'
 import GestorRoutes from '../routes/_gestor/GestorRoutes'
@@ -31,6 +32,8 @@ import OperatorScan from '../routes/_operator/OperatorScan'
 import OperatorManifest from '../routes/_operator/OperatorManifest'
 import OperatorTasks from '../routes/_operator/OperatorTasks'
 
+import TabBarLayout from '../components/TabBarLayout'
+
 export default function Router() {
   return (
     <Routes>
@@ -38,21 +41,25 @@ export default function Router() {
       <Route path="*" element={<Navigate to="/welcome" replace />} />
 
       <Route path="/welcome" element={<WelcomePage />} />
-      <Route path="/search" element={<SearchPage />} />
-      <Route path="/search/results" element={<ResultsPage />} />
-      <Route path="/schedules/:scheduleId" element={<SchedulePage />} />
 
       <Route path="/auth/login" element={<LoginPage />} />
       <Route path="/auth/register" element={<RegisterPage />} />
       <Route path="/auth/register/company" element={<RegisterCompanyPage />} />
 
+      <Route element={<TabBarLayout />}>
+        <Route path="/search" element={<SearchPage />} />
+        <Route path="/search/results" element={<ResultsPage />} />
+        <Route path="/schedules/:scheduleId" element={<SchedulePage />} />
+        <Route path="/bookings" element={<BookingsPage />} />
+        <Route path="/bookings/:bookingId" element={<BookingDetailPage />} />
+        <Route path="/tickets" element={<TicketsPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/notifications" element={<NotificationsPage />} />
+      </Route>
+
       <Route path="/checkout/:scheduleId" element={<CheckoutPage />} />
       <Route path="/payment/:bookingId" element={<PaymentPage />} />
       <Route path="/ticket/:bookingId" element={<TicketPage />} />
-      <Route path="/bookings" element={<BookingsPage />} />
-      <Route path="/bookings/:bookingId" element={<BookingDetailPage />} />
-      <Route path="/profile" element={<ProfilePage />} />
-      <Route path="/notifications" element={<NotificationsPage />} />
 
       <Route path="/gestor" element={<GestorDashboard />} />
       <Route path="/gestor/routes" element={<GestorRoutes />} />
