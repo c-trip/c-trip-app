@@ -1,7 +1,23 @@
 @import 'tailwindcss';
+@import 'swiper/css';
+@import 'swiper/css/pagination';
 
 @theme {
   --font-outfit: 'Outfit', sans-serif;
   --color-green-gradient-start: #6B9E8C;
   --color-green-gradient-end: #3A6356;
+}
+
+.swiper-pagination-bullet {
+  width: 8px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.5);
+  opacity: 1;
+  transition: all 0.3s ease;
+}
+
+.swiper-pagination-bullet-active {
+  width: 24px;
+  border-radius: 4px;
+  background: #3A6356;
 }
