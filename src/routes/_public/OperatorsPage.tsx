@@ -58,6 +58,10 @@ export default function OperatorsPage() {
     ? route.split('-').map((s) => s.charAt(0).toUpperCase() + s.slice(1))
     : ['', '']
 
+  const title = destinationFormatted
+    ? `${originFormatted} → ${destinationFormatted}`
+    : originFormatted
+
   const allOperators = getOperatorsByRoute(originFormatted, destinationFormatted)
   const filteredOperators = useMemo(
     () => filterOperators(allOperators, activeTab),
@@ -75,9 +79,7 @@ export default function OperatorsPage() {
             <IconArrowLeft className="h-5 w-5 text-gray-700" />
           </button>
           <div>
-            <h1 className="text-lg font-bold text-gray-900">
-              {originFormatted} → {destinationFormatted}
-            </h1>
+            <h1 className="text-lg font-bold text-gray-900">{title}</h1>
             <p className="text-xs text-gray-400">{allOperators.length} operadores disponiveis</p>
           </div>
         </div>
