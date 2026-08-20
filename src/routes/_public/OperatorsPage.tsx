@@ -84,10 +84,14 @@ export default function OperatorsPage() {
       </header>
 
       <div className="px-5 pt-4">
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="bg-transparent">
+          <TabsList variant="line" className="w-full bg-transparent gap-2">
             {TABS.map((tab) => (
-              <TabsTrigger key={tab.value} value={tab.value} className="flex-1 text-xs">
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
+                className="flex-1 rounded-full py-2 px-3.5 text-[13px] font-semibold font-outfit border border-gray-200 bg-white text-black data-active:bg-[#1B7A3D] data-active:text-white data-active:border-[#1B7A3D]"
+              >
                 {tab.label}
               </TabsTrigger>
             ))}
