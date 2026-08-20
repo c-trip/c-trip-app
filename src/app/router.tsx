@@ -62,8 +62,8 @@ export default function Router() {
       <Route path="/checkout/:scheduleId" element={<CheckoutPage />} />
       <Route path="/payment/:bookingId" element={<PaymentPage />} />
       <Route path="/ticket/:bookingId" element={<TicketPage />} />
-      <Route path="/routes" element={<OperatorsPage />} />
-      <Route path="/routes/:origin-:destination" element={<OperatorsPage />} />
+      <Route path="/search-results" element={<OperatorsPage />} />
+      <Route path="/search-results/:origin-:destination" element={<OperatorsPage />} />
 
       <Route path="/gestor" element={<GestorDashboard />} />
       <Route path="/gestor/routes" element={<GestorRoutes />} />
