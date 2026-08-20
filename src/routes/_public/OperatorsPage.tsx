@@ -38,7 +38,7 @@ export default function OperatorsPage() {
               <OperatorCard
                 key={operator.id}
                 operator={operator}
-                onSelect={(op) => console.log('Seleccionado:', op.name)}
+                onSelect={(op) => navigate(`/schedules/${op.id}`)}
               />
             ))}
           </div>
