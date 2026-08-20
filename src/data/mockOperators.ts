@@ -104,9 +104,19 @@ const operatorsByRoute: Record<string, Operator[]> = {
 }
 
 export function getOperatorsByRoute(origin?: string, destination?: string): Operator[] {
-  if (!origin || !destination) {
+  if (!origin) {
     return Object.values(operatorsByRoute).flat()
   }
-  const key = `${origin.toLowerCase()}-${destination.toLowerCase()}`
-  return operatorsByRoute[key] ?? []
+
+  const originLower = origin.toLowerCase()
+
+  if (destination) {
+    const key = `${originLower}-${destination.toLowerCase()}`
+    return operatorsByRoute[key] ?? []
+  }
+
+  return Object.entries(operatorsByRoute)
+    .filter(([key]) => key.startsWith(`${originLower}-`))
+    .map(([, ops]) => ops)
+    .flat()
 }

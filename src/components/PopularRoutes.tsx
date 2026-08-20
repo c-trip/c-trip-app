@@ -15,7 +15,7 @@ export default function PopularRoutes({ onViewAll, onSelectRoute }: PopularRoute
     if (onViewAll) {
       onViewAll()
     } else {
-      navigate('/search-results')
+      navigate('/search/results')
     }
   }
 
@@ -23,8 +23,7 @@ export default function PopularRoutes({ onViewAll, onSelectRoute }: PopularRoute
     if (onSelectRoute) {
       onSelectRoute(origin, destination)
     } else {
-      const key = `${origin.toLowerCase()}-${destination.toLowerCase()}`
-      navigate(`/search-results/${key}`)
+      navigate(`/search-results/${origin.toLowerCase()}/${destination.toLowerCase()}`)
     }
   }
 
