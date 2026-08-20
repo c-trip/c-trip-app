@@ -1,17 +1,68 @@
+import { useState, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router'
 import { IconArrowLeft, IconBus } from '@tabler/icons-react'
 import OperatorCard from '../../components/OperatorCard'
+import { Tabs, TabsList, TabsTrigger } from '../../components/ui/tabs'
 import { getOperatorsByRoute } from '../../data/mockOperators'
+import type { Operator } from '@/types'
+
+const TABS = [
+  { value: 'todos', label: 'Todos' },
+  { value: 'rapido', label: 'Mais rápido' },
+  { value: 'barato', label: 'Mais barato' },
+  { value: 'manha', label: 'Manhã' },
+  { value: 'tarde', label: 'Tarde' },
+] as const
+
+function parseDurationToMinutes(duration: string): number {
+  let total = 0
+  const hMatch = duration.match(/(\d+)\s*h/)
+  const mMatch = duration.match(/(\d+)\s*min/)
+  if (hMatch) total += parseInt(hMatch[1], 10) * 60
+  if (mMatch) total += parseInt(mMatch[1], 10)
+  return total
+}
+
+function parsePrice(price: string): number {
+  return parseInt(price.replace(/\D/g, ''), 10)
+}
+
+function parseHour(time: string): number {
+  return parseInt(time.split(':')[0], 10)
+}
+
+function filterOperators(operators: Operator[], tab: string): Operator[] {
+  const sorted = [...operators]
+  switch (tab) {
+    case 'rapido':
+      return sorted.sort(
+        (a, b) => parseDurationToMinutes(a.duration) - parseDurationToMinutes(b.duration),
+      )
+    case 'barato':
+      return sorted.sort((a, b) => parsePrice(a.price) - parsePrice(b.price))
+    case 'manha':
+      return sorted.filter((op) => parseHour(op.departureTime) < 12)
+    case 'tarde':
+      return sorted.filter((op) => parseHour(op.departureTime) >= 12)
+    default:
+      return sorted
+  }
+}
 
 export default function OperatorsPage() {
   const { route } = useParams<{ route: string }>()
   const navigate = useNavigate()
+  const [activeTab, setActiveTab] = useState('todos')
 
   const [originFormatted, destinationFormatted] = route
     ? route.split('-').map((s) => s.charAt(0).toUpperCase() + s.slice(1))
     : ['', '']
 
-  const operators = getOperatorsByRoute(originFormatted, destinationFormatted)
+  const allOperators = getOperatorsByRoute(originFormatted, destinationFormatted)
+  const filteredOperators = useMemo(
+    () => filterOperators(allOperators, activeTab),
+    [allOperators, activeTab],
+  )
 
   return (
     <div className="min-h-screen bg-gray-50 font-outfit">
@@ -27,15 +78,27 @@ export default function OperatorsPage() {
             <h1 className="text-lg font-bold text-gray-900">
               {originFormatted} → {destinationFormatted}
             </h1>
-            <p className="text-xs text-gray-400">{operators.length} operadores disponiveis</p>
+            <p className="text-xs text-gray-400">{allOperators.length} operadores disponiveis</p>
           </div>
         </div>
       </header>
 
+      <div className="px-5 pt-4">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="w-full">
+            {TABS.map((tab) => (
+              <TabsTrigger key={tab.value} value={tab.value} className="flex-1 text-xs">
+                {tab.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+      </div>
+
       <main className="px-5 py-5">
-        {operators.length > 0 ? (
+        {filteredOperators.length > 0 ? (
           <div className="flex flex-col gap-4">
-            {operators.map((operator) => (
+            {filteredOperators.map((operator) => (
               <OperatorCard
                 key={operator.id}
                 operator={operator}
