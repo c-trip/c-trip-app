@@ -53,7 +53,7 @@ export default function OperatorCard({ operator, }: OperatorCardProps) {
            <div className="flex items-center gap-2 rounded-xl ">
             <div>
               <p className="text-lg font-bold text-[#111827]">{operator.arrivalTime}</p>
-              <p className="text-[10px] text-gray-400">Benguela</p>
+              <p className="text-[10px] text-gray-400">Arrivals</p>
             </div>
           </div>
         </div>
