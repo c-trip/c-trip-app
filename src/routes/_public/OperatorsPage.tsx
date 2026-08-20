@@ -50,13 +50,16 @@ function filterOperators(operators: Operator[], tab: string): Operator[] {
 }
 
 export default function OperatorsPage() {
-  const { route } = useParams<{ route: string }>()
+  const { origin, destination } = useParams<{ origin: string; destination?: string }>()
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('todos')
 
-  const [originFormatted, destinationFormatted] = route
-    ? route.split('-').map((s) => s.charAt(0).toUpperCase() + s.slice(1))
-    : ['', '']
+  const originFormatted = origin
+    ? origin.charAt(0).toUpperCase() + origin.slice(1)
+    : ''
+  const destinationFormatted = destination
+    ? destination.charAt(0).toUpperCase() + destination.slice(1)
+    : ''
 
   const title = destinationFormatted
     ? `${originFormatted} → ${destinationFormatted}`

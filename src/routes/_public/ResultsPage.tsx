@@ -27,6 +27,7 @@ export default function ResultsPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate(-1)}
+            aria-label="Voltar"
             className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 transition-colors hover:bg-gray-200"
           >
             <IconArrowLeft className="h-5 w-5 text-gray-700" />

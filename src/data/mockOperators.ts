@@ -116,7 +116,7 @@ export function getOperatorsByRoute(origin?: string, destination?: string): Oper
   }
 
   return Object.entries(operatorsByRoute)
-    .filter(([key]) => key.split('-').includes(originLower))
+    .filter(([key]) => key.startsWith(`${originLower}-`))
     .map(([, ops]) => ops)
     .flat()
 }
