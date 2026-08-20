@@ -95,7 +95,10 @@ const operatorsByRoute: Record<string, Operator[]> = {
   'luanda-huambo': luandaHuambo,
 }
 
-export function getOperatorsByRoute(origin: string, destination: string): Operator[] {
+export function getOperatorsByRoute(origin?: string, destination?: string): Operator[] {
+  if (!origin || !destination) {
+    return Object.values(operatorsByRoute).flat()
+  }
   const key = `${origin.toLowerCase()}-${destination.toLowerCase()}`
   return operatorsByRoute[key] ?? []
 }
