@@ -13,6 +13,7 @@ export interface Operator {
   logo?: string
   price: string
   departureTime: string
+  arrivalTime: string, 
   duration: string
   vehicleType: VehicleType
   availableSeats: number

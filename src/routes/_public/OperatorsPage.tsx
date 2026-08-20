@@ -32,7 +32,7 @@ export default function OperatorsPage() {
         </div>
       </header>
 
-      <main className="px-4 py-4">
+      <main className="px-5 py-5">
         {operators.length > 0 ? (
           <div className="flex flex-col gap-4">
             {operators.map((operator) => (
