@@ -15,7 +15,7 @@ export default function PopularRoutes({ onViewAll, onSelectRoute }: PopularRoute
     if (onViewAll) {
       onViewAll()
     } else {
-      navigate('/search-results')
+      navigate('/search/results')
     }
   }
 
