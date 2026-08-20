@@ -4,11 +4,12 @@ import OperatorCard from '../../components/OperatorCard'
 import { getOperatorsByRoute } from '../../data/mockOperators'
 
 export default function OperatorsPage() {
-  const { origin, destination } = useParams<{ origin: string; destination: string }>()
+  const { route } = useParams<{ route: string }>()
   const navigate = useNavigate()
 
-  const originFormatted = origin ? origin.charAt(0).toUpperCase() + origin.slice(1) : ''
-  const destinationFormatted = destination ? destination.charAt(0).toUpperCase() + destination.slice(1) : ''
+  const [originFormatted, destinationFormatted] = route
+    ? route.split('-').map((s) => s.charAt(0).toUpperCase() + s.slice(1))
+    : ['', '']
 
   const operators = getOperatorsByRoute(originFormatted, destinationFormatted)
 

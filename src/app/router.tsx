@@ -40,7 +40,6 @@ export default function Router() {
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/welcome" replace />} />
-      <Route path="*" element={<Navigate to="/welcome" replace />} />
 
       <Route path="/welcome" element={<WelcomePage />} />
 
@@ -63,7 +62,7 @@ export default function Router() {
       <Route path="/payment/:bookingId" element={<PaymentPage />} />
       <Route path="/ticket/:bookingId" element={<TicketPage />} />
       <Route path="/search-results" element={<OperatorsPage />} />
-      <Route path="/search-results/:origin-:destination" element={<OperatorsPage />} />
+      <Route path="/search-results/:route" element={<OperatorsPage />} />
 
       <Route path="/gestor" element={<GestorDashboard />} />
       <Route path="/gestor/routes" element={<GestorRoutes />} />
@@ -78,6 +77,8 @@ export default function Router() {
       <Route path="/operator/reprint" element={<OperatorReprint />} />
       <Route path="/operator/manifest" element={<OperatorManifest />} />
       <Route path="/operator/tasks" element={<OperatorTasks />} />
+
+      <Route path="*" element={<Navigate to="/welcome" replace />} />
     </Routes>
   )
 }
