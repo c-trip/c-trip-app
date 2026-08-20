@@ -32,6 +32,8 @@ import OperatorScan from '../routes/_operator/OperatorScan'
 import OperatorManifest from '../routes/_operator/OperatorManifest'
 import OperatorTasks from '../routes/_operator/OperatorTasks'
 
+import OperatorsPage from '../routes/_public/OperatorsPage'
+
 import TabBarLayout from '../components/TabBarLayout'
 
 export default function Router() {
@@ -60,6 +62,7 @@ export default function Router() {
       <Route path="/checkout/:scheduleId" element={<CheckoutPage />} />
       <Route path="/payment/:bookingId" element={<PaymentPage />} />
       <Route path="/ticket/:bookingId" element={<TicketPage />} />
+      <Route path="/routes/:origin-:destination" element={<OperatorsPage />} />
 
       <Route path="/gestor" element={<GestorDashboard />} />
       <Route path="/gestor/routes" element={<GestorRoutes />} />
