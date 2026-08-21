@@ -37,7 +37,7 @@ function getHeldMap(scheduleId: string): Record<number, number> {
     for (const [k, v] of Object.entries(parsed)) {
       const seat = Number(k)
       const ts = Number(v)
-      if (Number.isInteger(seat) && Number.isFinite(ts) && ts > now - HOLD_MS) {
+      if (Number.isInteger(seat) && Number.isFinite(ts) && ts > now - HOLD_MS && ts <= now) {
         result[seat] = ts
       }
     }

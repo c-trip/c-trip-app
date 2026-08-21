@@ -107,7 +107,7 @@ function readActiveHeld(scheduleId: string): number[] {
       .filter(([k, v]) => {
         const seat = Number(k)
         const ts = Number(v)
-        return Number.isInteger(seat) && Number.isFinite(ts) && ts > now - HOLD_MS
+        return Number.isInteger(seat) && Number.isFinite(ts) && ts > now - HOLD_MS && ts <= now
       })
       .map(([k]) => Number(k))
   } catch { return [] }
@@ -128,6 +128,14 @@ export default function SchedulePage() {
   })
 
   const heldSeats = scheduleId ? readActiveHeld(scheduleId) : []
+  const heldSet = new Set(heldSeats)
+
+  useEffect(() => {
+    if (selectedSeatRef.current !== null && heldSet.has(selectedSeatRef.current)) {
+      selectedSeatRef.current = null
+      setSelectedSeat(null)
+    }
+  })
 
   useEffect(() => {
     const id = setInterval(() => setTick(t => t + 1), 2000)
@@ -155,7 +163,6 @@ export default function SchedulePage() {
 
   const occupiedSet = new Set(seatMap.occupied)
   const reservedSet = new Set(seatMap.reserved)
-  const heldSet = new Set(heldSeats)
 
   const rows = Math.ceil(seatMap.totalSeats / 4)
   const seatGrid: (number | null)[][] = []
@@ -287,6 +294,11 @@ export default function SchedulePage() {
         <button
           disabled={selectedSeat === null}
           onClick={() => {
+            if (selectedSeat === null) return
+            if (occupiedSet.has(selectedSeat) || reservedSet.has(selectedSeat) || heldSet.has(selectedSeat)) {
+              setSelectedSeat(null)
+              return
+            }
             const routeSlug = schedule.route.replace(/\s*→\s*/g, '-').toLowerCase()
             const companySlug = schedule.operatorName.toLowerCase()
             navigate(`/hold/${schedule.id}/${routeSlug}/${companySlug}?seat=${selectedSeat}`)
