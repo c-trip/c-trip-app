@@ -34,7 +34,7 @@ export default function ResultsPage() {
           </button>
           <div>
             <h1 className="text-lg font-bold text-gray-900">Destinos</h1>
-            <p className="text-xs text-gray-400">18 províncias de Angola</p>
+            <p className="text-xs text-gray-400">21 províncias de Angola</p>
           </div>
         </div>
       </header>
