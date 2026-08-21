@@ -61,7 +61,7 @@ export default function HoldPage() {
 
   return (
       <div className="min-h-screen bg-gray-50 font-outfit flex flex-col">
-      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white px-4 py-4">
+      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white px-4 py-4">
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate(-1)}
@@ -77,7 +77,20 @@ export default function HoldPage() {
         </div>
       </header>
 
-      <main className="px-6 py-6 flex flex-col items-center gap-6 mt-4 flex-1">
+      <div className={`sticky top-[72px] z-10 bg-gray-50 px-6 py-3 bg-[#FEF3C7]
+        border-b ${isUrgent ? 'border-red-300' : 'border-gray-200'}`}>
+        <div className="flex items-center justify-center gap-2">
+          <IconClock className={`h-4 w-4 ${isUrgent ? 'text-red-500' : 'text-[#9CA3AF]'}`} />
+          <p className={`text-lg font-bold ${isUrgent ? 'text-red-500' : 'text-gray-900'}`}>
+            {expired ? '00 : 00' : timeDisplay}
+          </p>
+          <span className="text-[10px] text-gray-400">
+            {expired ? 'Reserva expirada' : 'Tempo restante'}
+          </span>
+        </div>
+      </div>
+
+      <main className="px-6 py-6 flex flex-col items-center gap-6 flex-1">
         <Card className="rounded-2xl border border-gray-200 bg-white w-full max-w-[350px]">
           <CardContent className="flex flex-col gap-3">
             <h2 className="text-lg font-bold text-gray-900">{schedule.route}</h2>
@@ -91,10 +104,10 @@ export default function HoldPage() {
               <span className="text-gray-400 text-[13px]">Data e Hora</span>
               <span className="font-bold text-gray-900 text-[13px]">{schedule.departureDate}</span>
             </div>
-        
+
             <div className="flex justify-between text-xs">
               <span className="text-gray-400 text-[13px]">Lugar Escolhido</span>
-              <span className="font-bold bg-[#1B7A3D1A] py-0.5 px-2 
+              <span className="font-bold bg-[#1B7A3D1A] py-0.5 px-2
              rounded-xl text-[#1B7A3D] text-[13px]">Lugar {seatLabel}</span>
             </div>
 
@@ -106,19 +119,6 @@ export default function HoldPage() {
             </div>
           </CardContent>
         </Card>
-
-        <Card className={`rounded-2xl border bg-white w-full max-w-[350px] ${isUrgent ? 'border-red-300' : 'border-gray-200'}`}>
-          <CardContent className="flex flex-col items-center gap-2 py-5">
-            <IconClock className={`h-6 w-6 ${isUrgent ? 'text-red-500' : 'text-[#9CA3AF]'}`} />
-            <p className={`text-2xl font-bold ${isUrgent ? 'text-red-500' : 'text-gray-900'}`}>
-              {expired ? '00 : 00' : timeDisplay}
-            </p>
-            <p className="text-[10px] text-gray-400">
-              {expired ? 'Reserva expirada' : 'Tempo restante'}
-            </p>
-          </CardContent>
-        </Card>
-
       </main>
 
       <footer className='sticky bottom-0 flex justify-center items-center
