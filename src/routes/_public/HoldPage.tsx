@@ -24,30 +24,40 @@ function getHeldKey(scheduleId: string): string {
   return `held_seats_${scheduleId}`
 }
 
-function getHeldSeats(scheduleId: string): number[] {
+const HOLD_MS = HOLD_MINUTES * 60 * 1000
+
+function getHeldMap(scheduleId: string): Record<number, number> {
   const raw = localStorage.getItem(getHeldKey(scheduleId))
-  if (!raw) return []
+  if (!raw) return {}
   try {
     const parsed = JSON.parse(raw)
-    if (!Array.isArray(parsed)) return []
-    return parsed.filter((v: unknown): v is number => Number.isInteger(v))
-  } catch { return [] }
+    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) return {}
+    const now = Date.now()
+    const result: Record<number, number> = {}
+    for (const [k, v] of Object.entries(parsed)) {
+      const seat = Number(k)
+      const ts = Number(v)
+      if (Number.isInteger(seat) && Number.isFinite(ts) && ts > now - HOLD_MS) {
+        result[seat] = ts
+      }
+    }
+    return result
+  } catch { return {} }
 }
 
 function addHeldSeat(scheduleId: string, seat: number): void {
-  const seats = getHeldSeats(scheduleId)
-  if (!seats.includes(seat)) {
-    seats.push(seat)
-    localStorage.setItem(getHeldKey(scheduleId), JSON.stringify(seats))
-  }
+  const map = getHeldMap(scheduleId)
+  map[seat] = Date.now()
+  localStorage.setItem(getHeldKey(scheduleId), JSON.stringify(map))
 }
 
 function removeHeldSeat(scheduleId: string, seat: number): void {
-  const seats = getHeldSeats(scheduleId).filter(s => s !== seat)
-  if (seats.length === 0) {
+  const map = getHeldMap(scheduleId)
+  delete map[seat]
+  if (Object.keys(map).length === 0) {
     localStorage.removeItem(getHeldKey(scheduleId))
   } else {
-    localStorage.setItem(getHeldKey(scheduleId), JSON.stringify(seats))
+    localStorage.setItem(getHeldKey(scheduleId), JSON.stringify(map))
   }
 }
 
@@ -246,7 +256,6 @@ export default function HoldPage() {
               localStorage.removeItem(holdKey)
               return
             }
-            removeHeldSeat(schedule.id, seatNum)
             localStorage.removeItem(holdKey)
             navigate(`/checkout/${schedule.id}?seat=${seatNum}`)
           }}

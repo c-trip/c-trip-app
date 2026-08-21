@@ -94,21 +94,31 @@ function SeatButton({
   )
 }
 
+const HOLD_MS = 3 * 60 * 1000
+
+function readActiveHeld(scheduleId: string): number[] {
+  const raw = localStorage.getItem(`held_seats_${scheduleId}`)
+  if (!raw) return []
+  try {
+    const parsed = JSON.parse(raw)
+    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) return []
+    const now = Date.now()
+    return Object.entries(parsed)
+      .filter(([k, v]) => {
+        const seat = Number(k)
+        const ts = Number(v)
+        return Number.isInteger(seat) && Number.isFinite(ts) && ts > now - HOLD_MS
+      })
+      .map(([k]) => Number(k))
+  } catch { return [] }
+}
+
 export default function SchedulePage() {
   const { scheduleId } = useParams<{ scheduleId: string }>()
   const navigate = useNavigate()
   const [selectedSeat, setSelectedSeat] = useState<number | null>(null)
   const selectedSeatRef = useRef(selectedSeat)
-  const [heldSeats, setHeldSeats] = useState<number[]>(() => {
-    const raw = localStorage.getItem(`held_seats_${scheduleId}`)
-    if (!raw) return []
-    try {
-      const parsed = JSON.parse(raw)
-      if (!Array.isArray(parsed)) return []
-      return parsed.filter((v: unknown): v is number => Number.isInteger(v))
-    } catch { return [] }
-  })
-  const heldRef = useRef(heldSeats)
+  const [, setTick] = useState(0)
 
   const schedule = getScheduleById(scheduleId)
   const seatMap = getSeatMapBySchedule(scheduleId)
@@ -117,29 +127,12 @@ export default function SchedulePage() {
     selectedSeatRef.current = selectedSeat
   })
 
+  const heldSeats = scheduleId ? readActiveHeld(scheduleId) : []
+
   useEffect(() => {
-    const heldKey = `held_seats_${scheduleId}`
-    const id = setInterval(() => {
-      const raw = localStorage.getItem(heldKey)
-      let next: number[]
-      if (!raw) { next = [] } else {
-        try {
-          const parsed = JSON.parse(raw)
-          next = Array.isArray(parsed) ? parsed.filter((v: unknown): v is number => Number.isInteger(v)) : []
-        } catch { next = [] }
-      }
-      const prev = JSON.stringify(heldRef.current)
-      const nextStr = JSON.stringify(next)
-      if (prev !== nextStr) {
-        heldRef.current = next
-        setHeldSeats(next)
-        if (selectedSeatRef.current !== null && next.includes(selectedSeatRef.current)) {
-          setSelectedSeat(null)
-        }
-      }
-    }, 2000)
+    const id = setInterval(() => setTick(t => t + 1), 2000)
     return () => clearInterval(id)
-  }, [scheduleId])
+  }, [])
 
   if (!schedule || !seatMap) {
     return (
