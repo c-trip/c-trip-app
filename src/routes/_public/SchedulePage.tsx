@@ -140,9 +140,15 @@ export default function SchedulePage() {
           >
             <IconArrowLeft className="h-5 w-5 text-gray-700" />
           </button>
-          <div>
-            <h1 className="text-lg font-bold text-gray-900">{schedule.route}</h1>
-            <p className="text-xs text-gray-400">{schedule.departureDate}</p>
+          <div className='flex flex-col'>
+           <h1 className='text-lg font-bold'>Escolha o Lugar</h1>
+            <div className='flex gap-1'>
+            <p className="text-xs text-gray-400">{schedule.route}</p>
+            <p className="text-xs text-gray-400">* {schedule.operatorName}</p>
+            <p className="text-xs text-gray-400">* {schedule.departureTime}</p>
+
+            </div>
+
           </div>
         </div>
       </header>
@@ -213,7 +219,7 @@ export default function SchedulePage() {
           </div>
         </div>
       </main>
-      <main className="sticky bottom-0 flex items-center border-t-2 border-[#9CA3AF] bg-white p-6 z-10">
+      <main className="sticky bottom-0 flex items-center border-t-2 border-[#E5E7EB] bg-white p-6 z-10">
         <button
           disabled={selectedSeat === null}
           onClick={() => navigate(`/checkout/${schedule.id}?seat=${selectedSeat}`)}
