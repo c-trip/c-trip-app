@@ -98,10 +98,15 @@ export default function SchedulePage() {
   const { scheduleId } = useParams<{ scheduleId: string }>()
   const navigate = useNavigate()
   const [selectedSeat, setSelectedSeat] = useState<number | null>(null)
+  const selectedSeatRef = useRef(selectedSeat)
   const [heldSeats, setHeldSeats] = useState<number[]>(() => {
     const raw = localStorage.getItem(`held_seats_${scheduleId}`)
     if (!raw) return []
-    try { return JSON.parse(raw) } catch { return [] }
+    try {
+      const parsed = JSON.parse(raw)
+      if (!Array.isArray(parsed)) return []
+      return parsed.filter((v: unknown): v is number => Number.isInteger(v))
+    } catch { return [] }
   })
   const heldRef = useRef(heldSeats)
 
@@ -109,16 +114,28 @@ export default function SchedulePage() {
   const seatMap = getSeatMapBySchedule(scheduleId)
 
   useEffect(() => {
+    selectedSeatRef.current = selectedSeat
+  })
+
+  useEffect(() => {
     const heldKey = `held_seats_${scheduleId}`
     const id = setInterval(() => {
       const raw = localStorage.getItem(heldKey)
       let next: number[]
-      if (!raw) { next = [] } else { try { next = JSON.parse(raw) } catch { next = [] } }
+      if (!raw) { next = [] } else {
+        try {
+          const parsed = JSON.parse(raw)
+          next = Array.isArray(parsed) ? parsed.filter((v: unknown): v is number => Number.isInteger(v)) : []
+        } catch { next = [] }
+      }
       const prev = JSON.stringify(heldRef.current)
       const nextStr = JSON.stringify(next)
       if (prev !== nextStr) {
         heldRef.current = next
         setHeldSeats(next)
+        if (selectedSeatRef.current !== null && next.includes(selectedSeatRef.current)) {
+          setSelectedSeat(null)
+        }
       }
     }, 2000)
     return () => clearInterval(id)

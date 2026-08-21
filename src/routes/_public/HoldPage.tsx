@@ -27,7 +27,11 @@ function getHeldKey(scheduleId: string): string {
 function getHeldSeats(scheduleId: string): number[] {
   const raw = localStorage.getItem(getHeldKey(scheduleId))
   if (!raw) return []
-  try { return JSON.parse(raw) } catch { return [] }
+  try {
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+    return parsed.filter((v: unknown): v is number => Number.isInteger(v))
+  } catch { return [] }
 }
 
 function addHeldSeat(scheduleId: string, seat: number): void {
@@ -100,10 +104,10 @@ export default function HoldPage() {
       const remaining = Math.max(totalSeconds - elapsed, 0)
       if (remaining === 0) {
         setSecondsLeft(0)
+        removeHeldSeat(sid, seatNum)
+        localStorage.removeItem(holdKey)
         if (!restartTimeout) {
           restartTimeout = setTimeout(() => {
-            removeHeldSeat(sid, seatNum)
-            localStorage.removeItem(holdKey)
             navigate(`/schedules/${sid}`)
           }, 2000)
         }
@@ -216,13 +220,15 @@ export default function HoldPage() {
       <footer className="sticky bottom-0 flex justify-center items-center
        border-t-2 border-[#E5E7EB] bg-white p-6">
         <button
+          disabled={secondsLeft === 0}
           onClick={() => {
+            if (secondsLeft === 0) return
             removeHeldSeat(schedule.id, seatNum)
             localStorage.removeItem(holdKey)
             navigate(`/checkout/${schedule.id}?seat=${seatNum}`)
           }}
           className="w-full max-w-[350px] rounded-xl h-12 font-semibold text-[16px] text-white
-           bg-[#1B7A3D] hover:bg-[#15632F] transition-colors"
+           bg-[#1B7A3D] hover:bg-[#15632F] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Ir para o checkout
         </button>
