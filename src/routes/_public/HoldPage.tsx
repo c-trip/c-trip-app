@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router'
-import { IconArrowLeft, IconClock } from '@tabler/icons-react'
+import { IconArrowLeft } from '@tabler/icons-react'
 import { getScheduleById } from '@/data/mockSeats'
 import { Card, CardContent } from '@/components/ui/card'
 
@@ -23,16 +23,28 @@ export default function HoldPage() {
 
   const schedule = getScheduleById(scheduleId)
 
-  const [secondsLeft, setSecondsLeft] = useState(HOLD_MINUTES * 60)
+  const holdKey = `hold_${scheduleId}_${seatNum}`
+  const totalSeconds = HOLD_MINUTES * 60
 
-  const tick = useCallback(() => {
-    setSecondsLeft((prev) => (prev > 0 ? prev - 1 : 0))
-  }, [])
+  const [secondsLeft, setSecondsLeft] = useState(() => {
+    const stored = localStorage.getItem(holdKey)
+    if (stored) {
+      const elapsed = Math.floor((Date.now() - Number(stored)) / 1000)
+      return Math.max(totalSeconds - elapsed, 0)
+    }
+    localStorage.setItem(holdKey, String(Date.now()))
+    return totalSeconds
+  })
 
   useEffect(() => {
-    const id = setInterval(tick, 1000)
+    const id = setInterval(() => {
+      const stored = localStorage.getItem(holdKey)
+      if (!stored) return setSecondsLeft(0)
+      const elapsed = Math.floor((Date.now() - Number(stored)) / 1000)
+      setSecondsLeft(Math.max(totalSeconds - elapsed, 0))
+    }, 1000)
     return () => clearInterval(id)
-  }, [tick])
+  }, [holdKey, totalSeconds])
 
   const expired = secondsLeft === 0
   const minutes = Math.floor(secondsLeft / 60)
@@ -77,20 +89,29 @@ export default function HoldPage() {
         </div>
       </header>
 
-      <div className={`sticky top-[72px] z-10 bg-gray-50 px-6 py-3 bg-[#FEF3C7]
-        border-b ${isUrgent ? 'border-red-300' : 'border-gray-200'}`}>
-        <div className="flex items-center justify-center gap-2">
-          <IconClock className={`h-4 w-4 ${isUrgent ? 'text-red-500' : 'text-[#9CA3AF]'}`} />
-          <p className={`text-lg font-bold ${isUrgent ? 'text-red-500' : 'text-gray-900'}`}>
+      <div className={`sticky top-[72px] z-10 px-6 py-3 bg-[#FEF3C7] flex items-center 
+       justify-items-start border-b gap-2 ${isUrgent ? 'border-red-300' : 'border-gray-200'}`}>
+        
+          <div className='h-7 w-7 border-4 p-0.5 flex border-[#F59E0B] rounded-full
+          justify-center items-center bg-white'>
+             <p className='font-bold text-[11px] text-[#F59E0B]'>
+              {expired ? '0m' : `${minutes}m`}
+             </p>
+          </div>
+        <div className="flex place-items-start flex-col justify-items-start">
+         <div className='flex gap-2 items-center justify-center'>
+          <p className={`text-[14px] font-bold ${isUrgent ? 'text-red-500' : 'text-[#111827]'}`}>
             {expired ? '00 : 00' : timeDisplay}
           </p>
           <span className="text-[10px] text-gray-400">
-            {expired ? 'Reserva expirada' : 'Tempo restante'}
+            {expired ? 'Reserva expirada' : 'Restantes'}
           </span>
+         </div>
+          <p className='text-[12px] text-[#4B5563]'>Conclua o pagamento para garantir o seu bilhete.</p>
         </div>
       </div>
 
-      <main className="px-6 py-6 flex flex-col items-center gap-6 flex-1">
+      <main className="px-6 py-10 flex flex-col items-center gap-6 flex-1">
         <Card className="rounded-2xl border border-gray-200 bg-white w-full max-w-[350px]">
           <CardContent className="flex flex-col gap-3">
             <h2 className="text-lg font-bold text-gray-900">{schedule.route}</h2>
