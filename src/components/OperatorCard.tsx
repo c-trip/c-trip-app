@@ -13,9 +13,12 @@ interface OperatorCardProps {
   onSelect?: (operator: Operator) => void
 }
 
-export default function OperatorCard({ operator, }: OperatorCardProps) {
+export default function OperatorCard({ operator, onSelect }: OperatorCardProps) {
   return (
-    <Card className="overflow-hidden rounded-b-xl border border-[#E5E7EB] bg-white ">
+    <Card
+      onClick={() => onSelect?.(operator)}
+      className="cursor-pointer overflow-hidden rounded-b-xl border border-[#E5E7EB] bg-white transition-transform hover:scale-[1.01]"
+    >
       <CardContent className="gap-2 grid grid-cols-1">
         <div className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-3">

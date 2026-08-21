@@ -13,9 +13,33 @@ export interface Operator {
   logo?: string
   price: string
   departureTime: string
-  arrivalTime: string, 
+  arrivalTime: string
   duration: string
   vehicleType: VehicleType
   availableSeats: number
   rating: number
+}
+
+export interface Schedule {
+  id: string
+  operatorName: string
+  route: string
+  origin: string
+  destination: string
+  departureDate: string
+  departureTime: string
+  arrivalTime: string
+  duration: string
+  price: string
+  busModel: string
+  busPlate: string
+  driverName: string
+  vehicleType: VehicleType
+  boardingCutoffMinutes: number
+}
+
+export interface SeatMap {
+  total_seats: number
+  available: number[]
+  occupied: number[]
 }
