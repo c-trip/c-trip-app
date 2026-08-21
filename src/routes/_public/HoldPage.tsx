@@ -4,7 +4,7 @@ import { IconArrowLeft } from '@tabler/icons-react'
 import { getScheduleById, getSeatMapBySchedule } from '@/data/mockSeats'
 import { Card, CardContent } from '@/components/ui/card'
 
-const HOLD_MINUTES = 5
+const HOLD_MINUTES = 3
 
 function getSeatLabel(seatNum: number): string {
   const row = Math.ceil(seatNum / 4)
@@ -18,6 +18,33 @@ function readTimestamp(key: string): number | null {
   const ts = Number(raw)
   if (!Number.isFinite(ts) || ts > Date.now()) return null
   return ts
+}
+
+function getHeldKey(scheduleId: string): string {
+  return `held_seats_${scheduleId}`
+}
+
+function getHeldSeats(scheduleId: string): number[] {
+  const raw = localStorage.getItem(getHeldKey(scheduleId))
+  if (!raw) return []
+  try { return JSON.parse(raw) } catch { return [] }
+}
+
+function addHeldSeat(scheduleId: string, seat: number): void {
+  const seats = getHeldSeats(scheduleId)
+  if (!seats.includes(seat)) {
+    seats.push(seat)
+    localStorage.setItem(getHeldKey(scheduleId), JSON.stringify(seats))
+  }
+}
+
+function removeHeldSeat(scheduleId: string, seat: number): void {
+  const seats = getHeldSeats(scheduleId).filter(s => s !== seat)
+  if (seats.length === 0) {
+    localStorage.removeItem(getHeldKey(scheduleId))
+  } else {
+    localStorage.setItem(getHeldKey(scheduleId), JSON.stringify(seats))
+  }
 }
 
 export default function HoldPage() {
@@ -54,7 +81,10 @@ export default function HoldPage() {
   })
 
   useEffect(() => {
-    if (!seatIsValid) return
+    if (!seatIsValid || !scheduleId) return
+
+    addHeldSeat(scheduleId, seatNum)
+    const sid = scheduleId
 
     const ts = readTimestamp(holdKey)
     if (!ts) {
@@ -72,10 +102,9 @@ export default function HoldPage() {
         setSecondsLeft(0)
         if (!restartTimeout) {
           restartTimeout = setTimeout(() => {
+            removeHeldSeat(sid, seatNum)
             localStorage.removeItem(holdKey)
-            localStorage.setItem(holdKey, String(Date.now()))
-            setSecondsLeft(totalSeconds)
-            restartTimeout = null
+            navigate(`/schedules/${sid}`)
           }, 2000)
         }
       } else {
@@ -87,7 +116,7 @@ export default function HoldPage() {
       clearInterval(id)
       if (restartTimeout) clearTimeout(restartTimeout)
     }
-  }, [holdKey, totalSeconds, seatIsValid])
+  }, [holdKey, totalSeconds, seatIsValid, scheduleId, seatNum, navigate])
 
   const minutes = Math.floor(secondsLeft / 60)
   const seconds = secondsLeft % 60
@@ -187,7 +216,11 @@ export default function HoldPage() {
       <footer className="sticky bottom-0 flex justify-center items-center
        border-t-2 border-[#E5E7EB] bg-white p-6">
         <button
-          onClick={() => navigate(`/checkout/${schedule.id}?seat=${seatNum}`)}
+          onClick={() => {
+            removeHeldSeat(schedule.id, seatNum)
+            localStorage.removeItem(holdKey)
+            navigate(`/checkout/${schedule.id}?seat=${seatNum}`)
+          }}
           className="w-full max-w-[350px] rounded-xl h-12 font-semibold text-[16px] text-white
            bg-[#1B7A3D] hover:bg-[#15632F] transition-colors"
         >

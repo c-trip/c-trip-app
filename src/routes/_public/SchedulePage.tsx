@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router'
 import { IconArrowLeft, IconBus } from '@tabler/icons-react'
 import { getScheduleById, getSeatMapBySchedule } from '@/data/mockSeats'
@@ -13,7 +13,7 @@ function SeatButton({
   onDoubleClick,
 }: {
   label: string
-  status: 'available' | 'occupied' | 'reserved'
+  status: 'available' | 'occupied' | 'reserved' | 'held'
   selected: boolean
   dimmed: boolean
   onClick: () => void
@@ -40,6 +40,19 @@ function SeatButton({
         type="button"
         disabled
         aria-label={`Lugar ${label} reservado`}
+        className={`${base} bg-[#F59E0B] text-white cursor-not-allowed`}
+      >
+        {label}
+      </button>
+    )
+  }
+
+  if (status === 'held') {
+    return (
+      <button
+        type="button"
+        disabled
+        aria-label={`Lugar ${label} em retenção`}
         className={`${base} bg-[#F59E0B] text-white cursor-not-allowed`}
       >
         {label}
@@ -85,9 +98,31 @@ export default function SchedulePage() {
   const { scheduleId } = useParams<{ scheduleId: string }>()
   const navigate = useNavigate()
   const [selectedSeat, setSelectedSeat] = useState<number | null>(null)
+  const [heldSeats, setHeldSeats] = useState<number[]>(() => {
+    const raw = localStorage.getItem(`held_seats_${scheduleId}`)
+    if (!raw) return []
+    try { return JSON.parse(raw) } catch { return [] }
+  })
+  const heldRef = useRef(heldSeats)
 
   const schedule = getScheduleById(scheduleId)
   const seatMap = getSeatMapBySchedule(scheduleId)
+
+  useEffect(() => {
+    const heldKey = `held_seats_${scheduleId}`
+    const id = setInterval(() => {
+      const raw = localStorage.getItem(heldKey)
+      let next: number[]
+      if (!raw) { next = [] } else { try { next = JSON.parse(raw) } catch { next = [] } }
+      const prev = JSON.stringify(heldRef.current)
+      const nextStr = JSON.stringify(next)
+      if (prev !== nextStr) {
+        heldRef.current = next
+        setHeldSeats(next)
+      }
+    }, 2000)
+    return () => clearInterval(id)
+  }, [scheduleId])
 
   if (!schedule || !seatMap) {
     return (
@@ -110,6 +145,7 @@ export default function SchedulePage() {
 
   const occupiedSet = new Set(seatMap.occupied)
   const reservedSet = new Set(seatMap.reserved)
+  const heldSet = new Set(heldSeats)
 
   const rows = Math.ceil(seatMap.totalSeats / 4)
   const seatGrid: (number | null)[][] = []
@@ -123,14 +159,15 @@ export default function SchedulePage() {
     seatGrid.push(row)
   }
 
-  function getSeatStatus(seat: number): 'available' | 'occupied' | 'reserved' {
+  function getSeatStatus(seat: number): 'available' | 'occupied' | 'reserved' | 'held' {
     if (occupiedSet.has(seat)) return 'occupied'
     if (reservedSet.has(seat)) return 'reserved'
+    if (heldSet.has(seat)) return 'held'
     return 'available'
   }
 
   function handleSeatClick(seat: number) {
-    if (occupiedSet.has(seat) || reservedSet.has(seat)) return
+    if (occupiedSet.has(seat) || reservedSet.has(seat) || heldSet.has(seat)) return
     setSelectedSeat(seat === selectedSeat ? null : seat)
   }
 
