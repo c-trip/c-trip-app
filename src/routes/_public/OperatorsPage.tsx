@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router'
 import { IconArrowLeft, IconBus } from '@tabler/icons-react'
 import OperatorCard from '../../components/OperatorCard'
 import { getOperatorsByRoute } from '../../data/mockOperators'
+import { provincias } from '../../data/provincias'
 import type { Operator } from '@/types'
 
 const TABS = [
@@ -12,6 +13,8 @@ const TABS = [
   { value: 'manha', label: 'Manhã' },
   { value: 'tarde', label: 'Tarde' },
 ] as const
+
+type TabValue = (typeof TABS)[number]['value']
 
 function parseDurationToMinutes(duration: string): number {
   let total = 0
@@ -30,7 +33,7 @@ function parseHour(time: string): number {
   return parseInt(time.split(':')[0], 10)
 }
 
-function filterOperators(operators: Operator[], tab: string): Operator[] {
+function filterOperators(operators: Operator[], tab: TabValue): Operator[] {
   const sorted = [...operators]
   switch (tab) {
     case 'rapido':
@@ -51,7 +54,7 @@ function filterOperators(operators: Operator[], tab: string): Operator[] {
 export default function OperatorsPage() {
   const { origin, destination } = useParams<{ origin: string; destination?: string }>()
   const navigate = useNavigate()
-  const [activeTab, setActiveTab] = useState('todos')
+  const [activeTab, setActiveTab] = useState<TabValue>('todos')
 
   const originFormatted = origin
     ? origin.charAt(0).toUpperCase() + origin.slice(1)
@@ -60,9 +63,12 @@ export default function OperatorsPage() {
     ? destination.charAt(0).toUpperCase() + destination.slice(1)
     : ''
 
-  const title = destinationFormatted
-    ? `${originFormatted} → ${destinationFormatted}`
-    : originFormatted
+  const originProvince = provincias.find((p) => p.id === origin)
+  const destinationProvince = provincias.find((p) => p.id === destination)
+
+  const title = destinationProvince
+    ? `${originProvince?.nome ?? originFormatted} → ${destinationProvince.nome}`
+    : originProvince?.nome ?? originFormatted
 
   const allOperators = getOperatorsByRoute(originFormatted, destinationFormatted)
   const filteredOperators = useMemo(
