@@ -47,7 +47,7 @@ export default function OperatorCard({ operator, }: OperatorCardProps) {
           
           <div className='flex flex-col gap-2 justify-center items-center'>
             <p className='font-light text-[11px] text-[#9CA3AF] '>{operator.duration}</p>
-            <img src="/public/timeline-line-wrap.svg" alt="" />
+            <img src="  /timeline-line-wrap.svg" alt="" />
           </div>
 
            <div className="flex items-center gap-2 rounded-xl ">
