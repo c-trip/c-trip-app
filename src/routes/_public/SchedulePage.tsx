@@ -8,12 +8,16 @@ function SeatButton({
   label,
   status,
   selected,
+  dimmed,
   onClick,
+  onDoubleClick,
 }: {
   label: string
   status: 'available' | 'occupied' | 'reserved'
   selected: boolean
+  dimmed: boolean
   onClick: () => void
+  onDoubleClick: () => void
 }) {
   const base = 'h-9 w-9 rounded-lg text-[11px] font-semibold transition-all flex items-center justify-center'
 
@@ -35,7 +39,22 @@ function SeatButton({
 
   if (selected) {
     return (
-      <button onClick={onClick} className={`${base} bg-[#1B7A3D] text-white shadow-md scale-110`}>
+      <button
+        onClick={onClick}
+        onDoubleClick={onDoubleClick}
+        className={`${base} bg-[#15632F] text-white shadow-lg scale-110 ring-2 ring-white`}
+      >
+        {label}
+      </button>
+    )
+  }
+
+  if (dimmed) {
+    return (
+      <button
+        onClick={onClick}
+        className={`${base} bg-[#1B7A3D] text-white opacity-40 cursor-not-allowed`}
+      >
         {label}
       </button>
     )
@@ -100,6 +119,15 @@ export default function SchedulePage() {
     return 'available'
   }
 
+  function handleSeatClick(seat: number | null) {
+    if (seat === null || occupiedSet.has(seat) || reservedSet.has(seat)) return
+    setSelectedSeat(seat === selectedSeat ? null : seat)
+  }
+
+  function handleSeatDoubleClick() {
+    setSelectedSeat(null)
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 font-outfit">
       <header className="sticky top-0 z-10 border-b border-gray-200 bg-white px-4 py-4">
@@ -107,7 +135,8 @@ export default function SchedulePage() {
           <button
             onClick={() => navigate(-1)}
             aria-label="Voltar"
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 transition-colors hover:bg-gray-200"
+            className="flex h-10 w-10 items-center justify-center rounded-full
+             bg-gray-100 transition-colors hover:bg-gray-200"
           >
             <IconArrowLeft className="h-5 w-5 text-gray-700" />
           </button>
@@ -134,18 +163,16 @@ export default function SchedulePage() {
                 const leftSeats = row.slice(0, 2)
                 const rightSeats = row.slice(2, 4)
                 return (
-                  <div key={rowIdx} className="flex items-center gap-2">
+                  <div key={rowIdx} className="flex items-center gap-4">
                     {leftSeats.map((seat, i) => (
                       <SeatButton
                         key={seat}
                         label={seat !== null ? `${rowNum}${String.fromCharCode(65 + i)}` : ''}
                         status={getSeatStatus(seat)}
                         selected={seat === selectedSeat}
-                        onClick={() => {
-                          if (seat !== null && !occupiedSet.has(seat) && !reservedSet.has(seat)) {
-                            setSelectedSeat(seat === selectedSeat ? null : seat)
-                          }
-                        }}
+                        dimmed={selectedSeat !== null && seat !== selectedSeat && getSeatStatus(seat) === 'available'}
+                        onClick={() => handleSeatClick(seat)}
+                        onDoubleClick={handleSeatDoubleClick}
                       />
                     ))}
 
@@ -159,11 +186,9 @@ export default function SchedulePage() {
                         label={seat !== null ? `${rowNum}${String.fromCharCode(67 + i)}` : ''}
                         status={getSeatStatus(seat)}
                         selected={seat === selectedSeat}
-                        onClick={() => {
-                          if (seat !== null && !occupiedSet.has(seat) && !reservedSet.has(seat)) {
-                            setSelectedSeat(seat === selectedSeat ? null : seat)
-                          }
-                        }}
+                        dimmed={selectedSeat !== null && seat !== selectedSeat && getSeatStatus(seat) === 'available'}
+                        onClick={() => handleSeatClick(seat)}
+                        onDoubleClick={handleSeatDoubleClick}
                       />
                     ))}
                   </div>
@@ -173,7 +198,7 @@ export default function SchedulePage() {
           </CardContent>
         </Card>
 
-        <div className="flex justify-center gap-4 text-[10px] text-gray-500">
+        <div className="flex justify-center gap-14 text-[10px] text-gray-500">
           <div className="flex items-center gap-1">
             <div className="h-3 w-3 rounded bg-[#1B7A3D]" />
             <span>Livre</span>
@@ -187,6 +212,19 @@ export default function SchedulePage() {
             <span>Reservado</span>
           </div>
         </div>
+      </main>
+      <main className="sticky bottom-0 flex items-center border-t-2 border-[#9CA3AF] bg-white p-6 z-10">
+        <button
+          disabled={selectedSeat === null}
+          onClick={() => navigate(`/checkout/${schedule.id}?seat=${selectedSeat}`)}
+          className={`rounded-xl h-12 w-full font-semibold text-[16px] text-white transition-colors ${
+            selectedSeat !== null
+              ? 'bg-[#1B7A3D] hover:bg-[#15632F]'
+              : 'bg-[#9CA3AF] cursor-not-allowed'
+          }`}
+        >
+          Continuar
+        </button>
       </main>
     </div>
   )
