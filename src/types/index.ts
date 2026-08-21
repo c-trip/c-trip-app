@@ -39,7 +39,7 @@ export interface Schedule {
 }
 
 export interface SeatMap {
-  total_seats: number
+  totalSeats: number
   available: number[]
   occupied: number[]
   reserved: number[]

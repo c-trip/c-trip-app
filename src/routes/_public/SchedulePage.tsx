@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router'
-import { IconArrowLeft, IconXboxX } from '@tabler/icons-react'
-import { getScheduleById, getSeatMapBySchedule } from '../../data/mockSeats'
-import { Card, CardContent } from '../../components/ui/card'
+import { IconArrowLeft, IconBus } from '@tabler/icons-react'
+import { getScheduleById, getSeatMapBySchedule } from '@/data/mockSeats'
+import { Card, CardContent } from '@/components/ui/card'
 
 function SeatButton({
   label,
@@ -23,17 +23,27 @@ function SeatButton({
 
   if (status === 'occupied') {
     return (
-      <div className={`${base} bg-gray-300 text-gray-500 cursor-not-allowed`}>
+      <button
+        type="button"
+        disabled
+        aria-label={`Lugar ${label} ocupado`}
+        className={`${base} bg-gray-300 text-gray-500 cursor-not-allowed`}
+      >
         {label}
-      </div>
+      </button>
     )
   }
 
   if (status === 'reserved') {
     return (
-      <div className={`${base} bg-[#F59E0B] text-white cursor-not-allowed`}>
+      <button
+        type="button"
+        disabled
+        aria-label={`Lugar ${label} reservado`}
+        className={`${base} bg-[#F59E0B] text-white cursor-not-allowed`}
+      >
         {label}
-      </div>
+      </button>
     )
   }
 
@@ -42,6 +52,7 @@ function SeatButton({
       <button
         onClick={onClick}
         onDoubleClick={onDoubleClick}
+        aria-pressed
         className={`${base} bg-[#15632F] text-white shadow-lg scale-110 ring-2 ring-white`}
       >
         {label}
@@ -53,7 +64,7 @@ function SeatButton({
     return (
       <button
         onClick={onClick}
-        className={`${base} bg-[#1B7A3D] text-white opacity-40 cursor-not-allowed`}
+        className={`${base} bg-[#1B7A3D] text-white opacity-40 hover:opacity-100`}
       >
         {label}
       </button>
@@ -100,27 +111,26 @@ export default function SchedulePage() {
   const occupiedSet = new Set(seatMap.occupied)
   const reservedSet = new Set(seatMap.reserved)
 
-  const rows = Math.ceil(seatMap.total_seats / 4)
+  const rows = Math.ceil(seatMap.totalSeats / 4)
   const seatGrid: (number | null)[][] = []
   let seatNum = 1
   for (let r = 0; r < rows; r++) {
     const row: (number | null)[] = []
     for (let c = 0; c < 4; c++) {
-      row.push(seatNum <= seatMap.total_seats ? seatNum : null)
+      row.push(seatNum <= seatMap.totalSeats ? seatNum : null)
       seatNum++
     }
     seatGrid.push(row)
   }
 
-  function getSeatStatus(seat: number | null): 'available' | 'occupied' | 'reserved' {
-    if (seat === null) return 'available'
+  function getSeatStatus(seat: number): 'available' | 'occupied' | 'reserved' {
     if (occupiedSet.has(seat)) return 'occupied'
     if (reservedSet.has(seat)) return 'reserved'
     return 'available'
   }
 
-  function handleSeatClick(seat: number | null) {
-    if (seat === null || occupiedSet.has(seat) || reservedSet.has(seat)) return
+  function handleSeatClick(seat: number) {
+    if (occupiedSet.has(seat) || reservedSet.has(seat)) return
     setSelectedSeat(seat === selectedSeat ? null : seat)
   }
 
@@ -140,15 +150,13 @@ export default function SchedulePage() {
           >
             <IconArrowLeft className="h-5 w-5 text-gray-700" />
           </button>
-          <div className='flex flex-col'>
-           <h1 className='text-lg font-bold'>Escolha o Lugar</h1>
-            <div className='flex gap-1'>
-            <p className="text-xs text-gray-400">{schedule.route}</p>
-            <p className="text-xs text-gray-400">* {schedule.operatorName}</p>
-            <p className="text-xs text-gray-400">* {schedule.departureTime}</p>
-
+          <div className="flex flex-col">
+            <h1 className="text-lg font-bold">Escolha o Lugar</h1>
+            <div className="flex gap-1">
+              <p className="text-xs text-gray-400">{schedule.route}</p>
+              <p className="text-xs text-gray-400">• {schedule.operatorName}</p>
+              <p className="text-xs text-gray-400">• {schedule.departureTime}</p>
             </div>
-
           </div>
         </div>
       </header>
@@ -157,7 +165,7 @@ export default function SchedulePage() {
         <Card className="rounded-2xl border border-gray-200 bg-white w-[280px]">
           <CardContent className="flex flex-col gap-4">
             <div className="flex items-center gap-2 justify-between">
-              <IconXboxX className="size-5 text-[#4B5563]" />
+              <IconBus className="size-5 text-[#4B5563]" />
               <h2 className="text-sm font-semibold text-[#9CA3AF]">Frente do Autocarro</h2>
               <div className="h-6 w-6 rounded-xs bg-[#E5E7EB]" />
             </div>
@@ -170,33 +178,41 @@ export default function SchedulePage() {
                 const rightSeats = row.slice(2, 4)
                 return (
                   <div key={rowIdx} className="flex items-center gap-4">
-                    {leftSeats.map((seat, i) => (
-                      <SeatButton
-                        key={seat}
-                        label={seat !== null ? `${rowNum}${String.fromCharCode(65 + i)}` : ''}
-                        status={getSeatStatus(seat)}
-                        selected={seat === selectedSeat}
-                        dimmed={selectedSeat !== null && seat !== selectedSeat && getSeatStatus(seat) === 'available'}
-                        onClick={() => handleSeatClick(seat)}
-                        onDoubleClick={handleSeatDoubleClick}
-                      />
-                    ))}
+                    {leftSeats.map((seat, i) =>
+                      seat === null ? (
+                        <div key={`empty-l-${rowNum}-${i}`} className="h-9 w-9" aria-hidden="true" />
+                      ) : (
+                        <SeatButton
+                          key={seat}
+                          label={`${rowNum}${String.fromCharCode(65 + i)}`}
+                          status={getSeatStatus(seat)}
+                          selected={seat === selectedSeat}
+                          dimmed={selectedSeat !== null && seat !== selectedSeat && getSeatStatus(seat) === 'available'}
+                          onClick={() => handleSeatClick(seat)}
+                          onDoubleClick={handleSeatDoubleClick}
+                        />
+                      ),
+                    )}
 
                     <span className="w-10 text-center text-[11px] font-medium text-gray-400">
                       Corredor
                     </span>
 
-                    {rightSeats.map((seat, i) => (
-                      <SeatButton
-                        key={seat}
-                        label={seat !== null ? `${rowNum}${String.fromCharCode(67 + i)}` : ''}
-                        status={getSeatStatus(seat)}
-                        selected={seat === selectedSeat}
-                        dimmed={selectedSeat !== null && seat !== selectedSeat && getSeatStatus(seat) === 'available'}
-                        onClick={() => handleSeatClick(seat)}
-                        onDoubleClick={handleSeatDoubleClick}
-                      />
-                    ))}
+                    {rightSeats.map((seat, i) =>
+                      seat === null ? (
+                        <div key={`empty-r-${rowNum}-${i}`} className="h-9 w-9" aria-hidden="true" />
+                      ) : (
+                        <SeatButton
+                          key={seat}
+                          label={`${rowNum}${String.fromCharCode(67 + i)}`}
+                          status={getSeatStatus(seat)}
+                          selected={seat === selectedSeat}
+                          dimmed={selectedSeat !== null && seat !== selectedSeat && getSeatStatus(seat) === 'available'}
+                          onClick={() => handleSeatClick(seat)}
+                          onDoubleClick={handleSeatDoubleClick}
+                        />
+                      ),
+                    )}
                   </div>
                 )
               })}
@@ -219,7 +235,8 @@ export default function SchedulePage() {
           </div>
         </div>
       </main>
-      <main className="sticky bottom-0 flex items-center border-t-2 border-[#E5E7EB] bg-white p-6 z-10">
+
+      <footer className="sticky bottom-0 flex items-center border-t-2 border-[#E5E7EB] bg-white p-6 z-10">
         <button
           disabled={selectedSeat === null}
           onClick={() => navigate(`/checkout/${schedule.id}?seat=${selectedSeat}`)}
@@ -231,7 +248,7 @@ export default function SchedulePage() {
         >
           Continuar
         </button>
-      </main>
+      </footer>
     </div>
   )
 }
