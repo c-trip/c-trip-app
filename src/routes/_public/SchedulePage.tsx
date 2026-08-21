@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router'
 import { IconArrowLeft, IconBus } from '@tabler/icons-react'
 import { getScheduleById, getSeatMapBySchedule } from '@/data/mockSeats'
@@ -128,14 +128,24 @@ export default function SchedulePage() {
   })
 
   const heldSeats = scheduleId ? readActiveHeld(scheduleId) : []
-  const heldSet = new Set(heldSeats)
+  const heldKey = scheduleId ?? ''
+  const heldSet = useMemo(() => new Set(heldSeats), [heldKey, heldSeats.length])
+  const prevScheduleRef = useRef(scheduleId)
+
+  useEffect(() => {
+    if (prevScheduleRef.current !== scheduleId) {
+      prevScheduleRef.current = scheduleId
+      selectedSeatRef.current = null
+      setSelectedSeat(null)
+    }
+  })
 
   useEffect(() => {
     if (selectedSeatRef.current !== null && heldSet.has(selectedSeatRef.current)) {
       selectedSeatRef.current = null
       setSelectedSeat(null)
     }
-  })
+  }, [heldSet])
 
   useEffect(() => {
     const id = setInterval(() => setTick(t => t + 1), 2000)
@@ -295,7 +305,8 @@ export default function SchedulePage() {
           disabled={selectedSeat === null}
           onClick={() => {
             if (selectedSeat === null) return
-            if (occupiedSet.has(selectedSeat) || reservedSet.has(selectedSeat) || heldSet.has(selectedSeat)) {
+            const currentHeld = scheduleId ? readActiveHeld(scheduleId) : []
+            if (occupiedSet.has(selectedSeat) || reservedSet.has(selectedSeat) || currentHeld.includes(selectedSeat)) {
               setSelectedSeat(null)
               return
             }
