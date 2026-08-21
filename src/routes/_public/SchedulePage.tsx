@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router'
 import { IconArrowLeft, IconBus } from '@tabler/icons-react'
 import { getScheduleById, getSeatMapBySchedule } from '@/data/mockSeats'
@@ -128,8 +128,7 @@ export default function SchedulePage() {
   })
 
   const heldSeats = scheduleId ? readActiveHeld(scheduleId) : []
-  const heldSignature = heldSeats.join(',')
-  const heldSet = useMemo(() => new Set(heldSeats), [heldSignature])
+  const heldSet = new Set(heldSeats)
   const prevScheduleRef = useRef(scheduleId)
 
   useEffect(() => {
@@ -139,13 +138,6 @@ export default function SchedulePage() {
       setSelectedSeat(null)
     }
   }, [scheduleId])
-
-  useEffect(() => {
-    if (selectedSeatRef.current !== null && heldSet.has(selectedSeatRef.current)) {
-      selectedSeatRef.current = null
-      setSelectedSeat(null)
-    }
-  }, [heldSet])
 
   useEffect(() => {
     const id = setInterval(() => setTick(t => t + 1), 2000)
@@ -284,10 +276,14 @@ export default function SchedulePage() {
           </CardContent>
         </Card>
 
-        <div className="flex justify-center gap-14 text-[10px] text-gray-500">
+        <div className="flex justify-center gap-8 text-[10px] text-gray-500 flex-wrap">
           <div className="flex items-center gap-1">
             <div className="h-3 w-3 rounded bg-[#1B7A3D]" />
             <span>Livre</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="h-3 w-3 rounded bg-[#F59E0B]" />
+            <span>Retido</span>
           </div>
           <div className="flex items-center gap-1">
             <div className="h-3 w-3 rounded bg-gray-300" />
