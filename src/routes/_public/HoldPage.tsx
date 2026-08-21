@@ -89,12 +89,12 @@ export default function HoldPage() {
         </div>
       </header>
 
-      <div className={`sticky top-[72px] z-10 px-6 py-3 bg-[#FEF3C7] flex items-center 
-       justify-items-start border-b gap-2 ${isUrgent ? 'border-red-300' : 'border-gray-200'}`}>
+      <div className={`sticky top-[72px] z-10 px-6 py-3 flex items-center
+       justify-items-start border-b gap-2 ${isUrgent ? 'bg-red-50 border-red-300' : 'bg-[#FEF3C7] border-gray-200'}`}>
         
-          <div className='h-7 w-7 border-4 p-0.5 flex border-[#F59E0B] rounded-full
-          justify-center items-center bg-white'>
-             <p className='font-bold text-[11px] text-[#F59E0B]'>
+          <div className={`h-7 w-7 border-4 p-0.5 flex border-[#F59E0B] rounded-full
+          justify-center items-center bg-white ${isUrgent ? '!border-red-500' : ''}`}>
+             <p className={`font-bold text-[11px] text-[#F59E0B] ${isUrgent ? '!text-red-500' : ''}`}>
               {expired ? '0m' : `${minutes}m`}
              </p>
           </div>
