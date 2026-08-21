@@ -57,7 +57,7 @@ export default function HoldPage() {
   const navigate = useNavigate()
 
   const seatParam = searchParams.get('seat')
-  const seatNum = seatParam ? parseInt(seatParam, 10) : NaN
+  const seatNum = /^\d+$/.test(seatParam ?? '') ? parseInt(seatParam!, 10) : NaN
 
   const schedule = getScheduleById(scheduleId)
   const seatMap = getSeatMapBySchedule(scheduleId)
@@ -80,7 +80,6 @@ export default function HoldPage() {
       const elapsed = Math.floor((Date.now() - ts) / 1000)
       return Math.max(totalSeconds - elapsed, 0)
     }
-    localStorage.setItem(holdKey, String(Date.now()))
     return totalSeconds
   })
 
@@ -99,7 +98,17 @@ export default function HoldPage() {
 
     const id = setInterval(() => {
       const current = readTimestamp(holdKey)
-      if (!current) return
+      if (!current) {
+        setSecondsLeft(0)
+        removeHeldSeat(sid, seatNum)
+        localStorage.removeItem(holdKey)
+        if (!restartTimeout) {
+          restartTimeout = setTimeout(() => {
+            navigate(`/schedules/${sid}`)
+          }, 2000)
+        }
+        return
+      }
       const elapsed = Math.floor((Date.now() - current) / 1000)
       const remaining = Math.max(totalSeconds - elapsed, 0)
       if (remaining === 0) {
@@ -205,7 +214,7 @@ export default function HoldPage() {
             </div>
             <div className="flex justify-between text-xs">
               <span className="text-gray-400 text-[13px]">Data e Hora</span>
-              <span className="font-bold text-gray-900 text-[13px]">{schedule.departureDate}</span>
+              <span className="font-bold text-gray-900 text-[13px]">{schedule.departureDate} {schedule.departureTime}</span>
             </div>
 
             <div className="flex justify-between text-xs">
@@ -230,6 +239,13 @@ export default function HoldPage() {
           disabled={isExpired}
           onClick={() => {
             if (isExpired) return
+            const current = readTimestamp(holdKey)
+            if (!current || Math.floor((Date.now() - current) / 1000) >= totalSeconds) {
+              setSecondsLeft(0)
+              removeHeldSeat(schedule.id, seatNum)
+              localStorage.removeItem(holdKey)
+              return
+            }
             removeHeldSeat(schedule.id, seatNum)
             localStorage.removeItem(holdKey)
             navigate(`/checkout/${schedule.id}?seat=${seatNum}`)
