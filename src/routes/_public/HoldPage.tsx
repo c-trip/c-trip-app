@@ -126,6 +126,7 @@ export default function HoldPage() {
   const seconds = secondsLeft % 60
   const timeDisplay = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
   const isUrgent = secondsLeft <= 60 && secondsLeft > 0
+  const isExpired = secondsLeft === 0
 
   if (!schedule || !seatIsValid) {
     return (
@@ -171,19 +172,25 @@ export default function HoldPage() {
        justify-items-start border-b gap-2 ${isUrgent ? 'bg-red-50 border-red-300' : 'bg-[#FEF3C7] border-gray-200'}`}>
         <div className={`h-7 w-7 border-2 p-0.5 flex border-[#F59E0B] rounded-full
          justify-center items-center bg-white ${isUrgent ? '!border-red-500' : ''}`}>
-          <p className={`font-bold text-[11px] text-[#F59E0B] ${isUrgent ? '!text-red-500' : ''}`}>
-            {`${minutes}m`}
+          <p className={`font-bold text-[11px] ${isUrgent ? '!text-red-500' : 'text-[#F59E0B]'}`}>
+            {isExpired ? '0m' : `${minutes}m`}
           </p>
         </div>
         <div className="flex place-items-start flex-col justify-items-start">
           <div className="flex gap-2 items-center justify-center">
             <p className={`text-[14px] font-bold ${isUrgent ? 'text-red-500' : 'text-[#111827]'}`}>
-              {timeDisplay}
+              {isExpired ? '00:00' : timeDisplay}
             </p>
-            <span className="text-[10px] text-gray-400">Restantes</span>
+            <span className="text-[10px] text-gray-400">
+              {isExpired ? 'Reserva expirada' : 'Restantes'}
+            </span>
           </div>
           <p className="text-[12px] text-[#4B5563]">Conclua o pagamento para garantir o seu bilhete.</p>
         </div>
+      </div>
+
+      <div aria-live="polite" className="sr-only">
+        {isExpired ? 'A reserva do lugar expirou.' : ''}
       </div>
 
       <main className="px-6 py-10 flex flex-col items-center gap-6 flex-1">
@@ -220,9 +227,9 @@ export default function HoldPage() {
       <footer className="sticky bottom-0 flex justify-center items-center
        border-t-2 border-[#E5E7EB] bg-white p-6">
         <button
-          disabled={secondsLeft === 0}
+          disabled={isExpired}
           onClick={() => {
-            if (secondsLeft === 0) return
+            if (isExpired) return
             removeHeldSeat(schedule.id, seatNum)
             localStorage.removeItem(holdKey)
             navigate(`/checkout/${schedule.id}?seat=${seatNum}`)
