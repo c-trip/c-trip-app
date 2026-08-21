@@ -42,7 +42,7 @@ export default function HoldPage() {
 
   if (!schedule || seatNum === null) {
     return (
-      <div className="min-h-screen bg-gray-50 font-outfit">
+    <div className="min-h-screen bg-gray-50 font-outfit flex flex-col">
         <header className="sticky top-0 z-10 border-b border-gray-200 bg-white px-4 py-4">
           <div className="flex items-center gap-3">
             <button
@@ -60,7 +60,7 @@ export default function HoldPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 font-outfit">
+      <div className="min-h-screen bg-gray-50 font-outfit flex flex-col">
       <header className="sticky top-0 z-10 border-b border-gray-200 bg-white px-4 py-4">
         <div className="flex items-center gap-3">
           <button
@@ -71,40 +71,38 @@ export default function HoldPage() {
             <IconArrowLeft className="h-5 w-5 text-gray-700" />
           </button>
           <div className="flex flex-col">
-            <h1 className="text-lg font-bold">Lugar {seatLabel}</h1>
+            <h1 className="text-lg font-bold">Resumo do Lugar </h1>
             <p className="text-xs text-gray-400">Processo de reserva em andamento</p>
           </div>
         </div>
       </header>
 
-      <main className="px-6 py-6 flex flex-col items-center gap-6 mt-4">
+      <main className="px-6 py-6 flex flex-col items-center gap-6 mt-4 flex-1">
         <Card className="rounded-2xl border border-gray-200 bg-white w-full max-w-[350px]">
           <CardContent className="flex flex-col gap-3">
-            <h2 className="text-sm font-bold text-gray-900">{schedule.route}</h2>
+            <h2 className="text-lg font-bold text-gray-900">{schedule.route}</h2>
             <div className="border-t border-[#E5E7EB]" />
 
             <div className="flex justify-between text-xs">
-              <span className="text-gray-400">Operador</span>
-              <span className="font-medium text-gray-900">{schedule.operatorName}</span>
+              <span className="text-gray-400 text-[13px]">Companhia</span>
+              <span className="font-bold text-gray-900 text-[13px]">{schedule.operatorName}</span>
             </div>
             <div className="flex justify-between text-xs">
-              <span className="text-gray-400">Data</span>
-              <span className="font-medium text-gray-900">{schedule.departureDate}</span>
+              <span className="text-gray-400 text-[13px]">Data e Hora</span>
+              <span className="font-bold text-gray-900 text-[13px]">{schedule.departureDate}</span>
             </div>
+        
             <div className="flex justify-between text-xs">
-              <span className="text-gray-400">Hora</span>
-              <span className="font-medium text-gray-900">{schedule.departureTime}</span>
-            </div>
-            <div className="flex justify-between text-xs">
-              <span className="text-gray-400">Lugar</span>
-              <span className="font-medium text-[#1B7A3D]">{seatLabel}</span>
+              <span className="text-gray-400 text-[13px]">Lugar Escolhido</span>
+              <span className="font-bold bg-[#1B7A3D1A] py-0.5 px-2 
+             rounded-xl text-[#1B7A3D] text-[13px]">Lugar {seatLabel}</span>
             </div>
 
             <div className="border-t border-[#E5E7EB]" />
 
             <div className="flex justify-between">
-              <span className="text-sm font-bold text-gray-900">Total</span>
-              <span className="text-base font-extrabold text-[#1B7A3D]">{schedule.price}</span>
+              <span className="text-sm font-normal text-[#4B5563]">Total</span>
+              <span className="text-xl font-inter font-extrabold text-[#1B7A3D]">{schedule.price}</span>
             </div>
           </CardContent>
         </Card>
@@ -121,7 +119,11 @@ export default function HoldPage() {
           </CardContent>
         </Card>
 
-        <button
+      </main>
+
+      <footer className='sticky bottom-0 flex justify-center items-center
+      border-t-2 border-[#E5E7EB] p-6'>
+         <button
           disabled={expired}
           onClick={() => navigate(`/checkout/${schedule.id}?seat=${seatNum}`)}
           className={`w-full max-w-[350px] rounded-xl h-12 font-semibold text-[16px] text-white transition-colors ${
@@ -130,9 +132,9 @@ export default function HoldPage() {
               : 'bg-[#1B7A3D] hover:bg-[#15632F]'
           }`}
         >
-          {expired ? 'Reserva expirada' : 'Confirmar Reserva'}
+          {expired ? 'Reserva expirada' : 'Ir para o checkout'}
         </button>
-      </main>
+      </footer>
     </div>
   )
 }
