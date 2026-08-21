@@ -13,9 +13,25 @@ interface OperatorCardProps {
   onSelect?: (operator: Operator) => void
 }
 
-export default function OperatorCard({ operator, }: OperatorCardProps) {
+export default function OperatorCard({ operator, onSelect }: OperatorCardProps) {
+  const interactive = Boolean(onSelect)
   return (
-    <Card className="overflow-hidden rounded-b-xl border border-[#E5E7EB] bg-white ">
+    <Card
+      role={interactive ? 'button' : undefined}
+      tabIndex={interactive ? 0 : undefined}
+      aria-label={interactive ? `Ver horários de ${operator.name}` : undefined}
+      onClick={() => onSelect?.(operator)}
+      onKeyDown={(event) => {
+        if (!interactive) return
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          onSelect?.(operator)
+        }
+      }}
+      className={`overflow-hidden rounded-b-xl border border-[#E5E7EB] bg-white transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-gradient-end ${
+        interactive ? 'cursor-pointer hover:scale-[1.01]' : ''
+      }`}
+    >
       <CardContent className="gap-2 grid grid-cols-1">
         <div className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
