@@ -42,4 +42,5 @@ export interface SeatMap {
   total_seats: number
   available: number[]
   occupied: number[]
+  reserved: number[]
 }
