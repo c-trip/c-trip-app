@@ -4,6 +4,7 @@ import WelcomePage from '../routes/_public/WelcomePage'
 import SearchPage from '../routes/_public/SearchPage'
 import ResultsPage from '../routes/_public/ResultsPage'
 import SchedulePage from '../routes/_public/SchedulePage'
+import HoldPage from '../routes/_public/HoldPage'
 
 import LoginPage from '../routes/_auth/LoginPage'
 import RegisterPage from '../routes/_auth/RegisterPage'
@@ -58,6 +59,7 @@ export default function Router() {
       </Route>
 
       <Route path="/schedules/:scheduleId" element={<SchedulePage />} />
+      <Route path="/hold/:scheduleId" element={<HoldPage />} />
 
       <Route path="/checkout/:scheduleId" element={<CheckoutPage />} />
       <Route path="/payment/:bookingId" element={<PaymentPage />} />

@@ -239,7 +239,7 @@ export default function SchedulePage() {
       <footer className="sticky bottom-0 flex items-center border-t-2 border-[#E5E7EB] bg-white p-6 z-10">
         <button
           disabled={selectedSeat === null}
-          onClick={() => navigate(`/checkout/${schedule.id}?seat=${selectedSeat}`)}
+          onClick={() => navigate(`/hold/${schedule.id}?seat=${selectedSeat}`)}
           className={`rounded-xl h-12 w-full font-semibold text-[16px] text-white transition-colors ${
             selectedSeat !== null
               ? 'bg-[#1B7A3D] hover:bg-[#15632F]'
