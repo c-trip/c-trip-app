@@ -128,8 +128,8 @@ export default function SchedulePage() {
   })
 
   const heldSeats = scheduleId ? readActiveHeld(scheduleId) : []
-  const heldKey = scheduleId ?? ''
-  const heldSet = useMemo(() => new Set(heldSeats), [heldKey, heldSeats.length])
+  const heldSignature = heldSeats.join(',')
+  const heldSet = useMemo(() => new Set(heldSeats), [heldSignature])
   const prevScheduleRef = useRef(scheduleId)
 
   useEffect(() => {
@@ -138,7 +138,7 @@ export default function SchedulePage() {
       selectedSeatRef.current = null
       setSelectedSeat(null)
     }
-  })
+  }, [scheduleId])
 
   useEffect(() => {
     if (selectedSeatRef.current !== null && heldSet.has(selectedSeatRef.current)) {
