@@ -21,7 +21,7 @@ function readTimestamp(key: string): number | null {
 }
 
 export default function HoldPage() {
-  const { scheduleId, routeSlug, companySlug } = useParams<{ scheduleId: string; routeSlug: string; companySlug: string }>()
+  const { scheduleId } = useParams<{ scheduleId: string }>()
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
 
@@ -61,6 +61,8 @@ export default function HoldPage() {
       localStorage.setItem(holdKey, String(Date.now()))
     }
 
+    let restartTimeout: ReturnType<typeof setTimeout> | null = null
+
     const id = setInterval(() => {
       const current = readTimestamp(holdKey)
       if (!current) return
@@ -68,17 +70,23 @@ export default function HoldPage() {
       const remaining = Math.max(totalSeconds - elapsed, 0)
       if (remaining === 0) {
         setSecondsLeft(0)
-        setTimeout(() => {
-          localStorage.removeItem(holdKey)
-          localStorage.setItem(holdKey, String(Date.now()))
-          setSecondsLeft(totalSeconds)
-        }, 2000)
+        if (!restartTimeout) {
+          restartTimeout = setTimeout(() => {
+            localStorage.removeItem(holdKey)
+            localStorage.setItem(holdKey, String(Date.now()))
+            setSecondsLeft(totalSeconds)
+            restartTimeout = null
+          }, 2000)
+        }
       } else {
         setSecondsLeft(remaining)
       }
     }, 1000)
 
-    return () => clearInterval(id)
+    return () => {
+      clearInterval(id)
+      if (restartTimeout) clearTimeout(restartTimeout)
+    }
   }, [holdKey, totalSeconds, seatIsValid])
 
   const minutes = Math.floor(secondsLeft / 60)
@@ -179,7 +187,7 @@ export default function HoldPage() {
       <footer className="sticky bottom-0 flex justify-center items-center
        border-t-2 border-[#E5E7EB] bg-white p-6">
         <button
-          onClick={() => navigate(`/checkout/${schedule.id}/${routeSlug}/${companySlug}?seat=${seatNum}`)}
+          onClick={() => navigate(`/checkout/${schedule.id}?seat=${seatNum}`)}
           className="w-full max-w-[350px] rounded-xl h-12 font-semibold text-[16px] text-white
            bg-[#1B7A3D] hover:bg-[#15632F] transition-colors"
         >
