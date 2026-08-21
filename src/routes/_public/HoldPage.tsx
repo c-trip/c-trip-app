@@ -16,11 +16,12 @@ function readTimestamp(key: string): number | null {
   const raw = localStorage.getItem(key)
   if (!raw) return null
   const ts = Number(raw)
-  return Number.isFinite(ts) ? ts : null
+  if (!Number.isFinite(ts) || ts > Date.now()) return null
+  return ts
 }
 
 export default function HoldPage() {
-  const { scheduleId } = useParams<{ scheduleId: string }>()
+  const { scheduleId, routeSlug, companySlug } = useParams<{ scheduleId: string; routeSlug: string; companySlug: string }>()
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
 
@@ -66,10 +67,15 @@ export default function HoldPage() {
       const elapsed = Math.floor((Date.now() - current) / 1000)
       const remaining = Math.max(totalSeconds - elapsed, 0)
       if (remaining === 0) {
-        localStorage.removeItem(holdKey)
-        localStorage.setItem(holdKey, String(Date.now()))
+        setSecondsLeft(0)
+        setTimeout(() => {
+          localStorage.removeItem(holdKey)
+          localStorage.setItem(holdKey, String(Date.now()))
+          setSecondsLeft(totalSeconds)
+        }, 2000)
+      } else {
+        setSecondsLeft(remaining)
       }
-      setSecondsLeft(remaining > 0 ? remaining : totalSeconds)
     }, 1000)
 
     return () => clearInterval(id)
@@ -108,7 +114,8 @@ export default function HoldPage() {
           <button
             onClick={() => navigate(-1)}
             aria-label="Voltar"
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 transition-colors hover:bg-gray-200"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 transition-colors
+             hover:bg-gray-200"
           >
             <IconArrowLeft className="h-5 w-5 text-gray-700" />
           </button>
@@ -121,7 +128,7 @@ export default function HoldPage() {
 
       <div className={`sticky top-[72px] z-10 px-6 py-3 flex items-center
        justify-items-start border-b gap-2 ${isUrgent ? 'bg-red-50 border-red-300' : 'bg-[#FEF3C7] border-gray-200'}`}>
-        <div className={`h-7 w-7 border-4 p-0.5 flex border-[#F59E0B] rounded-full
+        <div className={`h-7 w-7 border-2 p-0.5 flex border-[#F59E0B] rounded-full
          justify-center items-center bg-white ${isUrgent ? '!border-red-500' : ''}`}>
           <p className={`font-bold text-[11px] text-[#F59E0B] ${isUrgent ? '!text-red-500' : ''}`}>
             {`${minutes}m`}
@@ -172,7 +179,7 @@ export default function HoldPage() {
       <footer className="sticky bottom-0 flex justify-center items-center
        border-t-2 border-[#E5E7EB] bg-white p-6">
         <button
-          onClick={() => navigate(`/checkout/${schedule.id}?seat=${seatNum}`)}
+          onClick={() => navigate(`/checkout/${schedule.id}/${routeSlug}/${companySlug}?seat=${seatNum}`)}
           className="w-full max-w-[350px] rounded-xl h-12 font-semibold text-[16px] text-white
            bg-[#1B7A3D] hover:bg-[#15632F] transition-colors"
         >

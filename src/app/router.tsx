@@ -59,7 +59,7 @@ export default function Router() {
       </Route>
 
       <Route path="/schedules/:scheduleId" element={<SchedulePage />} />
-      <Route path="/hold/:scheduleId" element={<HoldPage />} />
+      <Route path="/hold/:scheduleId/:routeSlug/:companySlug" element={<HoldPage />} />
 
       <Route path="/checkout/:scheduleId" element={<CheckoutPage />} />
       <Route path="/payment/:bookingId" element={<PaymentPage />} />
