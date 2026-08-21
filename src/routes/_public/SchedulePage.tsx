@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router'
 import { IconArrowLeft, IconBus } from '@tabler/icons-react'
+import { gooeyToast } from 'goey-toast'
 import { getScheduleById, getSeatMapBySchedule } from '@/data/mockSeats'
 import { Card, CardContent } from '@/components/ui/card'
 
@@ -25,7 +26,7 @@ function SeatButton({
     return (
       <button
         type="button"
-        disabled
+        onClick={onClick}
         aria-label={`Lugar ${label} ocupado`}
         className={`${base} bg-gray-300 text-gray-500 cursor-not-allowed`}
       >
@@ -38,7 +39,7 @@ function SeatButton({
     return (
       <button
         type="button"
-        disabled
+        onClick={onClick}
         aria-label={`Lugar ${label} reservado`}
         className={`${base} bg-[#F59E0B] text-white cursor-not-allowed`}
       >
@@ -51,7 +52,7 @@ function SeatButton({
     return (
       <button
         type="button"
-        disabled
+        onClick={onClick}
         aria-label={`Lugar ${label} em retenção`}
         className={`${base} bg-[#F59E0B] text-white cursor-not-allowed`}
       >
@@ -186,7 +187,18 @@ export default function SchedulePage() {
   }
 
   function handleSeatClick(seat: number) {
-    if (occupiedSet.has(seat) || reservedSet.has(seat) || heldSet.has(seat)) return
+    if (occupiedSet.has(seat)) {
+      gooeyToast.error('Lugar ocupado', { description: `O lugar ${seat} já está ocupado.` })
+      return
+    }
+    if (reservedSet.has(seat)) {
+      gooeyToast.warning('Lugar reservado', { description: `O lugar ${seat} já está reservado.` })
+      return
+    }
+    if (heldSet.has(seat)) {
+      gooeyToast.warning('Lugar em retenção', { description: `O lugar ${seat} está temporariamente retido.` })
+      return
+    }
     setSelectedSeat(seat === selectedSeat ? null : seat)
   }
 
@@ -303,6 +315,7 @@ export default function SchedulePage() {
             if (selectedSeat === null) return
             const currentHeld = scheduleId ? readActiveHeld(scheduleId) : []
             if (occupiedSet.has(selectedSeat) || reservedSet.has(selectedSeat) || currentHeld.includes(selectedSeat)) {
+              gooeyToast.error('Lugar já não disponível', { description: `O lugar ${selectedSeat} foi ocupado ou retido por outro utilizador.` })
               setSelectedSeat(null)
               return
             }
