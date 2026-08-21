@@ -142,15 +142,15 @@ const schedules: Record<string, Schedule> = {
 const seatMaps: Record<string, SeatMap> = {
   'macon-1': {
     total_seats: 40,
-    available: [1, 2, 3, 5, 6, 7, 9, 10, 11, 13, 14, 15, 17, 18, 19, 21, 22, 23, 25, 26, 27, 29, 30, 31, 33, 34, 35, 37, 38, 39],
+    available: [1, 2, 3, 6, 7, 9, 10, 13, 14, 15, 17, 18, 21, 22, 23, 25, 26, 29, 30, 31, 33, 34, 37, 38, 39],
     occupied: [4, 8, 12, 16, 20, 24, 28, 32, 36, 40],
-    reserved: [],
+    reserved: [5, 11, 19, 27, 35],
   },
   'angorreal-1': {
     total_seats: 40,
-    available: [1, 2, 5, 6, 9, 10, 13, 14, 17, 18, 21, 22, 25, 26, 29, 30, 33, 34, 37, 38],
+    available: [1, 2, 6, 10, 13, 14, 17, 21, 22, 25, 29, 30, 33, 37, 38],
     occupied: [3, 4, 7, 8, 11, 12, 15, 16, 19, 20, 23, 24, 27, 28, 31, 32, 35, 36, 39, 40],
-    reserved: [],
+    reserved: [5, 9, 18, 26, 34],
   },
   'labarca-1': {
     total_seats: 30,
