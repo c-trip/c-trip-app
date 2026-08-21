@@ -10,7 +10,7 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AppProviders>
       <Router />
-      <GooeyToaster position="bottom-center" theme="light" />
+      <GooeyToaster position="top-center" theme="light" />
     </AppProviders>
   </StrictMode>,
 )
