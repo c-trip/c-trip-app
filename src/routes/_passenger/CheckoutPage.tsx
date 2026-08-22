@@ -46,7 +46,7 @@ export default function CheckoutPage() {
   const [secondsLeft, setSecondsLeft] = useState(() => {
     if (!seatIsValid) return 0
     const ts = readTimestamp(holdKey)
-    if (ts) {
+    if (ts && ts <= Date.now()) {
       const elapsed = Math.floor((Date.now() - ts) / 1000)
       return Math.max(totalSeconds - elapsed, 0)
     }
@@ -64,28 +64,29 @@ export default function CheckoutPage() {
 
     const sid = scheduleId
 
+    function expireHold() {
+      setSecondsLeft(0)
+      removeHeldSeat(sid, seatNum)
+      localStorage.removeItem(holdKey)
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+        intervalRef.current = null
+      }
+      gooeyToast.error('Reserva expirada', { description: 'Tempo esgotado. Selecione o lugar novamente.' })
+      if (redirectTimeoutRef.current) clearTimeout(redirectTimeoutRef.current)
+      redirectTimeoutRef.current = setTimeout(() => navigate(`/schedules/${sid}`), 2000)
+    }
+
     intervalRef.current = setInterval(() => {
       const current = readTimestamp(holdKey)
-    if (!current || Date.now() - current >= totalSeconds * 1000) {
-        setSecondsLeft(0)
-        removeHeldSeat(sid, seatNum)
-        localStorage.removeItem(holdKey)
-        clearInterval(intervalRef.current!)
-        gooeyToast.error('Reserva expirada', { description: 'Tempo esgotado. Selecione o lugar novamente.' })
-        if (redirectTimeoutRef.current) clearTimeout(redirectTimeoutRef.current)
-        redirectTimeoutRef.current = setTimeout(() => navigate(`/schedules/${sid}`), 2000)
+      if (!current || current > Date.now() || Date.now() - current >= totalSeconds * 1000) {
+        expireHold()
         return
       }
       const elapsed = Math.floor((Date.now() - current) / 1000)
       const remaining = Math.max(totalSeconds - elapsed, 0)
       if (remaining === 0) {
-        setSecondsLeft(0)
-        removeHeldSeat(sid, seatNum)
-        localStorage.removeItem(holdKey)
-        clearInterval(intervalRef.current!)
-        gooeyToast.error('Reserva expirada', { description: 'Tempo esgotado. Selecione o lugar novamente.' })
-        if (redirectTimeoutRef.current) clearTimeout(redirectTimeoutRef.current)
-        redirectTimeoutRef.current = setTimeout(() => navigate(`/schedules/${sid}`), 2000)
+        expireHold()
       } else {
         setSecondsLeft(remaining)
       }
@@ -133,7 +134,7 @@ export default function CheckoutPage() {
     if (isDisabled) return
     if (!validate()) return
     const current = readTimestamp(holdKey)
-    if (!current || Date.now() - current >= totalSeconds * 1000) {
+    if (!current || current > Date.now() || Date.now() - current >= totalSeconds * 1000) {
       if (intervalRef.current) {
         clearInterval(intervalRef.current)
         intervalRef.current = null
