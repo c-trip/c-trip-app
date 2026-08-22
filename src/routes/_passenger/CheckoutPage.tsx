@@ -156,7 +156,7 @@ export default function CheckoutPage() {
       description: `Bilhete para o lugar ${seatLabel} confirmado com sucesso.`,
     })
     if (redirectTimeoutRef.current) clearTimeout(redirectTimeoutRef.current)
-    redirectTimeoutRef.current = setTimeout(() => navigate(`/ticket-qr/${scheduleId}`), 2000)
+    redirectTimeoutRef.current = setTimeout(() => navigate(`/ticket-qr/${scheduleId}?seat=${seatNum}`), 2000)
   }
 
   if (!schedule || !seatIsValid) {
