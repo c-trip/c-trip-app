@@ -1,6 +1,7 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router'
-import { IconShieldCheckFilled, IconShare2, IconDownload } from '@tabler/icons-react'
+import { IconShieldCheckFilled, IconShare2, IconDownload, IconLoader2 } from '@tabler/icons-react'
+import { gooeyToast } from 'goey-toast'
 import { getScheduleById } from '@/data/mockSeats'
 import { generateTicketQR } from '@/lib/qr'
 
@@ -17,10 +18,12 @@ export default function TicketQrPage() {
   const seatParam = searchParams.get('seat')
   const seatNum = /^\d+$/.test(seatParam ?? '') ? parseInt(seatParam!, 10) : NaN
   const seatLabel = Number.isFinite(seatNum) ? getSeatLabel(seatNum) : '\u2014'
+  const passengerName = searchParams.get('nome') || '—'
   const schedule = getScheduleById(scheduleId)
-  const canvasRef = useRef<HTMLCanvasElement>(null)
 
   const [qrDataUrl, setQrDataUrl] = useState('')
+  const [isSharing, setIsSharing] = useState(false)
+  const [isDownloading, setIsDownloading] = useState(false)
 
   useEffect(() => {
     if (!schedule) return
@@ -36,23 +39,46 @@ export default function TicketQrPage() {
     }).then(setQrDataUrl).catch(console.error)
   }, [schedule, seatLabel])
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!qrDataUrl) return
-    const link = document.createElement('a')
-    link.href = qrDataUrl
-    link.download = `bilhete-${scheduleId}-${seatLabel}.png`
-    link.click()
+    setIsDownloading(true)
+    try {
+      const link = document.createElement('a')
+      link.href = qrDataUrl
+      link.download = `bilhete-${scheduleId}-${seatLabel}.png`
+      link.click()
+      gooeyToast.success('Download concluido', { description: 'O bilhete foi guardado no seu dispositivo.' })
+    } catch {
+      gooeyToast.error('Erro ao baixar', { description: 'Tente novamente.' })
+    } finally {
+      setIsDownloading(false)
+    }
   }
 
   const handleShare = async () => {
-    const shareData = {
-      title: `Bilhete ${schedule?.operatorName}`,
-      text: `Bilhete de ${schedule?.origin} para ${schedule?.destination} - Lugar ${seatLabel}`,
-    }
-    if (navigator.share) {
-      await navigator.share(shareData).catch(() => {})
-    } else {
-      await navigator.clipboard.writeText(shareData.text)
+    if (!qrDataUrl) return
+    setIsSharing(true)
+    try {
+      const text = `Bilhete ${schedule?.operatorName} - ${schedule?.origin} → ${schedule?.destination} | Lugar ${seatLabel} | Data: ${schedule?.departureDate} | Hora: ${schedule?.departureTime}`
+      const res = await fetch(qrDataUrl)
+      const blob = await res.blob()
+      const file = new File([blob], `bilhete-${seatLabel}.png`, { type: 'image/png' })
+
+      if (navigator.share) {
+        if (navigator.canShare?.({ files: [file] })) {
+          await navigator.share({ title: `Bilhete ${schedule?.operatorName}`, text, files: [file] })
+        } else {
+          await navigator.share({ title: `Bilhete ${schedule?.operatorName}`, text })
+        }
+      } else {
+        const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text + '\n\nQR Code: ' + qrDataUrl)}`
+        window.open(whatsappUrl, '_blank')
+      }
+      gooeyToast.success('Partilhado', { description: 'O bilhete foi partilhado com sucesso.' })
+    } catch {
+      gooeyToast.error('Erro ao partilhar', { description: 'Tente novamente.' })
+    } finally {
+      setIsSharing(false)
     }
   }
 
@@ -68,7 +94,6 @@ export default function TicketQrPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 font-outfit flex flex-col">
-      <canvas ref={canvasRef} className="hidden" />
       <header className="border-b border-gray-200 bg-white px-6 py-4">
         <h1 className="text-lg font-bold text-gray-900">Bilhete confirmado</h1>
       </header>
@@ -104,7 +129,7 @@ export default function TicketQrPage() {
             <div className="flex items-center justify-between">
               <div className="flex flex-col">
                 <p className="text-[11px] text-[#4B5563] font-normal">Passageiro</p>
-                <p className="text-[13px] text-[#111827] font-semibold">{schedule.driverName}</p>
+                <p className="text-[13px] text-[#111827] font-semibold">{passengerName}</p>
               </div>
               <div>
                 <p className="text-[11px] text-[#4B5563] font-normal">N do lugar</p>
@@ -130,19 +155,21 @@ export default function TicketQrPage() {
         <div className="flex items-center justify-between gap-2">
           <button
             onClick={handleShare}
+            disabled={isSharing || isDownloading}
             className="text-[#1B7A3D] border-[#1B7A3D] rounded-xl border-2 h-11 w-[170px]
-            flex items-center justify-center gap-2"
+            flex items-center justify-center gap-2 disabled:opacity-50"
           >
-            <IconShare2 />
-            <p>Partilhar</p>
+            {isSharing ? <IconLoader2 className="w-5 h-5 animate-spin" /> : <IconShare2 />}
+            <p>{isSharing ? 'A partilhar...' : 'Partilhar'}</p>
           </button>
           <button
             onClick={handleDownload}
+            disabled={isDownloading || isSharing}
             className="text-[#1B7A3D] border-[#1B7A3D] rounded-xl border-2 h-11 w-[170px]
-            flex items-center justify-center gap-2"
+            flex items-center justify-center gap-2 disabled:opacity-50"
           >
-            <IconDownload />
-            <p>Baixar</p>
+            {isDownloading ? <IconLoader2 className="w-5 h-5 animate-spin" /> : <IconDownload />}
+            <p>{isDownloading ? 'A baixar...' : 'Baixar'}</p>
           </button>
         </div>
         <button
