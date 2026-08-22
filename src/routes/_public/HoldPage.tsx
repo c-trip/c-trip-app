@@ -206,7 +206,6 @@ export default function HoldPage() {
               localStorage.removeItem(holdKey)
               return
             }
-            localStorage.removeItem(holdKey)
             navigate(`/checkout/${schedule.id}?seat=${seatNum}`)
           }}
           className="w-full max-w-[350px] rounded-xl h-12 font-semibold text-[16px] text-white
