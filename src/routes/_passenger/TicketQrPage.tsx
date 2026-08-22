@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
-import { IconArrowLeft, IconX } from '@tabler/icons-react'
+import { IconArrowLeft, IconX, IconShare2, IconDownload, IconLoader2, IconShieldCheckFilled } from '@tabler/icons-react'
 import { gooeyToast } from 'goey-toast'
 import { getScheduleById, getSeatMapBySchedule } from '@/data/mockSeats'
 import { getSeatLabel } from '@/lib/seats'
@@ -107,6 +107,8 @@ export default function TicketQrPage() {
 
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null)
   const [isShareOpen, setIsShareOpen] = useState(false)
+  const [isSharing, setIsSharing] = useState(false)
+  const [isDownloading, setIsDownloading] = useState(false)
   const closeButtonRef = useRef<HTMLButtonElement>(null)
 
   const ticketRef = `CTP-${(scheduleId ?? '').toUpperCase()}-${seatLabel}`
@@ -117,7 +119,14 @@ export default function TicketQrPage() {
     let cancelled = false
     const cacheKey = getQrCacheKey(scheduleId, String(seatNum))
 
-    void Promise.resolve(localStorage.getItem(cacheKey))
+    let cached: string | null = null
+    try {
+      cached = localStorage.getItem(cacheKey)
+    } catch {
+      /* SecurityError or similar — treat as cache miss */
+    }
+
+    void Promise.resolve(cached)
       .then((cached) => {
         if (cancelled) return null
         if (cached) {
@@ -164,6 +173,7 @@ export default function TicketQrPage() {
 
     return () => {
       cancelled = true
+      setQrDataUrl(null)
     }
   }, [seatIsValid, scheduleId, schedule, seatNum, seatLabel])
 
@@ -179,6 +189,63 @@ export default function TicketQrPage() {
 
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [isShareOpen])
+
+  const handleDownload = async () => {
+    if (!qrDataUrl) return
+    setIsDownloading(true)
+    try {
+      const link = document.createElement('a')
+      link.href = qrDataUrl
+      link.download = `bilhete-${scheduleId}-${seatLabel}.png`
+      link.click()
+      gooeyToast.success('Download concluido', { description: 'O bilhete foi guardado no seu dispositivo.' })
+    } catch {
+      gooeyToast.error('Erro ao baixar', { description: 'Tente novamente.' })
+    } finally {
+      setIsDownloading(false)
+    }
+  }
+
+  const handleShare = async () => {
+    if (!qrDataUrl) return
+    setIsSharing(true)
+    try {
+      const res = await fetch(qrDataUrl)
+      const blob = await res.blob()
+      const file = new File([blob], `bilhete-${seatLabel}.png`, { type: 'image/png' })
+
+      if (navigator.share) {
+        if (navigator.canShare?.({ files: [file] })) {
+          await navigator.share({ title: `Bilhete ${schedule?.operatorName}`, text: shareText, files: [file] })
+        } else {
+          await navigator.share({ title: `Bilhete ${schedule?.operatorName}`, text: shareText })
+        }
+        gooeyToast.success('Partilhado', { description: 'O bilhete foi partilhado com sucesso.' })
+      } else {
+        setIsShareOpen(true)
+      }
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return
+      gooeyToast.error('Erro ao partilhar', { description: 'Tente novamente.' })
+    } finally {
+      setIsSharing(false)
+    }
+  }
+
+  const copyQRToClipboard = async (): Promise<boolean> => {
+    if (!qrDataUrl) return false
+    try {
+      const res = await fetch(qrDataUrl)
+      const blob = await res.blob()
+      const file = new File([blob], `bilhete-${seatLabel}.png`, { type: 'image/png' })
+      await navigator.clipboard.write([
+        new ClipboardItem({ 'image/png': file }),
+      ])
+      return true
+    } catch {
+      return false
+    }
+  }
 
   if (!schedule || !seatIsValid) {
     return (
@@ -228,23 +295,21 @@ export default function TicketQrPage() {
         Telegram: `https://t.me/share/url?url=${encodedPageUrl}&text=${encodedText}`,
         Facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedPageUrl}&quote=${encodedText}`,
       }
+
+      const imageCopied = await copyQRToClipboard()
       const url = shareUrls[app.name]
       if (url) window.open(url, '_blank', 'noopener,noreferrer')
-      setIsShareOpen(false)
-      return
-    }
-
-    try {
-      await navigator.clipboard.writeText(shareText)
-      gooeyToast.success('Copiado', {
-        description: 'Os detalhes do bilhete foram copiados para a área de transferência.',
+      gooeyToast.success(`A abrir ${app.name}`, {
+        description: imageCopied ? 'Imagem do QR copiada. Cole na conversa com Ctrl+V.' : 'Cole o texto na conversa.',
       })
-    } catch (error) {
-      if (!(error instanceof DOMException && error.name === 'AbortError')) {
-        gooeyToast.error('Erro ao partilhar', {
-          description: 'Não foi possível copiar os detalhes do bilhete.',
-        })
+    } else {
+      const imageCopied = await copyQRToClipboard()
+      if (!imageCopied) {
+        await navigator.clipboard.writeText(shareText)
       }
+      gooeyToast.success('Copiado', {
+        description: imageCopied ? `Imagem do QR copiada. Abra o ${app.name} e cole na conversa.` : `Texto copiado. Abra o ${app.name} e cole na conversa.`,
+      })
     }
     setIsShareOpen(false)
   }
@@ -268,6 +333,11 @@ export default function TicketQrPage() {
       </header>
 
       <main className="flex flex-1 flex-col items-center gap-6 px-6 py-6">
+        <div className="flex items-center justify-center gap-1 rounded-3xl bg-[#D1FAE5] px-3 py-1">
+          <IconShieldCheckFilled className="h-2.5 w-3 text-[#10B981]" />
+          <span className="text-[11px] font-semibold text-[#10B981]">Disponivel OFFLINE</span>
+        </div>
+
         <section
           aria-label="Detalhes do bilhete"
           className="w-full max-w-[350px] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm"
@@ -332,12 +402,32 @@ export default function TicketQrPage() {
           </div>
         </section>
 
-        <button
-          onClick={() => setIsShareOpen(true)}
-          className="h-12 w-full max-w-[350px] rounded-xl bg-[#1B7A3D] text-[16px] font-semibold text-white transition-colors hover:bg-[#15632F]"
-        >
-          Partilhar bilhete
-        </button>
+        <footer className="sticky bottom-0 z-10 flex w-full max-w-[350px] flex-col items-center gap-4 border-t-2 border-gray-200 bg-white p-6">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => void handleShare()}
+              disabled={isSharing || isDownloading}
+              className="flex h-11 w-[170px] items-center justify-center gap-2 rounded-xl border-2 border-[#1B7A3D] text-[#1B7A3D] transition-colors hover:bg-[#1B7A3D]/5 disabled:opacity-50"
+            >
+              {isSharing ? <IconLoader2 className="h-5 w-5 animate-spin" /> : <IconShare2 className="h-5 w-5" />}
+              <p className="text-sm font-semibold">{isSharing ? 'A partilhar...' : 'Partilhar'}</p>
+            </button>
+            <button
+              onClick={() => void handleDownload()}
+              disabled={isDownloading || isSharing}
+              className="flex h-11 w-[170px] items-center justify-center gap-2 rounded-xl border-2 border-[#1B7A3D] text-[#1B7A3D] transition-colors hover:bg-[#1B7A3D]/5 disabled:opacity-50"
+            >
+              {isDownloading ? <IconLoader2 className="h-5 w-5 animate-spin" /> : <IconDownload className="h-5 w-5" />}
+              <p className="text-sm font-semibold">{isDownloading ? 'A baixar...' : 'Baixar'}</p>
+            </button>
+          </div>
+          <button
+            onClick={() => navigate('/search')}
+            className="h-12 w-full max-w-[350px] rounded-xl bg-[#1B7A3D] text-[16px] font-semibold text-white transition-colors hover:bg-[#15632F]"
+          >
+            Voltar ao Inicio
+          </button>
+        </footer>
       </main>
 
       {isShareOpen && (
