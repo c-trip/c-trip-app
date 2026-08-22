@@ -4,6 +4,13 @@ import { IconArrowLeft, IconBus } from '@tabler/icons-react'
 import { gooeyToast } from 'goey-toast'
 import { getScheduleById, getSeatMapBySchedule } from '@/data/mockSeats'
 import { Card, CardContent } from '@/components/ui/card'
+import { readActiveHeldSeats } from '@/lib/seatHolds'
+
+function getSeatLabel(seatNum: number): string {
+  const row = Math.ceil(seatNum / 4)
+  const col = String.fromCharCode(65 + ((seatNum - 1) % 4))
+  return `${row}${col}`
+}
 
 function SeatButton({
   label,
@@ -54,7 +61,7 @@ function SeatButton({
         type="button"
         onClick={onClick}
         aria-label={`Lugar ${label} em retenção`}
-        className={`${base} bg-[#F59E0B] text-white cursor-not-allowed`}
+        className={`${base} bg-[#C2410C] text-white cursor-not-allowed`}
       >
         {label}
       </button>
@@ -95,47 +102,22 @@ function SeatButton({
   )
 }
 
-const HOLD_MS = 3 * 60 * 1000
-
-function readActiveHeld(scheduleId: string): number[] {
-  const raw = localStorage.getItem(`held_seats_${scheduleId}`)
-  if (!raw) return []
-  try {
-    const parsed = JSON.parse(raw)
-    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) return []
-    const now = Date.now()
-    return Object.entries(parsed)
-      .filter(([k, v]) => {
-        const seat = Number(k)
-        const ts = Number(v)
-        return Number.isInteger(seat) && Number.isFinite(ts) && ts > now - HOLD_MS && ts <= now
-      })
-      .map(([k]) => Number(k))
-  } catch { return [] }
-}
-
 export default function SchedulePage() {
   const { scheduleId } = useParams<{ scheduleId: string }>()
   const navigate = useNavigate()
   const [selectedSeat, setSelectedSeat] = useState<number | null>(null)
-  const selectedSeatRef = useRef(selectedSeat)
   const [, setTick] = useState(0)
 
   const schedule = getScheduleById(scheduleId)
   const seatMap = getSeatMapBySchedule(scheduleId)
 
-  useEffect(() => {
-    selectedSeatRef.current = selectedSeat
-  })
-
-  const heldSeats = scheduleId ? readActiveHeld(scheduleId) : []
+  const heldSeats = scheduleId ? readActiveHeldSeats(scheduleId) : []
   const heldSet = new Set(heldSeats)
   const prevScheduleRef = useRef(scheduleId)
 
   useEffect(() => {
     if (prevScheduleRef.current !== scheduleId) {
       prevScheduleRef.current = scheduleId
-      selectedSeatRef.current = null
       setSelectedSeat(null)
     }
   }, [scheduleId])
@@ -187,16 +169,17 @@ export default function SchedulePage() {
   }
 
   function handleSeatClick(seat: number) {
+    const label = getSeatLabel(seat)
     if (occupiedSet.has(seat)) {
-      gooeyToast.error('Lugar ocupado', { description: `O lugar ${seat} já está ocupado.` })
+      gooeyToast.error('Lugar ocupado', { description: `O lugar ${label} já está ocupado.` })
       return
     }
     if (reservedSet.has(seat)) {
-      gooeyToast.warning('Lugar reservado', { description: `O lugar ${seat} já está reservado.` })
+      gooeyToast.warning('Lugar reservado', { description: `O lugar ${label} já está reservado.` })
       return
     }
     if (heldSet.has(seat)) {
-      gooeyToast.warning('Lugar em retenção', { description: `O lugar ${seat} está temporariamente retido.` })
+      gooeyToast.warning('Lugar em retenção', { description: `O lugar ${label} está temporariamente retido.` })
       return
     }
     setSelectedSeat(seat === selectedSeat ? null : seat)
@@ -294,7 +277,7 @@ export default function SchedulePage() {
             <span>Livre</span>
           </div>
           <div className="flex items-center gap-1">
-            <div className="h-3 w-3 rounded bg-[#F59E0B]" />
+            <div className="h-3 w-3 rounded bg-[#C2410C]" />
             <span>Retido</span>
           </div>
           <div className="flex items-center gap-1">
@@ -313,14 +296,14 @@ export default function SchedulePage() {
           disabled={selectedSeat === null}
           onClick={() => {
             if (selectedSeat === null) return
-            const currentHeld = scheduleId ? readActiveHeld(scheduleId) : []
+            const currentHeld = scheduleId ? readActiveHeldSeats(scheduleId) : []
             if (occupiedSet.has(selectedSeat) || reservedSet.has(selectedSeat) || currentHeld.includes(selectedSeat)) {
-              gooeyToast.error('Lugar já não disponível', { description: `O lugar ${selectedSeat} foi ocupado ou retido por outro utilizador.` })
+              gooeyToast.error('Lugar já não disponível', { description: `O lugar ${getSeatLabel(selectedSeat)} foi ocupado ou retido por outro utilizador.` })
               setSelectedSeat(null)
               return
             }
-            const routeSlug = schedule.route.replace(/\s*→\s*/g, '-').toLowerCase()
-            const companySlug = schedule.operatorName.toLowerCase()
+            const routeSlug = encodeURIComponent(schedule.route.replace(/\s*→\s*/g, '-').toLowerCase())
+            const companySlug = encodeURIComponent(schedule.operatorName.toLowerCase())
             navigate(`/hold/${schedule.id}/${routeSlug}/${companySlug}?seat=${selectedSeat}`)
           }}
           className={`rounded-xl h-12 w-full font-semibold text-[16px] text-white transition-colors ${

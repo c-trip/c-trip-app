@@ -3,62 +3,12 @@ import { useParams, useNavigate, useSearchParams } from 'react-router'
 import { IconArrowLeft } from '@tabler/icons-react'
 import { getScheduleById, getSeatMapBySchedule } from '@/data/mockSeats'
 import { Card, CardContent } from '@/components/ui/card'
-
-const HOLD_MINUTES = 3
+import { readTimestamp, addHeldSeat, removeHeldSeat, HOLD_TOTAL_SECONDS } from '@/lib/seatHolds'
 
 function getSeatLabel(seatNum: number): string {
   const row = Math.ceil(seatNum / 4)
   const col = String.fromCharCode(65 + ((seatNum - 1) % 4))
   return `${row}${col}`
-}
-
-function readTimestamp(key: string): number | null {
-  const raw = localStorage.getItem(key)
-  if (!raw) return null
-  const ts = Number(raw)
-  if (!Number.isFinite(ts) || ts > Date.now()) return null
-  return ts
-}
-
-function getHeldKey(scheduleId: string): string {
-  return `held_seats_${scheduleId}`
-}
-
-const HOLD_MS = HOLD_MINUTES * 60 * 1000
-
-function getHeldMap(scheduleId: string): Record<number, number> {
-  const raw = localStorage.getItem(getHeldKey(scheduleId))
-  if (!raw) return {}
-  try {
-    const parsed = JSON.parse(raw)
-    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) return {}
-    const now = Date.now()
-    const result: Record<number, number> = {}
-    for (const [k, v] of Object.entries(parsed)) {
-      const seat = Number(k)
-      const ts = Number(v)
-      if (Number.isInteger(seat) && Number.isFinite(ts) && ts > now - HOLD_MS && ts <= now) {
-        result[seat] = ts
-      }
-    }
-    return result
-  } catch { return {} }
-}
-
-function addHeldSeat(scheduleId: string, seat: number): void {
-  const map = getHeldMap(scheduleId)
-  map[seat] = Date.now()
-  localStorage.setItem(getHeldKey(scheduleId), JSON.stringify(map))
-}
-
-function removeHeldSeat(scheduleId: string, seat: number): void {
-  const map = getHeldMap(scheduleId)
-  delete map[seat]
-  if (Object.keys(map).length === 0) {
-    localStorage.removeItem(getHeldKey(scheduleId))
-  } else {
-    localStorage.setItem(getHeldKey(scheduleId), JSON.stringify(map))
-  }
 }
 
 export default function HoldPage() {
@@ -81,7 +31,7 @@ export default function HoldPage() {
     !seatMap.reserved.includes(seatNum)
 
   const holdKey = `hold_${scheduleId}_${seatNum}`
-  const totalSeconds = HOLD_MINUTES * 60
+  const totalSeconds = HOLD_TOTAL_SECONDS
 
   const [secondsLeft, setSecondsLeft] = useState(() => {
     if (!seatIsValid) return 0
@@ -96,40 +46,40 @@ export default function HoldPage() {
   useEffect(() => {
     if (!seatIsValid || !scheduleId) return
 
-    addHeldSeat(scheduleId, seatNum)
     const sid = scheduleId
 
-    const ts = readTimestamp(holdKey)
-    if (!ts) {
-      localStorage.setItem(holdKey, String(Date.now()))
+    const existing = readTimestamp(holdKey)
+    const startedAt = existing ?? Date.now()
+    if (!existing) {
+      localStorage.setItem(holdKey, String(startedAt))
     }
+    addHeldSeat(sid, seatNum, startedAt)
 
     let restartTimeout: ReturnType<typeof setTimeout> | null = null
+
+    function expire() {
+      setSecondsLeft(0)
+      removeHeldSeat(sid, seatNum)
+      localStorage.removeItem(holdKey)
+      if (!restartTimeout) {
+        restartTimeout = setTimeout(() => {
+          navigate(`/schedules/${sid}`)
+        }, 2000)
+      }
+    }
 
     const id = setInterval(() => {
       const current = readTimestamp(holdKey)
       if (!current) {
-        setSecondsLeft(0)
-        removeHeldSeat(sid, seatNum)
-        localStorage.removeItem(holdKey)
-        if (!restartTimeout) {
-          restartTimeout = setTimeout(() => {
-            navigate(`/schedules/${sid}`)
-          }, 2000)
-        }
+        expire()
+        clearInterval(id)
         return
       }
       const elapsed = Math.floor((Date.now() - current) / 1000)
       const remaining = Math.max(totalSeconds - elapsed, 0)
       if (remaining === 0) {
-        setSecondsLeft(0)
-        removeHeldSeat(sid, seatNum)
-        localStorage.removeItem(holdKey)
-        if (!restartTimeout) {
-          restartTimeout = setTimeout(() => {
-            navigate(`/schedules/${sid}`)
-          }, 2000)
-        }
+        expire()
+        clearInterval(id)
       } else {
         setSecondsLeft(remaining)
       }
