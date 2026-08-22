@@ -71,6 +71,7 @@ export default function CheckoutPage() {
         localStorage.removeItem(holdKey)
         clearInterval(id)
         gooeyToast.error('Reserva expirada', { description: 'Tempo esgotado. Selecione o lugar novamente.' })
+        if (redirectTimeoutRef.current) clearTimeout(redirectTimeoutRef.current)
         redirectTimeoutRef.current = setTimeout(() => navigate(`/schedules/${sid}`), 2000)
         return
       }
@@ -82,13 +83,20 @@ export default function CheckoutPage() {
         localStorage.removeItem(holdKey)
         clearInterval(id)
         gooeyToast.error('Reserva expirada', { description: 'Tempo esgotado. Selecione o lugar novamente.' })
+        if (redirectTimeoutRef.current) clearTimeout(redirectTimeoutRef.current)
         redirectTimeoutRef.current = setTimeout(() => navigate(`/schedules/${sid}`), 2000)
       } else {
         setSecondsLeft(remaining)
       }
     }, 1000)
 
-    return () => clearInterval(id)
+    return () => {
+      clearInterval(id)
+      if (redirectTimeoutRef.current) {
+        clearTimeout(redirectTimeoutRef.current)
+        redirectTimeoutRef.current = null
+      }
+    }
   }, [holdKey, totalSeconds, seatIsValid, scheduleId, seatNum, navigate])
 
   const minutes = Math.floor(secondsLeft / 60)
@@ -121,9 +129,11 @@ export default function CheckoutPage() {
     if (!validate()) return
     const current = readTimestamp(holdKey)
     if (!current) {
+      setSecondsLeft(0)
       gooeyToast.error('Reserva expirada', { description: 'A retenção já expirou. Selecione o lugar novamente.' })
       removeHeldSeat(scheduleId!, seatNum)
       localStorage.removeItem(holdKey)
+      if (redirectTimeoutRef.current) clearTimeout(redirectTimeoutRef.current)
       redirectTimeoutRef.current = setTimeout(() => navigate(`/schedules/${scheduleId}`), 2000)
       return
     }
@@ -134,6 +144,7 @@ export default function CheckoutPage() {
     gooeyToast.success('Pagamento processado', {
       description: `Bilhete para o lugar ${seatLabel} confirmado com sucesso.`,
     })
+    if (redirectTimeoutRef.current) clearTimeout(redirectTimeoutRef.current)
     redirectTimeoutRef.current = setTimeout(() => navigate('/bookings'), 2000)
   }
 
