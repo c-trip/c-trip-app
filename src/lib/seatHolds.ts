@@ -10,7 +10,8 @@ export function readTimestamp(key: string): number | null {
   const raw = localStorage.getItem(key)
   if (!raw) return null
   const ts = Number(raw)
-  if (!Number.isFinite(ts) || ts > Date.now()) return null
+  const now = Date.now()
+  if (!Number.isFinite(ts) || ts > now || ts <= now - HOLD_MS) return null
   return ts
 }
 
