@@ -1,8 +1,16 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router'
 import { IconArrowLeft, IconBus } from '@tabler/icons-react'
+import { gooeyToast } from 'goey-toast'
 import { getScheduleById, getSeatMapBySchedule } from '@/data/mockSeats'
 import { Card, CardContent } from '@/components/ui/card'
+import { readActiveHeldSeats } from '@/lib/seatHolds'
+
+function getSeatLabel(seatNum: number): string {
+  const row = Math.ceil(seatNum / 4)
+  const col = String.fromCharCode(65 + ((seatNum - 1) % 4))
+  return `${row}${col}`
+}
 
 function SeatButton({
   label,
@@ -13,7 +21,7 @@ function SeatButton({
   onDoubleClick,
 }: {
   label: string
-  status: 'available' | 'occupied' | 'reserved'
+  status: 'available' | 'occupied' | 'reserved' | 'held'
   selected: boolean
   dimmed: boolean
   onClick: () => void
@@ -25,7 +33,7 @@ function SeatButton({
     return (
       <button
         type="button"
-        disabled
+        onClick={onClick}
         aria-label={`Lugar ${label} ocupado`}
         className={`${base} bg-gray-300 text-gray-500 cursor-not-allowed`}
       >
@@ -38,9 +46,22 @@ function SeatButton({
     return (
       <button
         type="button"
-        disabled
+        onClick={onClick}
         aria-label={`Lugar ${label} reservado`}
         className={`${base} bg-[#F59E0B] text-white cursor-not-allowed`}
+      >
+        {label}
+      </button>
+    )
+  }
+
+  if (status === 'held') {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        aria-label={`Lugar ${label} em retenção`}
+        className={`${base} bg-[#C2410C] text-white cursor-not-allowed`}
       >
         {label}
       </button>
@@ -85,9 +106,26 @@ export default function SchedulePage() {
   const { scheduleId } = useParams<{ scheduleId: string }>()
   const navigate = useNavigate()
   const [selectedSeat, setSelectedSeat] = useState<number | null>(null)
+  const [, setTick] = useState(0)
 
   const schedule = getScheduleById(scheduleId)
   const seatMap = getSeatMapBySchedule(scheduleId)
+
+  const heldSeats = scheduleId ? readActiveHeldSeats(scheduleId) : []
+  const heldSet = new Set(heldSeats)
+  const prevScheduleRef = useRef(scheduleId)
+
+  useEffect(() => {
+    if (prevScheduleRef.current !== scheduleId) {
+      prevScheduleRef.current = scheduleId
+      setSelectedSeat(null)
+    }
+  }, [scheduleId])
+
+  useEffect(() => {
+    const id = setInterval(() => setTick(t => t + 1), 2000)
+    return () => clearInterval(id)
+  }, [])
 
   if (!schedule || !seatMap) {
     return (
@@ -123,14 +161,27 @@ export default function SchedulePage() {
     seatGrid.push(row)
   }
 
-  function getSeatStatus(seat: number): 'available' | 'occupied' | 'reserved' {
+  function getSeatStatus(seat: number): 'available' | 'occupied' | 'reserved' | 'held' {
     if (occupiedSet.has(seat)) return 'occupied'
     if (reservedSet.has(seat)) return 'reserved'
+    if (heldSet.has(seat)) return 'held'
     return 'available'
   }
 
   function handleSeatClick(seat: number) {
-    if (occupiedSet.has(seat) || reservedSet.has(seat)) return
+    const label = getSeatLabel(seat)
+    if (occupiedSet.has(seat)) {
+      gooeyToast.error('Lugar ocupado', { description: `O lugar ${label} já está ocupado.` })
+      return
+    }
+    if (reservedSet.has(seat)) {
+      gooeyToast.warning('Lugar reservado', { description: `O lugar ${label} já está reservado.` })
+      return
+    }
+    if (heldSet.has(seat)) {
+      gooeyToast.warning('Lugar em retenção', { description: `O lugar ${label} está temporariamente retido.` })
+      return
+    }
     setSelectedSeat(seat === selectedSeat ? null : seat)
   }
 
@@ -220,10 +271,14 @@ export default function SchedulePage() {
           </CardContent>
         </Card>
 
-        <div className="flex justify-center gap-14 text-[10px] text-gray-500">
+        <div className="flex justify-center gap-8 text-[10px] text-gray-500 flex-wrap">
           <div className="flex items-center gap-1">
             <div className="h-3 w-3 rounded bg-[#1B7A3D]" />
             <span>Livre</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="h-3 w-3 rounded bg-[#C2410C]" />
+            <span>Retido</span>
           </div>
           <div className="flex items-center gap-1">
             <div className="h-3 w-3 rounded bg-gray-300" />
@@ -239,7 +294,18 @@ export default function SchedulePage() {
       <footer className="sticky bottom-0 flex items-center border-t-2 border-[#E5E7EB] bg-white p-6 z-10">
         <button
           disabled={selectedSeat === null}
-          onClick={() => navigate(`/checkout/${schedule.id}?seat=${selectedSeat}`)}
+          onClick={() => {
+            if (selectedSeat === null) return
+            const currentHeld = scheduleId ? readActiveHeldSeats(scheduleId) : []
+            if (occupiedSet.has(selectedSeat) || reservedSet.has(selectedSeat) || currentHeld.includes(selectedSeat)) {
+              gooeyToast.error('Lugar já não disponível', { description: `O lugar ${getSeatLabel(selectedSeat)} foi ocupado ou retido por outro utilizador.` })
+              setSelectedSeat(null)
+              return
+            }
+            const routeSlug = encodeURIComponent(schedule.route.replace(/\s*→\s*/g, '-').toLowerCase())
+            const companySlug = encodeURIComponent(schedule.operatorName.toLowerCase())
+            navigate(`/hold/${schedule.id}/${routeSlug}/${companySlug}?seat=${selectedSeat}`)
+          }}
           className={`rounded-xl h-12 w-full font-semibold text-[16px] text-white transition-colors ${
             selectedSeat !== null
               ? 'bg-[#1B7A3D] hover:bg-[#15632F]'
