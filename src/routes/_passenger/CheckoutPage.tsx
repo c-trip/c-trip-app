@@ -42,7 +42,7 @@ export default function CheckoutPage() {
       const elapsed = Math.floor((Date.now() - ts) / 1000)
       return Math.max(totalSeconds - elapsed, 0)
     }
-    return totalSeconds
+    return 0
   })
 
   useEffect(() => {
@@ -103,10 +103,12 @@ export default function CheckoutPage() {
     return true
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (isDisabled) return
     if (!validate()) return
     // TODO: API POST /bookings with { scheduleId, seat, nome, bi, telefone }
+    removeHeldSeat(scheduleId!, seatNum)
+    localStorage.removeItem(holdKey)
     gooeyToast.success('Pagamento processado', {
       description: `Bilhete para o lugar ${seatLabel} confirmado com sucesso.`,
     })
