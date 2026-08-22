@@ -13,6 +13,7 @@ import RegisterCompanyPage from '../routes/_auth/RegisterCompanyPage'
 import CheckoutPage from '../routes/_passenger/CheckoutPage'
 import PaymentPage from '../routes/_passenger/PaymentPage'
 import TicketPage from '../routes/_passenger/TicketPage'
+import TicketQrPage from '../routes/_passenger/TicketQrPage'
 import BookingsPage from '../routes/_passenger/BookingsPage'
 import BookingDetailPage from '../routes/_passenger/BookingDetailPage'
 import ProfilePage from '../routes/_passenger/ProfilePage'
@@ -62,6 +63,7 @@ export default function Router() {
       <Route path="/hold/:scheduleId/:routeSlug/:companySlug" element={<HoldPage />} />
 
       <Route path="/checkout/:scheduleId" element={<CheckoutPage />} />
+      <Route path="/ticket-qr/:scheduleId" element={<TicketQrPage />} />
       <Route path="/payment/:bookingId" element={<PaymentPage />} />
       <Route path="/ticket/:bookingId" element={<TicketPage />} />
       <Route path="/search-results/:origin" element={<OperatorsPage />} />

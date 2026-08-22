@@ -4,12 +4,7 @@ import { IconArrowLeft, IconUser, IconId, IconPhone, IconCheck, IconClock, IconC
 import { gooeyToast } from 'goey-toast'
 import { getScheduleById, getSeatMapBySchedule } from '@/data/mockSeats'
 import { readTimestamp, removeHeldSeat, HOLD_TOTAL_SECONDS } from '@/lib/seatHolds'
-
-function getSeatLabel(seatNum: number): string {
-  const row = Math.ceil(seatNum / 4)
-  const col = String.fromCharCode(65 + ((seatNum - 1) % 4))
-  return `${row}${col}`
-}
+import { getSeatLabel } from '@/lib/seats'
 
 export default function CheckoutPage() {
   const { scheduleId } = useParams<{ scheduleId: string }>()
@@ -155,8 +150,13 @@ export default function CheckoutPage() {
     gooeyToast.success('Pagamento processado', {
       description: `Bilhete para o lugar ${seatLabel} confirmado com sucesso.`,
     })
+    try {
+      sessionStorage.setItem(`ticket_passenger_${scheduleId}_${seatNum}`, nome)
+    } catch {
+      /* sessionStorage may be unavailable */
+    }
     if (redirectTimeoutRef.current) clearTimeout(redirectTimeoutRef.current)
-    redirectTimeoutRef.current = setTimeout(() => navigate('/bookings'), 2000)
+    redirectTimeoutRef.current = setTimeout(() => navigate(`/ticket-qr/${scheduleId}?seat=${seatNum}`), 2000)
   }
 
   if (!schedule || !seatIsValid) {
