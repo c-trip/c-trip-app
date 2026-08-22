@@ -210,11 +210,15 @@ export default function CheckoutPage() {
         </div>
       </div>
 
-      <form id="checkout-form" onSubmit={(e) => { e.preventDefault(); handleSubmit() }} className="px-6 py-6 flex flex-col items-center gap-6 flex-1">
+      <div aria-live="polite" className="sr-only">
+        {isExpired && 'Reserva expirada. Tempo esgotado.'}
+      </div>
+
+      <form key={holdKey} id="checkout-form" onSubmit={(e) => { e.preventDefault(); handleSubmit() }} className="px-6 py-6 flex flex-col items-center gap-6 flex-1">
         <div className="w-full max-w-[350px]">
-          <label className="block text-sm font-medium text-gray-700 mb-3 font-outfit">
+          <h2 className="block text-sm font-medium text-gray-700 mb-3 font-outfit">
             Dados do Passageiro (Lugar {seatLabel})
-          </label>
+          </h2>
 
           <div className="flex flex-col gap-4">
             <div>
@@ -276,10 +280,10 @@ export default function CheckoutPage() {
           </div>
         </div>
 
-        <div className="w-full max-w-[350px]">
-          <label className="block text-sm font-medium text-gray-700 mb-3 font-outfit">
+        <fieldset className="w-full max-w-[350px]">
+          <legend className="block text-sm font-medium text-gray-700 mb-3 font-outfit">
             Método de Pagamento
-          </label>
+          </legend>
           <button
             type="button"
             aria-pressed={selectedPayment === 'mcx'}
@@ -303,7 +307,7 @@ export default function CheckoutPage() {
               </div>
             </div>
           </button>
-        </div>
+        </fieldset>
       </form>
 
       <footer className="sticky bottom-0 flex flex-col items-center gap-3 border-t-2 border-[#E5E7EB] bg-white p-6">
