@@ -3,7 +3,6 @@ import { useParams, useNavigate, useSearchParams } from 'react-router'
 import { IconArrowLeft, IconUser, IconId, IconPhone, IconCheck, IconClock } from '@tabler/icons-react'
 import { gooeyToast } from 'goey-toast'
 import { getScheduleById } from '@/data/mockSeats'
-import { Card, CardContent } from '@/components/ui/card'
 import { readTimestamp, removeHeldSeat, HOLD_TOTAL_SECONDS } from '@/lib/seatHolds'
 
 function getSeatLabel(seatNum: number): string {
@@ -35,7 +34,7 @@ export default function CheckoutPage() {
   const [bi, setBi] = useState('')
   const [telefone, setTelefone] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [selectedPayment, setSelectedPayment] = useState<string | null>(null)
+  const [selectedPayment, setSelectedPayment] = useState<string | null>('mcx')
   const redirectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const [secondsLeft, setSecondsLeft] = useState(() => {
@@ -115,6 +114,14 @@ export default function CheckoutPage() {
   const handleSubmit = async () => {
     if (isDisabled) return
     if (!validate()) return
+    const current = readTimestamp(holdKey)
+    if (!current) {
+      gooeyToast.error('Reserva expirada', { description: 'A retenção já expirou. Selecione o lugar novamente.' })
+      removeHeldSeat(scheduleId!, seatNum)
+      localStorage.removeItem(holdKey)
+      redirectTimeoutRef.current = setTimeout(() => navigate(`/schedules/${scheduleId}`), 2000)
+      return
+    }
     setIsSubmitting(true)
     // TODO: API POST /bookings with { scheduleId, seat, nome, bi, telefone }
     removeHeldSeat(scheduleId!, seatNum)
@@ -247,13 +254,15 @@ export default function CheckoutPage() {
           <label className="block text-sm font-medium text-gray-700 mb-3 font-outfit">
             Método de Pagamento
           </label>
-          <Card
+          <button
+            type="button"
+            aria-pressed={selectedPayment === 'mcx'}
             onClick={() => setSelectedPayment('mcx')}
-            className={`rounded-2xl border-2 bg-white cursor-pointer transition-colors ${
+            className={`w-full rounded-2xl border-2 bg-white transition-colors text-left ${
               selectedPayment === 'mcx' ? 'border-[#1B7A3D]' : 'border-gray-200 hover:border-gray-300'
             }`}
           >
-            <CardContent className="flex items-center gap-3 py-4">
+            <div className="flex items-center gap-3 px-4 py-4">
               <div className={`flex h-10 w-10 items-center justify-center rounded-full ${
                 selectedPayment === 'mcx' ? 'bg-[#1B7A3D]' : 'bg-gray-200'
               }`}>
@@ -266,8 +275,8 @@ export default function CheckoutPage() {
                 <span className="text-sm font-bold text-gray-900 font-outfit">Multicaixa Express (MCX)</span>
                 <span className="text-xs text-gray-400 font-outfit">Pagamento rápido e seguro em Angola</span>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </button>
         </div>
       </main>
 
