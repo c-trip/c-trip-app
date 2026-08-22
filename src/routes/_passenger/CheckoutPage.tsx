@@ -66,7 +66,7 @@ export default function CheckoutPage() {
 
     intervalRef.current = setInterval(() => {
       const current = readTimestamp(holdKey)
-      if (!current) {
+    if (!current || Date.now() - current >= totalSeconds * 1000) {
         setSecondsLeft(0)
         removeHeldSeat(sid, seatNum)
         localStorage.removeItem(holdKey)
