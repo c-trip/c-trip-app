@@ -133,7 +133,7 @@ export default function CheckoutPage() {
     if (isDisabled) return
     if (!validate()) return
     const current = readTimestamp(holdKey)
-    if (!current) {
+    if (!current || Date.now() - current >= totalSeconds * 1000) {
       if (intervalRef.current) {
         clearInterval(intervalRef.current)
         intervalRef.current = null
