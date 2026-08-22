@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router'
 import { IconArrowLeft, IconUser, IconId, IconPhone, IconCheck } from '@tabler/icons-react'
 import { gooeyToast } from 'goey-toast'
 import { getScheduleById } from '@/data/mockSeats'
 import { Card, CardContent } from '@/components/ui/card'
+import { readTimestamp, removeHeldSeat, HOLD_TOTAL_SECONDS } from '@/lib/seatHolds'
 
 function getSeatLabel(seatNum: number): string {
   const row = Math.ceil(seatNum / 4)
@@ -18,6 +19,8 @@ export default function CheckoutPage() {
 
   const seatParam = searchParams.get('seat')
   const seatNum = /^\d+$/.test(seatParam ?? '') ? parseInt(seatParam!, 10) : NaN
+  const holdKey = `hold_${scheduleId}_${seatNum}`
+  const totalSeconds = HOLD_TOTAL_SECONDS
 
   const schedule = getScheduleById(scheduleId)
 
@@ -26,12 +29,89 @@ export default function CheckoutPage() {
     seatNum > 0 &&
     schedule !== undefined
 
+  const seatLabel = seatIsValid ? getSeatLabel(seatNum) : '—'
+
   const [nome, setNome] = useState('')
   const [bi, setBi] = useState('')
   const [telefone, setTelefone] = useState('')
-  const [errors, setErrors] = useState<{ nome?: string; bi?: string; telefone?: string }>({})
 
-  const seatLabel = seatIsValid ? getSeatLabel(seatNum) : '—'
+  const [secondsLeft, setSecondsLeft] = useState(() => {
+    if (!seatIsValid) return 0
+    const ts = readTimestamp(holdKey)
+    if (ts) {
+      const elapsed = Math.floor((Date.now() - ts) / 1000)
+      return Math.max(totalSeconds - elapsed, 0)
+    }
+    return totalSeconds
+  })
+
+  useEffect(() => {
+    if (!seatIsValid || !scheduleId) return
+
+    const sid = scheduleId
+
+    const id = setInterval(() => {
+      const current = readTimestamp(holdKey)
+      if (!current) {
+        setSecondsLeft(0)
+        removeHeldSeat(sid, seatNum)
+        localStorage.removeItem(holdKey)
+        clearInterval(id)
+        gooeyToast.error('Reserva expirada', { description: 'Tempo esgotado. Selecione o lugar novamente.' })
+        setTimeout(() => navigate(`/schedules/${sid}`), 2000)
+        return
+      }
+      const elapsed = Math.floor((Date.now() - current) / 1000)
+      const remaining = Math.max(totalSeconds - elapsed, 0)
+      if (remaining === 0) {
+        setSecondsLeft(0)
+        removeHeldSeat(sid, seatNum)
+        localStorage.removeItem(holdKey)
+        clearInterval(id)
+        gooeyToast.error('Reserva expirada', { description: 'Tempo esgotado. Selecione o lugar novamente.' })
+        setTimeout(() => navigate(`/schedules/${sid}`), 2000)
+      } else {
+        setSecondsLeft(remaining)
+      }
+    }, 1000)
+
+    return () => clearInterval(id)
+  }, [holdKey, totalSeconds, seatIsValid, scheduleId, seatNum, navigate])
+
+  const minutes = Math.floor(secondsLeft / 60)
+  const seconds = secondsLeft % 60
+  const timeDisplay = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+  const isUrgent = secondsLeft <= 60 && secondsLeft > 0
+  const isExpired = secondsLeft === 0
+
+  const isFormEmpty = !nome.trim() || !bi.trim() || !telefone.trim()
+  const isDisabled = isExpired || isFormEmpty
+
+  const validate = () => {
+    if (!nome.trim()) {
+      gooeyToast.error('Campo obrigatório', { description: 'Introduza o seu nome completo.' })
+      return false
+    }
+    if (!bi.trim()) {
+      gooeyToast.error('Campo obrigatório', { description: 'Introduza o número do BI ou passaporte.' })
+      return false
+    }
+    if (!telefone.trim()) {
+      gooeyToast.error('Campo obrigatório', { description: 'Introduza um número de telefone válido.' })
+      return false
+    }
+    return true
+  }
+
+  const handleSubmit = () => {
+    if (isDisabled) return
+    if (!validate()) return
+    // TODO: API POST /bookings with { scheduleId, seat, nome, bi, telefone }
+    gooeyToast.success('Pagamento processado', {
+      description: `Bilhete para o lugar ${seatLabel} confirmado com sucesso.`,
+    })
+    setTimeout(() => navigate('/bookings'), 2000)
+  }
 
   if (!schedule || !seatIsValid) {
     return (
@@ -52,24 +132,6 @@ export default function CheckoutPage() {
     )
   }
 
-  const validate = () => {
-    const newErrors: { nome?: string; bi?: string; telefone?: string } = {}
-    if (!nome || nome.trim().length < 2) newErrors.nome = 'Nome deve ter pelo menos 2 caracteres'
-    if (!bi || bi.trim().length < 4) newErrors.bi = 'Introduza o número do BI ou passaporte'
-    if (!telefone || telefone.trim().length < 9) newErrors.telefone = 'Introduza um número de telefone válido'
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
-  const handleSubmit = () => {
-    if (!validate()) return
-    // TODO: API POST /bookings with { scheduleId, seat, nome, bi, telefone }
-    gooeyToast.success('Pagamento processado', {
-      description: `Bilhete para o lugar ${seatLabel} confirmado com sucesso.`,
-    })
-    setTimeout(() => navigate('/bookings'), 2000)
-  }
-
   return (
     <div className="min-h-screen bg-gray-50 font-outfit flex flex-col">
       <header className="sticky top-0 z-20 border-b border-gray-200 bg-white px-4 py-4">
@@ -77,8 +139,7 @@ export default function CheckoutPage() {
           <button
             onClick={() => navigate(-1)}
             aria-label="Voltar"
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 transition-colors 
-            hover:bg-gray-200"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 transition-colors hover:bg-gray-200"
           >
             <IconArrowLeft className="h-5 w-5 text-gray-700" />
           </button>
@@ -89,9 +150,30 @@ export default function CheckoutPage() {
         </div>
       </header>
 
+      <div className={`sticky top-[72px] z-10 px-6 py-3 flex items-center
+       gap-2 border-b ${isUrgent ? 'bg-red-50 border-red-300' : 'bg-[#FEF3C7] border-gray-200'}`}>
+        <div className={`h-7 w-7 border-2 p-0.5 flex border-[#F59E0B] rounded-full
+         justify-center items-center bg-white ${isUrgent ? '!border-red-500' : ''}`}>
+          <p className={`font-bold text-[11px] ${isUrgent ? '!text-red-500' : 'text-[#F59E0B]'}`}>
+            {isExpired ? '0m' : `${minutes}m`}
+          </p>
+        </div>
+        <div className="flex flex-col">
+          <div className="flex gap-2 items-center">
+            <p className={`text-[14px] font-bold ${isUrgent ? 'text-red-500' : 'text-[#111827]'}`}>
+              {isExpired ? '00:00' : timeDisplay}
+            </p>
+            <span className="text-[10px] text-gray-400">
+              {isExpired ? 'Reserva expirada' : 'Restantes'}
+            </span>
+          </div>
+          <p className="text-[12px] text-[#4B5563]">Conclua o pagamento para garantir o seu bilhete.</p>
+        </div>
+      </div>
+
       <main className="px-6 py-6 flex flex-col items-center gap-6 flex-1">
         <div className="w-full max-w-[350px]">
-          <label className="block text-[15px] font-bold text-gray-700 mb-3 font-outfit">
+          <label className="block text-sm font-medium text-gray-700 mb-3 font-outfit">
             Dados do Passageiro (Lugar {seatLabel})
           </label>
 
@@ -107,12 +189,11 @@ export default function CheckoutPage() {
                   value={nome}
                   onChange={(e) => setNome(e.target.value)}
                   placeholder="Introduza o seu nome completo"
-                  className={`w-full rounded-xl border ${errors.nome ? 'border-red-500' : 'border-gray-300'} bg-gray-50 pl-10 pr-4 h-12
+                  className="w-full rounded-xl border border-gray-300 bg-gray-50 pl-10 pr-4 h-12
                    text-sm font-outfit text-gray-800 outline-none transition-colors
-                   focus:border-green-500`}
+                   focus:border-green-500"
                 />
               </div>
-              {errors.nome && <p className="text-red-500 text-xs mt-1 font-outfit">{errors.nome}</p>}
             </div>
 
             <div>
@@ -126,12 +207,11 @@ export default function CheckoutPage() {
                   value={bi}
                   onChange={(e) => setBi(e.target.value)}
                   placeholder="Ex: 001234567LA045"
-                  className={`w-full rounded-xl border ${errors.bi ? 'border-red-500' : 'border-gray-300'} bg-gray-50 pl-10 pr-4 h-12
+                  className="w-full rounded-xl border border-gray-300 bg-gray-50 pl-10 pr-4 h-12
                    text-sm font-outfit text-gray-800 outline-none transition-colors
-                   focus:border-green-500`}
+                   focus:border-green-500"
                 />
               </div>
-              {errors.bi && <p className="text-red-500 text-xs mt-1 font-outfit">{errors.bi}</p>}
             </div>
 
             <div>
@@ -145,12 +225,11 @@ export default function CheckoutPage() {
                   value={telefone}
                   onChange={(e) => setTelefone(e.target.value)}
                   placeholder="Ex: 923 456 789"
-                  className={`w-full rounded-xl border ${errors.telefone ? 'border-red-500' : 'border-gray-300'} bg-gray-50 pl-10 pr-4 h-12
+                  className="w-full rounded-xl border border-gray-300 bg-gray-50 pl-10 pr-4 h-12
                    text-sm font-outfit text-gray-800 outline-none transition-colors
-                   focus:border-green-500`}
+                   focus:border-green-500"
                 />
               </div>
-              {errors.telefone && <p className="text-red-500 text-xs mt-1 font-outfit">{errors.telefone}</p>}
             </div>
           </div>
         </div>
@@ -159,7 +238,7 @@ export default function CheckoutPage() {
           <label className="block text-sm font-medium text-gray-700 mb-3 font-outfit">
             Método de Pagamento
           </label>
-          <Card className="rounded-2xl border-2 border-[#1B7A3D] bg-white cursor-pointer">
+          <Card className="rounded-2xl border-2 border-[#1B7A3D] bg-white">
             <CardContent className="flex items-center gap-3 py-4">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1B7A3D]">
                 <IconCheck className="h-5 w-5 text-white" />
@@ -179,9 +258,10 @@ export default function CheckoutPage() {
           <span className="text-xl font-extrabold text-[#1B7A3D] font-outfit">{schedule.price}</span>
         </div>
         <button
+          disabled={isDisabled}
           onClick={handleSubmit}
           className="w-full max-w-[350px] rounded-xl h-12 font-semibold text-[16px] text-white
-           bg-[#1B7A3D] hover:bg-[#15632F] transition-colors"
+           bg-[#1B7A3D] hover:bg-[#15632F] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Confirmar e Pagar
         </button>
