@@ -1,4 +1,4 @@
-const HOLD_MINUTES = 3
+const HOLD_MINUTES = 10
 export const HOLD_MS = HOLD_MINUTES * 60 * 1000
 export const HOLD_TOTAL_SECONDS = HOLD_MINUTES * 60
 

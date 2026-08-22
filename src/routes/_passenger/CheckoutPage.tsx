@@ -41,6 +41,7 @@ export default function CheckoutPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [selectedPayment, setSelectedPayment] = useState<string | null>(null)
   const redirectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const [secondsLeft, setSecondsLeft] = useState(() => {
     if (!seatIsValid) return 0
@@ -63,13 +64,13 @@ export default function CheckoutPage() {
 
     const sid = scheduleId
 
-    const id = setInterval(() => {
+    intervalRef.current = setInterval(() => {
       const current = readTimestamp(holdKey)
       if (!current) {
         setSecondsLeft(0)
         removeHeldSeat(sid, seatNum)
         localStorage.removeItem(holdKey)
-        clearInterval(id)
+        clearInterval(intervalRef.current!)
         gooeyToast.error('Reserva expirada', { description: 'Tempo esgotado. Selecione o lugar novamente.' })
         if (redirectTimeoutRef.current) clearTimeout(redirectTimeoutRef.current)
         redirectTimeoutRef.current = setTimeout(() => navigate(`/schedules/${sid}`), 2000)
@@ -81,7 +82,7 @@ export default function CheckoutPage() {
         setSecondsLeft(0)
         removeHeldSeat(sid, seatNum)
         localStorage.removeItem(holdKey)
-        clearInterval(id)
+        clearInterval(intervalRef.current!)
         gooeyToast.error('Reserva expirada', { description: 'Tempo esgotado. Selecione o lugar novamente.' })
         if (redirectTimeoutRef.current) clearTimeout(redirectTimeoutRef.current)
         redirectTimeoutRef.current = setTimeout(() => navigate(`/schedules/${sid}`), 2000)
@@ -91,7 +92,7 @@ export default function CheckoutPage() {
     }, 1000)
 
     return () => {
-      clearInterval(id)
+      if (intervalRef.current) clearInterval(intervalRef.current)
       if (redirectTimeoutRef.current) {
         clearTimeout(redirectTimeoutRef.current)
         redirectTimeoutRef.current = null
@@ -142,6 +143,7 @@ export default function CheckoutPage() {
       return
     }
     setIsSubmitting(true)
+    if (intervalRef.current) clearInterval(intervalRef.current)
     // TODO: API POST /bookings with { scheduleId, seat, nome, bi, telefone }
     removeHeldSeat(scheduleId!, seatNum)
     localStorage.removeItem(holdKey)
