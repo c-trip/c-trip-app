@@ -39,7 +39,7 @@ export default function CheckoutPage() {
   const [bi, setBi] = useState('')
   const [telefone, setTelefone] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [selectedPayment, setSelectedPayment] = useState<string | null>('mcx')
+  const [selectedPayment, setSelectedPayment] = useState<string | null>(null)
   const redirectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const [secondsLeft, setSecondsLeft] = useState(() => {
