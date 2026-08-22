@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router'
-import QRCode from 'qrcode'
-import { IconShieldCheckFilled } from '@tabler/icons-react'
+import { IconShieldCheckFilled, IconShare2, IconDownload } from '@tabler/icons-react'
 import { getScheduleById } from '@/data/mockSeats'
+import { generateTicketQR } from '@/lib/qr'
 
 function getSeatLabel(seatNum: number): string {
   const row = Math.ceil(seatNum / 4)
@@ -16,14 +16,15 @@ export default function TicketQrPage() {
   const navigate = useNavigate()
   const seatParam = searchParams.get('seat')
   const seatNum = /^\d+$/.test(seatParam ?? '') ? parseInt(seatParam!, 10) : NaN
-  const seatLabel = Number.isFinite(seatNum) ? getSeatLabel(seatNum) : '—'
+  const seatLabel = Number.isFinite(seatNum) ? getSeatLabel(seatNum) : '\u2014'
   const schedule = getScheduleById(scheduleId)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
 
   const [qrDataUrl, setQrDataUrl] = useState('')
 
   useEffect(() => {
     if (!schedule) return
-    const payload = JSON.stringify({
+    generateTicketQR({
       scheduleId: schedule.id,
       operator: schedule.operatorName,
       origin: schedule.origin,
@@ -32,17 +33,34 @@ export default function TicketQrPage() {
       time: schedule.departureTime,
       seat: seatLabel,
       plate: schedule.busPlate,
-    })
-    QRCode.toDataURL(payload, { width: 200, margin: 2, errorCorrectionLevel: 'M' })
-      .then(setQrDataUrl)
-      .catch(console.error)
+    }).then(setQrDataUrl).catch(console.error)
   }, [schedule, seatLabel])
+
+  const handleDownload = () => {
+    if (!qrDataUrl) return
+    const link = document.createElement('a')
+    link.href = qrDataUrl
+    link.download = `bilhete-${scheduleId}-${seatLabel}.png`
+    link.click()
+  }
+
+  const handleShare = async () => {
+    const shareData = {
+      title: `Bilhete ${schedule?.operatorName}`,
+      text: `Bilhete de ${schedule?.origin} para ${schedule?.destination} - Lugar ${seatLabel}`,
+    }
+    if (navigator.share) {
+      await navigator.share(shareData).catch(() => {})
+    } else {
+      await navigator.clipboard.writeText(shareData.text)
+    }
+  }
 
   if (!schedule) {
     return (
       <div className="min-h-screen bg-gray-50 font-outfit flex flex-col">
-        <header className="border-b border-gray-200 bg-white px-4 py-4">
-          <h1 className="text-lg font-bold  text-gray-900">Bilhete confirmado</h1>
+        <header className="border-b border-gray-200 bg-white px-6 py-4">
+          <h1 className="text-lg font-bold text-center text-gray-900">Bilhete confirmado</h1>
         </header>
       </div>
     )
@@ -50,8 +68,9 @@ export default function TicketQrPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 font-outfit flex flex-col">
+      <canvas ref={canvasRef} className="hidden" />
       <header className="border-b border-gray-200 bg-white px-6 py-4">
-        <h1 className="text-lg font-bold  text-gray-900">Bilhete confirmado</h1>
+        <h1 className="text-lg font-bold text-gray-900">Bilhete confirmado</h1>
       </header>
 
       <div className="flex flex-col items-center gap-4 px-6 py-6 flex-1">
@@ -66,43 +85,66 @@ export default function TicketQrPage() {
             <p className="text-sm text-gray-500">{schedule.origin} → {schedule.destination}</p>
           </div>
 
-          <div className="flex justify-center py-6">
+          <div className="flex flex-col items-center justify-center py-6">
             {qrDataUrl ? (
               <img src={qrDataUrl} alt="Código QR do bilhete" className="h-[180px] w-[180px]" />
             ) : (
               <div className="h-[180px] w-[180px] bg-gray-100 rounded-lg animate-pulse" />
             )}
+            <p className="text-[8px] w-[120px] text-center">
+              COMFIRMED TRAVEL TICKET REF: CTP-004829-AO
+            </p>
+            <p className="text-[#4B5563] text-[12px] mt-2">
+              REF: CTP-004829-AO
+            </p>
           </div>
 
-          <div className="mx-6 border-t border-dashed border-gray-300" />
-
-          <div className="px-6 py-2">
-            <p className="text-xs text-gray-400 mb-1">Passageiro</p>
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <p className="text-sm font-bold text-gray-900">{schedule.driverName}</p>
+          <div className="border-t border-dashed border-gray-300" />
+          <div className="flex flex-col gap-2 mx-6 py-2">
+            <div className="flex items-center justify-between">
+              <div className="flex flex-col">
+                <p className="text-[11px] text-[#4B5563] font-normal">Passageiro</p>
+                <p className="text-[13px] text-[#111827] font-semibold">{schedule.driverName}</p>
               </div>
-              <div className="text-right">
-                <p className="text-xs text-gray-400">N.º do Lugar</p>
-                <p className="text-sm font-bold text-gray-900">{seatLabel}</p>
+              <div>
+                <p className="text-[11px] text-[#4B5563] font-normal">N do lugar</p>
+                <p className="text-[13px] text-[#1B7A3D] font-semibold">{seatLabel}</p>
               </div>
             </div>
-
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-xs text-gray-400">Data da Viagem</p>
-                <p className="text-sm font-bold text-gray-900">{schedule.departureDate}</p>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex flex-col">
+                <p className="text-[11px] text-[#4B5563] font-normal">Data da Viagem</p>
+                <p className="text-[13px] text-[#111827] font-semibold">{schedule.departureDate}</p>
               </div>
-              <div className="text-right">
-                <p className="text-xs text-gray-400">Hora de Partida</p>
-                <p className="text-sm font-bold text-gray-900">{schedule.departureTime}</p>
+              <div>
+                <p className="text-[11px] text-[#4B5563] font-normal">Hora de partida</p>
+                <p className="text-[13px] text-[#111827] font-semibold">{schedule.departureTime}</p>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <footer className="sticky bottom-0 flex justify-center border-t-2 border-[#E5E7EB] bg-white p-6">
+      <footer className="sticky bottom-0 gap-4 flex-col items-center flex justify-center border-t-2
+       border-[#E5E7EB] bg-white p-6">
+        <div className="flex items-center justify-between gap-2">
+          <button
+            onClick={handleShare}
+            className="text-[#1B7A3D] border-[#1B7A3D] rounded-xl border-2 h-11 w-[170px]
+            flex items-center justify-center gap-2"
+          >
+            <IconShare2 />
+            <p>Partilhar</p>
+          </button>
+          <button
+            onClick={handleDownload}
+            className="text-[#1B7A3D] border-[#1B7A3D] rounded-xl border-2 h-11 w-[170px]
+            flex items-center justify-center gap-2"
+          >
+            <IconDownload />
+            <p>Baixar</p>
+          </button>
+        </div>
         <button
           onClick={() => navigate('/search')}
           className="w-full max-w-[350px] rounded-xl h-12 font-semibold text-[16px] text-white
