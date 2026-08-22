@@ -332,7 +332,7 @@ export default function TicketQrPage() {
         </div>
       </header>
 
-      <main className="flex flex-1 flex-col items-center gap-6 px-6 py-6">
+      <main className="flex flex-1 flex-col items-center gap-6 px-6 py-6 pb-[180px]">
         <div className="flex items-center justify-center gap-1 rounded-3xl bg-[#D1FAE5] px-3 py-1">
           <IconShieldCheckFilled className="h-2.5 w-3 text-[#10B981]" />
           <span className="text-[11px] font-semibold text-[#10B981]">Disponivel OFFLINE</span>
@@ -402,12 +402,12 @@ export default function TicketQrPage() {
           </div>
         </section>
 
-        <footer className="sticky bottom-0 z-10 flex w-full max-w-[350px] flex-col items-center gap-4 border-t-2 border-gray-200 bg-white p-6">
+        <footer className="fixed bottom-0 inset-x-0 z-10 flex flex-col items-center gap-4 border-t-2 border-gray-200 bg-white p-6">
           <div className="flex items-center gap-2">
             <button
               onClick={() => void handleShare()}
               disabled={isSharing || isDownloading}
-              className="flex h-11 w-[170px] items-center justify-center gap-2 rounded-xl border-2 border-[#1B7A3D] text-[#1B7A3D] transition-colors hover:bg-[#1B7A3D]/5 disabled:opacity-50"
+              className="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border-2 border-[#1B7A3D] text-[#1B7A3D] transition-colors hover:bg-[#1B7A3D]/5 disabled:opacity-50"
             >
               {isSharing ? <IconLoader2 className="h-5 w-5 animate-spin" /> : <IconShare2 className="h-5 w-5" />}
               <p className="text-sm font-semibold">{isSharing ? 'A partilhar...' : 'Partilhar'}</p>
@@ -415,7 +415,7 @@ export default function TicketQrPage() {
             <button
               onClick={() => void handleDownload()}
               disabled={isDownloading || isSharing}
-              className="flex h-11 w-[170px] items-center justify-center gap-2 rounded-xl border-2 border-[#1B7A3D] text-[#1B7A3D] transition-colors hover:bg-[#1B7A3D]/5 disabled:opacity-50"
+              className="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border-2 border-[#1B7A3D] text-[#1B7A3D] transition-colors hover:bg-[#1B7A3D]/5 disabled:opacity-50"
             >
               {isDownloading ? <IconLoader2 className="h-5 w-5 animate-spin" /> : <IconDownload className="h-5 w-5" />}
               <p className="text-sm font-semibold">{isDownloading ? 'A baixar...' : 'Baixar'}</p>
@@ -423,7 +423,7 @@ export default function TicketQrPage() {
           </div>
           <button
             onClick={() => navigate('/search')}
-            className="h-12 w-full max-w-[350px] rounded-xl bg-[#1B7A3D] text-[16px] font-semibold text-white transition-colors hover:bg-[#15632F]"
+            className="h-12 w-full rounded-xl bg-[#1B7A3D] text-[16px] font-semibold text-white transition-colors hover:bg-[#15632F]"
           >
             Voltar ao Inicio
           </button>
