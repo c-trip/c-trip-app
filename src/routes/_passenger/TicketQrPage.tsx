@@ -407,7 +407,7 @@ export default function TicketQrPage() {
             <button
               onClick={() => void handleShare()}
               disabled={isSharing || isDownloading}
-              className="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border-2 border-[#1B7A3D] text-[#1B7A3D] transition-colors hover:bg-[#1B7A3D]/5 disabled:opacity-50"
+              className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl border-2 border-[#1B7A3D] text-[#1B7A3D] transition-colors hover:bg-[#1B7A3D]/5 disabled:opacity-50"
             >
               {isSharing ? <IconLoader2 className="h-5 w-5 animate-spin" /> : <IconShare2 className="h-5 w-5" />}
               <p className="text-sm font-semibold">{isSharing ? 'A partilhar...' : 'Partilhar'}</p>
@@ -415,7 +415,7 @@ export default function TicketQrPage() {
             <button
               onClick={() => void handleDownload()}
               disabled={isDownloading || isSharing}
-              className="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border-2 border-[#1B7A3D] text-[#1B7A3D] transition-colors hover:bg-[#1B7A3D]/5 disabled:opacity-50"
+              className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl border-2 border-[#1B7A3D] text-[#1B7A3D] transition-colors hover:bg-[#1B7A3D]/5 disabled:opacity-50"
             >
               {isDownloading ? <IconLoader2 className="h-5 w-5 animate-spin" /> : <IconDownload className="h-5 w-5" />}
               <p className="text-sm font-semibold">{isDownloading ? 'A baixar...' : 'Baixar'}</p>
