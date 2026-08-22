@@ -134,6 +134,10 @@ export default function CheckoutPage() {
     if (!validate()) return
     const current = readTimestamp(holdKey)
     if (!current) {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+        intervalRef.current = null
+      }
       setSecondsLeft(0)
       gooeyToast.error('Reserva expirada', { description: 'A retenção já expirou. Selecione o lugar novamente.' })
       removeHeldSeat(scheduleId!, seatNum)
@@ -206,7 +210,7 @@ export default function CheckoutPage() {
         </div>
       </div>
 
-      <main className="px-6 py-6 flex flex-col items-center gap-6 flex-1">
+      <form id="checkout-form" onSubmit={(e) => { e.preventDefault(); handleSubmit() }} className="px-6 py-6 flex flex-col items-center gap-6 flex-1">
         <div className="w-full max-w-[350px]">
           <label className="block text-sm font-medium text-gray-700 mb-3 font-outfit">
             Dados do Passageiro (Lugar {seatLabel})
@@ -300,7 +304,7 @@ export default function CheckoutPage() {
             </div>
           </button>
         </div>
-      </main>
+      </form>
 
       <footer className="sticky bottom-0 flex flex-col items-center gap-3 border-t-2 border-[#E5E7EB] bg-white p-6">
         <div className="flex justify-between w-full max-w-[350px]">
@@ -308,8 +312,9 @@ export default function CheckoutPage() {
           <span className="text-xl font-extrabold text-[#1B7A3D] font-outfit">{schedule.price}</span>
         </div>
         <button
+          type="submit"
+          form="checkout-form"
           disabled={isDisabled}
-          onClick={handleSubmit}
           className="w-full max-w-[350px] rounded-xl h-12 font-semibold text-[16px] text-white
            bg-[#1B7A3D] hover:bg-[#15632F] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
