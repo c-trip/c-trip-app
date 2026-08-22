@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router'
-import { IconArrowLeft, IconUser, IconId, IconPhone, IconCheck, IconClock } from '@tabler/icons-react'
+import { IconArrowLeft, IconUser, IconId, IconPhone, IconCheck, IconClock, IconCircleDot } from '@tabler/icons-react'
 import { gooeyToast } from 'goey-toast'
-import { getScheduleById } from '@/data/mockSeats'
+import { getScheduleById, getSeatMapBySchedule } from '@/data/mockSeats'
 import { readTimestamp, removeHeldSeat, HOLD_TOTAL_SECONDS } from '@/lib/seatHolds'
 
 function getSeatLabel(seatNum: number): string {
@@ -22,11 +22,16 @@ export default function CheckoutPage() {
   const totalSeconds = HOLD_TOTAL_SECONDS
 
   const schedule = getScheduleById(scheduleId)
+  const seatMap = getSeatMapBySchedule(scheduleId)
 
   const seatIsValid =
     Number.isFinite(seatNum) &&
     seatNum > 0 &&
-    schedule !== undefined
+    schedule !== undefined &&
+    seatMap !== undefined &&
+    seatNum <= seatMap.totalSeats &&
+    !seatMap.occupied.includes(seatNum) &&
+    !seatMap.reserved.includes(seatNum)
 
   const seatLabel = seatIsValid ? getSeatLabel(seatNum) : '—'
 
@@ -268,7 +273,7 @@ export default function CheckoutPage() {
               }`}>
                 {selectedPayment === 'mcx'
                   ? <IconCheck className="h-5 w-5 text-white" />
-                  : <span className="text-sm font-bold text-gray-500">MCX</span>
+                  : <IconCircleDot className="h-5 w-5 text-gray-400" />
                 }
               </div>
               <div className="flex flex-col">
