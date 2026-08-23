@@ -108,9 +108,7 @@ async function generateTicketCardImage(qrDataUrl: string, info: {
     ctx.fillRect(0, 0, W, H)
 
     ctx.fillStyle = '#1B7A3D'
-    ctx.beginPath()
-    ctx.roundRect(0, 0, W, 64, [16, 16, 0, 0])
-    ctx.fill()
+    ctx.fillRect(0, 0, W, 64)
 
     ctx.fillStyle = '#ffffff'
     ctx.font = 'bold 18px sans-serif'
@@ -129,21 +127,20 @@ async function generateTicketCardImage(qrDataUrl: string, info: {
     ctx.fillText(`${info.departureDate} · ${info.departureTime} – ${info.arrivalTime}`, 20, 118)
 
     ctx.fillStyle = '#F3F4F6'
-    ctx.beginPath()
-    ctx.roundRect(16, 136, W - 32, 190, 12)
-    ctx.fill()
+    ctx.fillRect(16, 136, W - 32, 190)
 
     if (qrDataUrl) {
       const img = new Image()
-      img.crossOrigin = 'anonymous'
       await new Promise<void>((resolve) => {
         img.onload = () => resolve()
         img.onerror = () => resolve()
         img.src = qrDataUrl
       })
-      const qrSize = 140
-      const qrX = (W - qrSize) / 2
-      ctx.drawImage(img, qrX, 148, qrSize, qrSize)
+      if (img.naturalWidth > 0) {
+        const qrSize = 140
+        const qrX = (W - qrSize) / 2
+        ctx.drawImage(img, qrX, 148, qrSize, qrSize)
+      }
     }
 
     ctx.fillStyle = '#6B7280'
@@ -153,10 +150,10 @@ async function generateTicketCardImage(qrDataUrl: string, info: {
     ctx.textAlign = 'left'
 
     const lines = [
-      { label: 'Passageiro', value: info.passengerName || '—' },
-      { label: 'Lugar', value: info.seatLabel },
-      { label: 'Referência', value: info.ticketRef },
-      { label: 'Viatura', value: info.busPlate },
+      { label: 'PASSAGEIRO', value: info.passengerName || '—' },
+      { label: 'LUGAR', value: info.seatLabel },
+      { label: 'REFERÊNCIA', value: info.ticketRef },
+      { label: 'VIATURA', value: info.busPlate },
     ]
 
     let y = 340
@@ -166,7 +163,7 @@ async function generateTicketCardImage(qrDataUrl: string, info: {
       if (col === 0 && i > 0) y += 38
       ctx.fillStyle = '#9CA3AF'
       ctx.font = '10px sans-serif'
-      ctx.fillText(lines[i].label.toUpperCase(), x, y)
+      ctx.fillText(lines[i].label, x, y)
       ctx.fillStyle = '#111827'
       ctx.font = 'bold 13px sans-serif'
       ctx.fillText(lines[i].value, x, y + 16)
@@ -184,7 +181,6 @@ async function generateTicketCardImage(qrDataUrl: string, info: {
     ctx.font = '11px sans-serif'
     ctx.textAlign = 'center'
     ctx.fillText('Apresente este bilhete no embarque', W / 2, H - 24)
-    ctx.textAlign = 'left'
 
     const blob = await new Promise<Blob | null>((resolve) =>
       canvas.toBlob(resolve, 'image/png'),
@@ -355,31 +351,6 @@ export default function TicketQrPage() {
     }
   }
 
-  const copyTicketToClipboard = async (): Promise<boolean> => {
-    if (!qrDataUrl) return false
-    try {
-      const file = await generateTicketCardImage(qrDataUrl, {
-        operatorName: schedule.operatorName,
-        origin: schedule.origin,
-        destination: schedule.destination,
-        departureDate: schedule.departureDate,
-        departureTime: schedule.departureTime,
-        arrivalTime: schedule.arrivalTime,
-        seatLabel,
-        passengerName,
-        ticketRef,
-        busPlate: schedule.busPlate,
-      })
-      if (!file) return false
-      await navigator.clipboard.write([
-        new ClipboardItem({ 'image/png': file }),
-      ])
-      return true
-    } catch {
-      return false
-    }
-  }
-
   if (!schedule || !seatIsValid) {
     return (
       <div className="min-h-screen bg-gray-50 font-outfit flex flex-col">
@@ -429,20 +400,72 @@ export default function TicketQrPage() {
         Facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedPageUrl}&quote=${encodedText}`,
       }
 
-      const imageCopied = await copyTicketToClipboard()
+      const file = await generateTicketCardImage(qrDataUrl!, {
+        operatorName: schedule.operatorName,
+        origin: schedule.origin,
+        destination: schedule.destination,
+        departureDate: schedule.departureDate,
+        departureTime: schedule.departureTime,
+        arrivalTime: schedule.arrivalTime,
+        seatLabel,
+        passengerName,
+        ticketRef,
+        busPlate: schedule.busPlate,
+      })
+
+      if (file) {
+        const blobUrl = URL.createObjectURL(file)
+        const a = document.createElement('a')
+        a.href = blobUrl
+        a.download = file.name
+        a.click()
+        URL.revokeObjectURL(blobUrl)
+      }
+
       const url = shareUrls[app.name]
       if (url) window.open(url, '_blank', 'noopener,noreferrer')
       gooeyToast.success(`A abrir ${app.name}`, {
-        description: imageCopied ? 'Imagem do bilhete copiada. Cole na conversa com Ctrl+V.' : 'Cole o texto na conversa.',
+        description: 'Imagem do bilhete descarregada. Anexe-a na conversa.',
       })
     } else {
-      const imageCopied = await copyTicketToClipboard()
-      if (!imageCopied) {
-        await navigator.clipboard.writeText(shareText)
-      }
-      gooeyToast.success('Copiado', {
-        description: imageCopied ? `Imagem do bilhete copiada. Abra o ${app.name} e cole na conversa.` : `Texto copiado. Abra o ${app.name} e cole na conversa.`,
+      const file = await generateTicketCardImage(qrDataUrl!, {
+        operatorName: schedule.operatorName,
+        origin: schedule.origin,
+        destination: schedule.destination,
+        departureDate: schedule.departureDate,
+        departureTime: schedule.departureTime,
+        arrivalTime: schedule.arrivalTime,
+        seatLabel,
+        passengerName,
+        ticketRef,
+        busPlate: schedule.busPlate,
       })
+
+      if (file) {
+        try {
+          await navigator.clipboard.write([
+            new ClipboardItem({ 'image/png': file }),
+          ])
+          gooeyToast.success('Copiado', {
+            description: `Imagem do bilhete copiada. Abra o ${app.name} e cole na conversa.`,
+          })
+        } catch {
+          const blobUrl = URL.createObjectURL(file)
+          const a = document.createElement('a')
+          a.href = blobUrl
+          a.download = file.name
+          a.click()
+          URL.revokeObjectURL(blobUrl)
+          gooeyToast.success('Descarregado', {
+            description: `Imagem do bilhete descarregada. Abra o ${app.name} e anexe-a.`,
+          })
+        }
+      } else {
+        await navigator.clipboard.writeText(shareText)
+        gooeyToast.success('Copiado', {
+          description: `Texto copiado. Abra o ${app.name} e cole na conversa.`,
+        })
+      }
     }
     setIsShareOpen(false)
   }
