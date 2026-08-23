@@ -78,8 +78,8 @@ export default function OperatorsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 font-outfit">
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
-        <header className="px-4 py-4">
+      <div className="sticky top-0 z-10">
+        <div className="bg-white border-b border-gray-200 px-4 py-4">
           <div className="flex items-center gap-3">
             <button
               onClick={() => navigate(-1)}
@@ -92,9 +92,9 @@ export default function OperatorsPage() {
               <p className="text-xs text-gray-400">{filteredOperators.length} operadores disponíveis</p>
             </div>
           </div>
-        </header>
+        </div>
 
-        <div className="flex gap-2 overflow-x-auto px-5 pb-3 scrollbar-none">
+        <div className="flex gap-2 overflow-x-auto px-5 py-3 scrollbar-none">
           {TABS.map((tab) => (
             <button
               key={tab.value}
