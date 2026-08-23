@@ -78,36 +78,38 @@ export default function OperatorsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 font-outfit">
-      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white px-4 py-4">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 transition-colors hover:bg-gray-200"
-          >
-            <IconArrowLeft className="h-5 w-5 text-gray-700" />
-          </button>
-          <div>
-            <h1 className="text-lg font-bold text-gray-900">{title}</h1>
-            <p className="text-xs text-gray-400">{filteredOperators.length} operadores disponíveis</p>
+      <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
+        <header className="px-4 py-4">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate(-1)}
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 transition-colors hover:bg-gray-200"
+            >
+              <IconArrowLeft className="h-5 w-5 text-gray-700" />
+            </button>
+            <div>
+              <h1 className="text-lg font-bold text-gray-900">{title}</h1>
+              <p className="text-xs text-gray-400">{filteredOperators.length} operadores disponíveis</p>
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <div className="flex gap-2 overflow-x-auto px-5 pt-4 scrollbar-none">
-        {TABS.map((tab) => (
-          <button
-            key={tab.value}
-            onClick={() => setActiveTab(tab.value)}
-            aria-pressed={activeTab === tab.value}
+        <div className="flex gap-2 overflow-x-auto px-5 pb-3 scrollbar-none">
+          {TABS.map((tab) => (
+            <button
+              key={tab.value}
+              onClick={() => setActiveTab(tab.value)}
+              aria-pressed={activeTab === tab.value}
               className={`whitespace-nowrap rounded-full py-2 px-3.5 text-[13px] font-semibold font-outfit border transition-colors ${
-              activeTab === tab.value
-                ? 'bg-[#1B7A3D] text-white border-[#1B7A3D]'
-                : 'bg-white text-black border-gray-200'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+                activeTab === tab.value
+                  ? 'bg-[#1B7A3D] text-white border-[#1B7A3D]'
+                  : 'bg-white text-black border-gray-200'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <main className="px-5 py-5">
