@@ -220,6 +220,8 @@ export default function TicketQrPage() {
   const [isSharing, setIsSharing] = useState(false)
   const [isDownloading, setIsDownloading] = useState(false)
   const closeButtonRef = useRef<HTMLButtonElement>(null)
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
 
   const ticketRef = `CTP-${(scheduleId ?? '').toUpperCase()}-${seatLabel}`
 
@@ -289,14 +291,35 @@ export default function TicketQrPage() {
 
   useEffect(() => {
     if (!isShareOpen) return
+    const dialog = dialogRef.current
+    const focusables = dialog
+      ? Array.from(dialog.querySelectorAll<HTMLElement>('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'))
+      : []
+    const first = focusables[0]
+    const last = focusables[focusables.length - 1]
+
+    first?.focus()
 
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') setIsShareOpen(false)
+      if (event.key === 'Escape') {
+        setIsShareOpen(false)
+        return
+      }
+      if (event.key !== 'Tab' || !focusables.length) return
+      if (event.shiftKey) {
+        if (document.activeElement === first) {
+          event.preventDefault()
+          last?.focus()
+        }
+      } else {
+        if (document.activeElement === last) {
+          event.preventDefault()
+          first?.focus()
+        }
+      }
     }
 
     document.addEventListener('keydown', handleKeyDown)
-    closeButtonRef.current?.focus()
-
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [isShareOpen])
 
@@ -304,10 +327,25 @@ export default function TicketQrPage() {
     if (!qrDataUrl) return
     setIsDownloading(true)
     try {
+      const file = await generateTicketCardImage(qrDataUrl, {
+        operatorName: schedule.operatorName,
+        origin: schedule.origin,
+        destination: schedule.destination,
+        departureDate: schedule.departureDate,
+        departureTime: schedule.departureTime,
+        arrivalTime: schedule.arrivalTime,
+        seatLabel,
+        passengerName,
+        ticketRef,
+        busPlate: schedule.busPlate,
+      })
+      if (!file) throw new Error('Não foi possível gerar a imagem do bilhete')
+      const blobUrl = URL.createObjectURL(file)
       const link = document.createElement('a')
-      link.href = qrDataUrl
-      link.download = `bilhete-${scheduleId}-${seatLabel}.png`
+      link.href = blobUrl
+      link.download = file.name
       link.click()
+      URL.revokeObjectURL(blobUrl)
       gooeyToast.success('Download concluido', { description: 'O bilhete foi guardado no seu dispositivo.' })
     } catch {
       gooeyToast.error('Erro ao baixar', { description: 'Tente novamente.' })
@@ -468,24 +506,13 @@ export default function TicketQrPage() {
       }
     }
     setIsShareOpen(false)
+    triggerRef.current?.focus()
   }
 
   return (
     <div className="min-h-screen bg-gray-50 font-outfit flex flex-col">
       <header className="sticky top-0 z-20 border-b border-gray-200 bg-white px-4 py-4">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate(-1)}
-            aria-label="Voltar"
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 transition-colors hover:bg-gray-200"
-          >
-            <IconArrowLeft className="h-5 w-5 text-gray-700" />
-          </button>
-          <div className="flex flex-col">
-            <h1 className="text-lg font-bold">O seu bilhete</h1>
-            <p className="text-xs text-gray-400">Apresente o QR Code no embarque</p>
-          </div>
-        </div>
+        <h1 className="text-center text-lg font-bold">Bilhete confirmado</h1>
       </header>
 
       <main className="flex flex-1 flex-col items-center gap-6 px-6 py-6 pb-[180px]">
@@ -562,6 +589,7 @@ export default function TicketQrPage() {
          border-gray-200 bg-white p-6">
           <div className="flex items-center gap-2">
             <button
+              ref={triggerRef}
               onClick={() => void handleShare()}
               disabled={!qrDataUrl || isSharing || isDownloading}
               className="flex h-11 w-[171px] items-center justify-center gap-2 rounded-xl border-2
@@ -595,6 +623,7 @@ export default function TicketQrPage() {
           onClick={() => setIsShareOpen(false)}
         >
           <div
+            ref={dialogRef}
             role="dialog"
             aria-modal="true"
             aria-labelledby="share-modal-title"
@@ -607,7 +636,7 @@ export default function TicketQrPage() {
               </h2>
               <button
                 ref={closeButtonRef}
-                onClick={() => setIsShareOpen(false)}
+          onClick={() => { setIsShareOpen(false); triggerRef.current?.focus() }}
                 aria-label="Fechar"
                 className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 transition-colors hover:bg-gray-200"
               >
