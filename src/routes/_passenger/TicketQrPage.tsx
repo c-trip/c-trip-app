@@ -402,20 +402,23 @@ export default function TicketQrPage() {
           </div>
         </section>
 
-        <footer className="fixed bottom-0 inset-x-0 z-10 flex flex-col items-center gap-4 border-t-2 border-gray-200 bg-white p-6">
+        <footer className="fixed bottom-0 inset-x-0 z-10 flex flex-col items-center gap-4 border-t-2
+         border-gray-200 bg-white p-6">
           <div className="flex items-center gap-2">
             <button
               onClick={() => void handleShare()}
-              disabled={isSharing || isDownloading}
-              className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl border-2 border-[#1B7A3D] text-[#1B7A3D] transition-colors hover:bg-[#1B7A3D]/5 disabled:opacity-50"
+              disabled={!qrDataUrl || isSharing || isDownloading}
+              className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl border-2
+              border-[#1B7A3D] text-[#1B7A3D] transition-colors hover:bg-[#1B7A3D]/5 disabled:opacity-50"
             >
               {isSharing ? <IconLoader2 className="h-5 w-5 animate-spin" /> : <IconShare2 className="h-5 w-5" />}
               <p className="text-sm font-semibold">{isSharing ? 'A partilhar...' : 'Partilhar'}</p>
             </button>
             <button
               onClick={() => void handleDownload()}
-              disabled={isDownloading || isSharing}
-              className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl border-2 border-[#1B7A3D] text-[#1B7A3D] transition-colors hover:bg-[#1B7A3D]/5 disabled:opacity-50"
+              disabled={!qrDataUrl || isDownloading || isSharing}
+              className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl border-2 border-[#1B7A3D]
+               text-[#1B7A3D] transition-colors hover:bg-[#1B7A3D]/5 disabled:opacity-50"
             >
               {isDownloading ? <IconLoader2 className="h-5 w-5 animate-spin" /> : <IconDownload className="h-5 w-5" />}
               <p className="text-sm font-semibold">{isDownloading ? 'A baixar...' : 'Baixar'}</p>
