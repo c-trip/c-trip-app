@@ -52,13 +52,13 @@ export default function Router() {
       <Route element={<TabBarLayout />}>
         <Route path="/search" element={<SearchPage />} />
         <Route path="/bookings" element={<BookingsPage />} />
-        <Route path="/bookings/:bookingId" element={<BookingDetailPage />} />
         <Route path="/tickets" element={<TicketsPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/notifications" element={<NotificationsPage />} />
       </Route>
 
       <Route path="/search/results" element={<ResultsPage />} />
+      <Route path="/bookings/:bookingId" element={<BookingDetailPage />} />
 
       <Route path="/schedules/:scheduleId" element={<SchedulePage />} />
       <Route path="/hold/:scheduleId/:routeSlug/:companySlug" element={<HoldPage />} />

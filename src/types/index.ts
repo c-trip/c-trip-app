@@ -44,3 +44,19 @@ export interface SeatMap {
   occupied: number[]
   reserved: number[]
 }
+
+export type BookingStatus = 'confirmada' | 'pendente' | 'cancelada' | 'concluida'
+
+export interface Booking {
+  id: string
+  scheduleId: string
+  seat: number
+  seatLabel: string
+  passengerName: string
+  passengerBI: string
+  passengerPhone: string
+  status: BookingStatus
+  price: string
+  createdAt: number
+  paymentMethod: string
+}
