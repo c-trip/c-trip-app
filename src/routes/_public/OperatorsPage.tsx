@@ -94,7 +94,7 @@ export default function OperatorsPage() {
           </div>
         </div>
 
-        <div className="flex gap-2 overflow-x-auto px-5 py-3 scrollbar-none">
+        <div className="flex gap-2 overflow-x-auto px-5 py-3 bg-gray-50/80 backdrop-blur-xl scrollbar-none">
           {TABS.map((tab) => (
             <button
               key={tab.value}
