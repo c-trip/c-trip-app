@@ -1,4 +1,5 @@
 import type { Operator } from '@/types'
+import { getSeatMapBySchedule } from './mockSeats'
 
 const luandaBenguela: Operator[] = [
   {
@@ -104,19 +105,28 @@ const operatorsByRoute: Record<string, Operator[]> = {
 }
 
 export function getOperatorsByRoute(origin?: string, destination?: string): Operator[] {
+  let operators: Operator[]
+
   if (!origin) {
-    return Object.values(operatorsByRoute).flat()
+    operators = Object.values(operatorsByRoute).flat()
+  } else {
+    const originLower = origin.toLowerCase()
+
+    if (destination) {
+      const key = `${originLower}-${destination.toLowerCase()}`
+      operators = operatorsByRoute[key] ?? []
+    } else {
+      operators = Object.entries(operatorsByRoute)
+        .filter(([key]) => key.startsWith(`${originLower}-`))
+        .map(([, ops]) => ops)
+        .flat()
+    }
   }
 
-  const originLower = origin.toLowerCase()
-
-  if (destination) {
-    const key = `${originLower}-${destination.toLowerCase()}`
-    return operatorsByRoute[key] ?? []
-  }
-
-  return Object.entries(operatorsByRoute)
-    .filter(([key]) => key.startsWith(`${originLower}-`))
-    .map(([, ops]) => ops)
-    .flat()
+  return operators.map((op) => {
+    const seatMap = getSeatMapBySchedule(op.id)
+    return seatMap
+      ? { ...op, availableSeats: seatMap.available.length }
+      : op
+  })
 }
