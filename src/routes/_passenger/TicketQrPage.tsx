@@ -82,6 +82,116 @@ const shareApps = [
 
 type ShareApp = (typeof shareApps)[number]
 
+async function generateTicketCardImage(qrDataUrl: string, info: {
+  operatorName: string
+  origin: string
+  destination: string
+  departureDate: string
+  departureTime: string
+  arrivalTime: string
+  seatLabel: string
+  passengerName: string
+  ticketRef: string
+  busPlate: string
+}): Promise<File | null> {
+  try {
+    const W = 400
+    const H = 580
+    const canvas = document.createElement('canvas')
+    canvas.width = W * 2
+    canvas.height = H * 2
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return null
+    ctx.scale(2, 2)
+
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(0, 0, W, H)
+
+    ctx.fillStyle = '#1B7A3D'
+    ctx.fillRect(0, 0, W, 64)
+
+    ctx.fillStyle = '#ffffff'
+    ctx.font = 'bold 18px sans-serif'
+    ctx.fillText('C-Trip', 20, 30)
+    ctx.font = '13px sans-serif'
+    ctx.globalAlpha = 0.85
+    ctx.fillText(info.operatorName, 20, 50)
+    ctx.globalAlpha = 1
+
+    ctx.fillStyle = '#111827'
+    ctx.font = 'bold 20px sans-serif'
+    ctx.fillText(`${info.origin} → ${info.destination}`, 20, 96)
+
+    ctx.fillStyle = '#6B7280'
+    ctx.font = '12px sans-serif'
+    ctx.fillText(`${info.departureDate} · ${info.departureTime} – ${info.arrivalTime}`, 20, 118)
+
+    ctx.fillStyle = '#F3F4F6'
+    ctx.fillRect(16, 136, W - 32, 190)
+
+    if (qrDataUrl) {
+      const img = new Image()
+      await new Promise<void>((resolve) => {
+        img.onload = () => resolve()
+        img.onerror = () => resolve()
+        img.src = qrDataUrl
+      })
+      if (img.naturalWidth > 0) {
+        const qrSize = 140
+        const qrX = (W - qrSize) / 2
+        ctx.drawImage(img, qrX, 148, qrSize, qrSize)
+      }
+    }
+
+    ctx.fillStyle = '#6B7280'
+    ctx.font = '11px sans-serif'
+    ctx.textAlign = 'center'
+    ctx.fillText(`Lugar ${info.seatLabel} · Valide no embarque`, W / 2, 305)
+    ctx.textAlign = 'left'
+
+    const lines = [
+      { label: 'PASSAGEIRO', value: info.passengerName || '—' },
+      { label: 'LUGAR', value: info.seatLabel },
+      { label: 'REFERÊNCIA', value: info.ticketRef },
+      { label: 'VIATURA', value: info.busPlate },
+    ]
+
+    let y = 340
+    for (let i = 0; i < lines.length; i++) {
+      const col = i % 2
+      const x = col === 0 ? 20 : W / 2 + 10
+      if (col === 0 && i > 0) y += 38
+      ctx.fillStyle = '#9CA3AF'
+      ctx.font = '10px sans-serif'
+      ctx.fillText(lines[i].label, x, y)
+      ctx.fillStyle = '#111827'
+      ctx.font = 'bold 13px sans-serif'
+      ctx.fillText(lines[i].value, x, y + 16)
+    }
+
+    ctx.strokeStyle = '#E5E7EB'
+    ctx.setLineDash([6, 4])
+    ctx.beginPath()
+    ctx.moveTo(20, H - 50)
+    ctx.lineTo(W - 20, H - 50)
+    ctx.stroke()
+    ctx.setLineDash([])
+
+    ctx.fillStyle = '#9CA3AF'
+    ctx.font = '11px sans-serif'
+    ctx.textAlign = 'center'
+    ctx.fillText('Apresente este bilhete no embarque', W / 2, H - 24)
+
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, 'image/png'),
+    )
+    if (!blob) return null
+    return new File([blob], `bilhete-${info.ticketRef}.png`, { type: 'image/png' })
+  } catch {
+    return null
+  }
+}
+
 export default function TicketQrPage() {
   const { scheduleId } = useParams<{ scheduleId: string }>()
   const [searchParams] = useSearchParams()
@@ -110,6 +220,8 @@ export default function TicketQrPage() {
   const [isSharing, setIsSharing] = useState(false)
   const [isDownloading, setIsDownloading] = useState(false)
   const closeButtonRef = useRef<HTMLButtonElement>(null)
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
 
   const ticketRef = `CTP-${(scheduleId ?? '').toUpperCase()}-${seatLabel}`
 
@@ -179,73 +291,37 @@ export default function TicketQrPage() {
 
   useEffect(() => {
     if (!isShareOpen) return
+    const dialog = dialogRef.current
+    const focusables = dialog
+      ? Array.from(dialog.querySelectorAll<HTMLElement>('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'))
+      : []
+    const first = focusables[0]
+    const last = focusables[focusables.length - 1]
+
+    first?.focus()
 
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') setIsShareOpen(false)
+      if (event.key === 'Escape') {
+        setIsShareOpen(false)
+        return
+      }
+      if (event.key !== 'Tab' || !focusables.length) return
+      if (event.shiftKey) {
+        if (document.activeElement === first) {
+          event.preventDefault()
+          last?.focus()
+        }
+      } else {
+        if (document.activeElement === last) {
+          event.preventDefault()
+          first?.focus()
+        }
+      }
     }
 
     document.addEventListener('keydown', handleKeyDown)
-    closeButtonRef.current?.focus()
-
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [isShareOpen])
-
-  const handleDownload = async () => {
-    if (!qrDataUrl) return
-    setIsDownloading(true)
-    try {
-      const link = document.createElement('a')
-      link.href = qrDataUrl
-      link.download = `bilhete-${scheduleId}-${seatLabel}.png`
-      link.click()
-      gooeyToast.success('Download concluido', { description: 'O bilhete foi guardado no seu dispositivo.' })
-    } catch {
-      gooeyToast.error('Erro ao baixar', { description: 'Tente novamente.' })
-    } finally {
-      setIsDownloading(false)
-    }
-  }
-
-  const handleShare = async () => {
-    if (!qrDataUrl) return
-    setIsSharing(true)
-    try {
-      const res = await fetch(qrDataUrl)
-      const blob = await res.blob()
-      const file = new File([blob], `bilhete-${seatLabel}.png`, { type: 'image/png' })
-
-      if (navigator.share) {
-        if (navigator.canShare?.({ files: [file] })) {
-          await navigator.share({ title: `Bilhete ${schedule?.operatorName}`, text: shareText, files: [file] })
-        } else {
-          await navigator.share({ title: `Bilhete ${schedule?.operatorName}`, text: shareText })
-        }
-        gooeyToast.success('Partilhado', { description: 'O bilhete foi partilhado com sucesso.' })
-      } else {
-        setIsShareOpen(true)
-      }
-    } catch (err) {
-      if (err instanceof DOMException && err.name === 'AbortError') return
-      gooeyToast.error('Erro ao partilhar', { description: 'Tente novamente.' })
-    } finally {
-      setIsSharing(false)
-    }
-  }
-
-  const copyQRToClipboard = async (): Promise<boolean> => {
-    if (!qrDataUrl) return false
-    try {
-      const res = await fetch(qrDataUrl)
-      const blob = await res.blob()
-      const file = new File([blob], `bilhete-${seatLabel}.png`, { type: 'image/png' })
-      await navigator.clipboard.write([
-        new ClipboardItem({ 'image/png': file }),
-      ])
-      return true
-    } catch {
-      return false
-    }
-  }
 
   if (!schedule || !seatIsValid) {
     return (
@@ -277,6 +353,72 @@ export default function TicketQrPage() {
     )
   }
 
+  const handleDownload = async () => {
+    if (!qrDataUrl) return
+    setIsDownloading(true)
+    try {
+      const file = await generateTicketCardImage(qrDataUrl, {
+        operatorName: schedule.operatorName,
+        origin: schedule.origin,
+        destination: schedule.destination,
+        departureDate: schedule.departureDate,
+        departureTime: schedule.departureTime,
+        arrivalTime: schedule.arrivalTime,
+        seatLabel,
+        passengerName,
+        ticketRef,
+        busPlate: schedule.busPlate,
+      })
+      if (!file) throw new Error('Não foi possível gerar a imagem do bilhete')
+      const blobUrl = URL.createObjectURL(file)
+      const link = document.createElement('a')
+      link.href = blobUrl
+      link.download = file.name
+      link.click()
+      URL.revokeObjectURL(blobUrl)
+      gooeyToast.success('Download concluido', { description: 'O bilhete foi guardado no seu dispositivo.' })
+    } catch {
+      gooeyToast.error('Erro ao baixar', { description: 'Tente novamente.' })
+    } finally {
+      setIsDownloading(false)
+    }
+  }
+
+  const handleShare = async () => {
+    if (!qrDataUrl) return
+    setIsSharing(true)
+    try {
+      const file = await generateTicketCardImage(qrDataUrl, {
+        operatorName: schedule.operatorName,
+        origin: schedule.origin,
+        destination: schedule.destination,
+        departureDate: schedule.departureDate,
+        departureTime: schedule.departureTime,
+        arrivalTime: schedule.arrivalTime,
+        seatLabel,
+        passengerName,
+        ticketRef,
+        busPlate: schedule.busPlate,
+      })
+
+      if (navigator.share && file) {
+        if (navigator.canShare?.({ files: [file] })) {
+          await navigator.share({ title: `Bilhete ${schedule.operatorName}`, text: shareText, files: [file] })
+        } else {
+          await navigator.share({ title: `Bilhete ${schedule.operatorName}`, text: shareText })
+        }
+        gooeyToast.success('Partilhado', { description: 'O bilhete foi partilhado com sucesso.' })
+      } else {
+        setIsShareOpen(true)
+      }
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return
+      gooeyToast.error('Erro ao partilhar', { description: 'Tente novamente.' })
+    } finally {
+      setIsSharing(false)
+    }
+  }
+
   const shareText = [
     `Bilhete C-Trip · ${ticketRef}`,
     `${schedule.route}`,
@@ -286,7 +428,7 @@ export default function TicketQrPage() {
     `Viatura: ${schedule.busPlate}`,
   ].join('\n')
 
-  async function handleShareApp(app: ShareApp) {
+  const handleShareApp = async (app: ShareApp) => {
     if (app.action === 'link') {
       const encodedText = encodeURIComponent(shareText)
       const encodedPageUrl = encodeURIComponent(window.location.href)
@@ -296,40 +438,81 @@ export default function TicketQrPage() {
         Facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedPageUrl}&quote=${encodedText}`,
       }
 
-      const imageCopied = await copyQRToClipboard()
+      const file = await generateTicketCardImage(qrDataUrl!, {
+        operatorName: schedule.operatorName,
+        origin: schedule.origin,
+        destination: schedule.destination,
+        departureDate: schedule.departureDate,
+        departureTime: schedule.departureTime,
+        arrivalTime: schedule.arrivalTime,
+        seatLabel,
+        passengerName,
+        ticketRef,
+        busPlate: schedule.busPlate,
+      })
+
+      if (file) {
+        const blobUrl = URL.createObjectURL(file)
+        const a = document.createElement('a')
+        a.href = blobUrl
+        a.download = file.name
+        a.click()
+        URL.revokeObjectURL(blobUrl)
+      }
+
       const url = shareUrls[app.name]
       if (url) window.open(url, '_blank', 'noopener,noreferrer')
       gooeyToast.success(`A abrir ${app.name}`, {
-        description: imageCopied ? 'Imagem do QR copiada. Cole na conversa com Ctrl+V.' : 'Cole o texto na conversa.',
+        description: 'Imagem do bilhete descarregada. Anexe-a na conversa.',
       })
     } else {
-      const imageCopied = await copyQRToClipboard()
-      if (!imageCopied) {
-        await navigator.clipboard.writeText(shareText)
-      }
-      gooeyToast.success('Copiado', {
-        description: imageCopied ? `Imagem do QR copiada. Abra o ${app.name} e cole na conversa.` : `Texto copiado. Abra o ${app.name} e cole na conversa.`,
+      const file = await generateTicketCardImage(qrDataUrl!, {
+        operatorName: schedule.operatorName,
+        origin: schedule.origin,
+        destination: schedule.destination,
+        departureDate: schedule.departureDate,
+        departureTime: schedule.departureTime,
+        arrivalTime: schedule.arrivalTime,
+        seatLabel,
+        passengerName,
+        ticketRef,
+        busPlate: schedule.busPlate,
       })
+
+      if (file) {
+        try {
+          await navigator.clipboard.write([
+            new ClipboardItem({ 'image/png': file }),
+          ])
+          gooeyToast.success('Copiado', {
+            description: `Imagem do bilhete copiada. Abra o ${app.name} e cole na conversa.`,
+          })
+        } catch {
+          const blobUrl = URL.createObjectURL(file)
+          const a = document.createElement('a')
+          a.href = blobUrl
+          a.download = file.name
+          a.click()
+          URL.revokeObjectURL(blobUrl)
+          gooeyToast.success('Descarregado', {
+            description: `Imagem do bilhete descarregada. Abra o ${app.name} e anexe-a.`,
+          })
+        }
+      } else {
+        await navigator.clipboard.writeText(shareText)
+        gooeyToast.success('Copiado', {
+          description: `Texto copiado. Abra o ${app.name} e cole na conversa.`,
+        })
+      }
     }
     setIsShareOpen(false)
+    triggerRef.current?.focus()
   }
 
   return (
     <div className="min-h-screen bg-gray-50 font-outfit flex flex-col">
       <header className="sticky top-0 z-20 border-b border-gray-200 bg-white px-4 py-4">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate(-1)}
-            aria-label="Voltar"
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 transition-colors hover:bg-gray-200"
-          >
-            <IconArrowLeft className="h-5 w-5 text-gray-700" />
-          </button>
-          <div className="flex flex-col">
-            <h1 className="text-lg font-bold">O seu bilhete</h1>
-            <p className="text-xs text-gray-400">Apresente o QR Code no embarque</p>
-          </div>
-        </div>
+        <h1 className="text-center text-lg font-bold">Bilhete confirmado</h1>
       </header>
 
       <main className="flex flex-1 flex-col items-center gap-6 px-6 py-6 pb-[180px]">
@@ -406,9 +589,10 @@ export default function TicketQrPage() {
          border-gray-200 bg-white p-6">
           <div className="flex items-center gap-2">
             <button
+              ref={triggerRef}
               onClick={() => void handleShare()}
               disabled={!qrDataUrl || isSharing || isDownloading}
-              className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl border-2
+              className="flex h-11 w-[171px] items-center justify-center gap-2 rounded-xl border-2
               border-[#1B7A3D] text-[#1B7A3D] transition-colors hover:bg-[#1B7A3D]/5 disabled:opacity-50"
             >
               {isSharing ? <IconLoader2 className="h-5 w-5 animate-spin" /> : <IconShare2 className="h-5 w-5" />}
@@ -417,7 +601,7 @@ export default function TicketQrPage() {
             <button
               onClick={() => void handleDownload()}
               disabled={!qrDataUrl || isDownloading || isSharing}
-              className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl border-2 border-[#1B7A3D]
+              className="flex h-11 w-[171px] items-center justify-center gap-2 rounded-xl border-2 border-[#1B7A3D]
                text-[#1B7A3D] transition-colors hover:bg-[#1B7A3D]/5 disabled:opacity-50"
             >
               {isDownloading ? <IconLoader2 className="h-5 w-5 animate-spin" /> : <IconDownload className="h-5 w-5" />}
@@ -439,6 +623,7 @@ export default function TicketQrPage() {
           onClick={() => setIsShareOpen(false)}
         >
           <div
+            ref={dialogRef}
             role="dialog"
             aria-modal="true"
             aria-labelledby="share-modal-title"
@@ -451,7 +636,7 @@ export default function TicketQrPage() {
               </h2>
               <button
                 ref={closeButtonRef}
-                onClick={() => setIsShareOpen(false)}
+          onClick={() => { setIsShareOpen(false); triggerRef.current?.focus() }}
                 aria-label="Fechar"
                 className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 transition-colors hover:bg-gray-200"
               >
