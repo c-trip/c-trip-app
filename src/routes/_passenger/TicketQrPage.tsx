@@ -323,6 +323,36 @@ export default function TicketQrPage() {
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [isShareOpen])
 
+  if (!schedule || !seatIsValid) {
+    return (
+      <div className="min-h-screen bg-gray-50 font-outfit flex flex-col">
+        <header className="sticky top-0 z-10 border-b border-gray-200 bg-white px-4 py-4">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate(-1)}
+              aria-label="Voltar"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 transition-colors hover:bg-gray-200"
+            >
+              <IconArrowLeft className="h-5 w-5 text-gray-700" />
+            </button>
+            <h1 className="text-lg font-bold text-gray-900">Bilhete não disponível</h1>
+          </div>
+        </header>
+        <main className="flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center">
+          <p className="max-w-xs text-sm text-gray-500">
+            Não foi possível carregar os dados deste bilhete. A viagem pode não existir ou o lugar já não é válido.
+          </p>
+          <button
+            onClick={() => navigate('/tickets')}
+            className="h-12 rounded-xl bg-[#1B7A3D] px-6 text-[16px] font-semibold text-white transition-colors hover:bg-[#15632F]"
+          >
+            Ver os meus bilhetes
+          </button>
+        </main>
+      </div>
+    )
+  }
+
   const handleDownload = async () => {
     if (!qrDataUrl) return
     setIsDownloading(true)
@@ -387,36 +417,6 @@ export default function TicketQrPage() {
     } finally {
       setIsSharing(false)
     }
-  }
-
-  if (!schedule || !seatIsValid) {
-    return (
-      <div className="min-h-screen bg-gray-50 font-outfit flex flex-col">
-        <header className="sticky top-0 z-10 border-b border-gray-200 bg-white px-4 py-4">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate(-1)}
-              aria-label="Voltar"
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 transition-colors hover:bg-gray-200"
-            >
-              <IconArrowLeft className="h-5 w-5 text-gray-700" />
-            </button>
-            <h1 className="text-lg font-bold text-gray-900">Bilhete não disponível</h1>
-          </div>
-        </header>
-        <main className="flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center">
-          <p className="max-w-xs text-sm text-gray-500">
-            Não foi possível carregar os dados deste bilhete. A viagem pode não existir ou o lugar já não é válido.
-          </p>
-          <button
-            onClick={() => navigate('/tickets')}
-            className="h-12 rounded-xl bg-[#1B7A3D] px-6 text-[16px] font-semibold text-white transition-colors hover:bg-[#15632F]"
-          >
-            Ver os meus bilhetes
-          </button>
-        </main>
-      </div>
-    )
   }
 
   const shareText = [
