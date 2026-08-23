@@ -428,7 +428,7 @@ export default function TicketQrPage() {
     `Viatura: ${schedule.busPlate}`,
   ].join('\n')
 
-  async function handleShareApp(app: ShareApp) {
+  const handleShareApp = async (app: ShareApp) => {
     if (app.action === 'link') {
       const encodedText = encodeURIComponent(shareText)
       const encodedPageUrl = encodeURIComponent(window.location.href)
