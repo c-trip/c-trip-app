@@ -93,13 +93,13 @@ export default function OperatorsPage() {
         </div>
       </header>
 
-      <div className="flex gap-2 px-5 pt-4">
+      <div className="flex gap-2 overflow-x-auto px-5 pt-4 scrollbar-none">
         {TABS.map((tab) => (
           <button
             key={tab.value}
             onClick={() => setActiveTab(tab.value)}
             aria-pressed={activeTab === tab.value}
-            className={`flex-1 rounded-full py-2 px-3.5 text-[13px] font-semibold font-outfit border transition-colors ${
+              className={`whitespace-nowrap rounded-full py-2 px-3.5 text-[13px] font-semibold font-outfit border transition-colors ${
               activeTab === tab.value
                 ? 'bg-[#1B7A3D] text-white border-[#1B7A3D]'
                 : 'bg-white text-black border-gray-200'
