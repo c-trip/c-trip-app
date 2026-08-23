@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useLayoutEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router'
 import { IconArrowLeft, IconBus } from '@tabler/icons-react'
 import OperatorCard from '../../components/OperatorCard'
@@ -55,21 +55,6 @@ export default function OperatorsPage() {
   const { origin, destination } = useParams<{ origin: string; destination?: string }>()
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<TabValue>('todos')
-  const headerRef = useRef<HTMLElement>(null)
-  const [headerHeight, setHeaderHeight] = useState(0)
-
-  useLayoutEffect(() => {
-    const el = headerRef.current
-    if (!el) return
-
-    setHeaderHeight(el.offsetHeight)
-
-    const ro = new ResizeObserver(([entry]) => {
-      setHeaderHeight(entry.contentBoxSize?.[0]?.blockSize ?? el.offsetHeight)
-    })
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [])
 
   const originFormatted = origin
     ? origin.charAt(0).toUpperCase() + origin.slice(1)
@@ -93,22 +78,23 @@ export default function OperatorsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 font-outfit">
-      <header ref={headerRef} className="sticky top-0 z-20 border-b border-gray-200 bg-white px-4 py-4">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 transition-colors hover:bg-gray-200"
-          >
-            <IconArrowLeft className="h-5 w-5 text-gray-700" />
-          </button>
-          <div>
-            <h1 className="text-lg font-bold text-gray-900">{title}</h1>
-            <p className="text-xs text-gray-400">{filteredOperators.length} operadores disponíveis</p>
+      <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
+        <header className="px-4 py-4">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate(-1)}
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 transition-colors hover:bg-gray-200"
+            >
+              <IconArrowLeft className="h-5 w-5 text-gray-700" />
+            </button>
+            <div>
+              <h1 className="text-lg font-bold text-gray-900">{title}</h1>
+              <p className="text-xs text-gray-400">{filteredOperators.length} operadores disponíveis</p>
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <div style={{ top: headerHeight }} className="sticky z-10 flex gap-2 overflow-x-auto px-5 py-3 bg-gray-50/80 backdrop-blur-xl scrollbar-none">
+        <div className="flex gap-2 overflow-x-auto px-5 pb-3 scrollbar-none">
           {TABS.map((tab) => (
             <button
               key={tab.value}
@@ -122,7 +108,8 @@ export default function OperatorsPage() {
             >
               {tab.label}
             </button>
-        ))}
+          ))}
+        </div>
       </div>
 
       <main className="px-5 py-5">
