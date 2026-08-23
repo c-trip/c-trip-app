@@ -59,9 +59,16 @@ export default function OperatorsPage() {
   const [headerHeight, setHeaderHeight] = useState(0)
 
   useLayoutEffect(() => {
-    if (headerRef.current) {
-      setHeaderHeight(headerRef.current.offsetHeight)
-    }
+    const el = headerRef.current
+    if (!el) return
+
+    setHeaderHeight(el.offsetHeight)
+
+    const ro = new ResizeObserver(([entry]) => {
+      setHeaderHeight(entry.contentBoxSize?.[0]?.blockSize ?? el.offsetHeight)
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
   }, [])
 
   const originFormatted = origin
