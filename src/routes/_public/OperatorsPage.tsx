@@ -78,23 +78,22 @@ export default function OperatorsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 font-outfit">
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
-        <header className="px-4 py-4">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate(-1)}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 transition-colors hover:bg-gray-200"
-            >
-              <IconArrowLeft className="h-5 w-5 text-gray-700" />
-            </button>
-            <div>
-              <h1 className="text-lg font-bold text-gray-900">{title}</h1>
-              <p className="text-xs text-gray-400">{filteredOperators.length} operadores disponíveis</p>
-            </div>
+      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white px-4 py-4">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 transition-colors hover:bg-gray-200"
+          >
+            <IconArrowLeft className="h-5 w-5 text-gray-700" />
+          </button>
+          <div>
+            <h1 className="text-lg font-bold text-gray-900">{title}</h1>
+            <p className="text-xs text-gray-400">{filteredOperators.length} operadores disponíveis</p>
           </div>
-        </header>
+        </div>
+      </header>
 
-        <div className="flex gap-2 overflow-x-auto px-5 pb-3 scrollbar-none">
+      <div className="sticky top-[72px] z-10 flex gap-2 overflow-x-auto px-5 py-3 bg-gray-50/80 backdrop-blur-xl scrollbar-none">
           {TABS.map((tab) => (
             <button
               key={tab.value}
@@ -108,8 +107,7 @@ export default function OperatorsPage() {
             >
               {tab.label}
             </button>
-          ))}
-        </div>
+        ))}
       </div>
 
       <main className="px-5 py-5">
