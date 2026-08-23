@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useLayoutEffect } from 'react'
 import { useParams, useNavigate } from 'react-router'
 import { IconArrowLeft, IconBus } from '@tabler/icons-react'
 import OperatorCard from '../../components/OperatorCard'
@@ -55,6 +55,14 @@ export default function OperatorsPage() {
   const { origin, destination } = useParams<{ origin: string; destination?: string }>()
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<TabValue>('todos')
+  const headerRef = useRef<HTMLElement>(null)
+  const [headerHeight, setHeaderHeight] = useState(0)
+
+  useLayoutEffect(() => {
+    if (headerRef.current) {
+      setHeaderHeight(headerRef.current.offsetHeight)
+    }
+  }, [])
 
   const originFormatted = origin
     ? origin.charAt(0).toUpperCase() + origin.slice(1)
@@ -78,7 +86,7 @@ export default function OperatorsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 font-outfit">
-      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white px-4 py-4">
+      <header ref={headerRef} className="sticky top-0 z-20 border-b border-gray-200 bg-white px-4 py-4">
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate(-1)}
@@ -93,7 +101,7 @@ export default function OperatorsPage() {
         </div>
       </header>
 
-      <div className="sticky top-[72px] z-10 flex gap-2 overflow-x-auto px-5 py-3 bg-gray-50/80 backdrop-blur-xl scrollbar-none">
+      <div style={{ top: headerHeight }} className="sticky z-10 flex gap-2 overflow-x-auto px-5 py-3 bg-gray-50/80 backdrop-blur-xl scrollbar-none">
           {TABS.map((tab) => (
             <button
               key={tab.value}
