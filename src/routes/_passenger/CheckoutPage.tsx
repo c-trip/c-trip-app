@@ -6,7 +6,7 @@ import { getScheduleById, getSeatMapBySchedule } from '@/data/mockSeats'
 import { readTimestamp, removeHeldSeat, HOLD_TOTAL_SECONDS } from '@/lib/seatHolds'
 import { saveBooking } from '@/lib/bookings'
 import { getSeatLabel } from '@/lib/seats'
-import type { Booking } from '@/types'
+import type { Booking, PaymentMethod } from '@/types'
 
 export default function CheckoutPage() {
   const { scheduleId } = useParams<{ scheduleId: string }>()
@@ -159,7 +159,7 @@ export default function CheckoutPage() {
       status: 'confirmada',
       price: schedule.price,
       createdAt: Date.now(),
-      paymentMethod: selectedPayment!,
+      paymentMethod: selectedPayment as PaymentMethod,
     }
     saveBooking(booking)
 
