@@ -34,9 +34,9 @@ export default function BookingsPage() {
 
   const filtered = useMemo(() => {
     if (activeTab === 'ativas') {
-      return bookings.filter((b) => b.status === 'confirmada')
+      return bookings.filter((b) => b.status === 'confirmada' || b.status === 'pendente')
     }
-    return bookings.filter((b) => b.status !== 'confirmada')
+    return bookings.filter((b) => b.status !== 'confirmada' && b.status !== 'pendente')
   }, [bookings, activeTab])
 
   return (
@@ -96,7 +96,7 @@ export default function BookingsPage() {
                     <div className="flex items-start gap-1">
                      <IconBus className='size-4 text-[#4B5563]' />
                     <p className="text-xs font-normal text-[#4B5563] mb-2">
-                      {schedule?.operatorName ?? booking.seatLabel}
+                      {schedule?.operatorName ?? 'Operador indisponível'}
                     </p>
                     </div>
 
@@ -106,10 +106,9 @@ export default function BookingsPage() {
                         <IconClock className='size-4 text-[#4B5563]'/>
                         <div className="text-[10px] text-[#4B5563] flex gap-1 ">
                           <p>
-                             {formatDate(schedule?.departureDate ?? 'data')}
-                            
+                            {schedule ? formatDate(schedule.departureDate) : '--'}
                             </p>
-                           <p>Ás</p>
+                           <p>Às</p>
                            <p>
 
                           {schedule?.departureTime ?? '--:--'}

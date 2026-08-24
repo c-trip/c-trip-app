@@ -9,7 +9,7 @@ const SEED_BOOKINGS: Booking[] = [
     id: 'BK-1001',
     scheduleId: 'macon-future-1',
     seat: 3,
-    seatLabel: '1A',
+    seatLabel: '1C',
     passengerName: 'João Silva',
     passengerBI: '001234567LA045',
     passengerPhone: '923 456 789',
@@ -22,7 +22,7 @@ const SEED_BOOKINGS: Booking[] = [
     id: 'BK-1002',
     scheduleId: 'angorreal-future-1',
     seat: 7,
-    seatLabel: '2B',
+    seatLabel: '2C',
     passengerName: 'Maria Fernandes',
     passengerBI: '009876543LA012',
     passengerPhone: '912 345 678',
@@ -35,7 +35,7 @@ const SEED_BOOKINGS: Booking[] = [
     id: 'BK-1003',
     scheduleId: 'labarca-1',
     seat: 11,
-    seatLabel: '3B',
+    seatLabel: '3C',
     passengerName: 'Carlos Mendes',
     passengerBI: '004567891LA078',
     passengerPhone: '934 567 890',
@@ -72,11 +72,28 @@ const SEED_BOOKINGS: Booking[] = [
   },
 ]
 
+const VALID_STATUS: readonly BookingStatus[] = ['confirmada', 'pendente', 'cancelada', 'concluida']
+
+function isBooking(value: unknown): value is Booking {
+  if (typeof value !== 'object' || value === null) return false
+  const b = value as Record<string, unknown>
+  return (
+    typeof b.id === 'string' &&
+    typeof b.scheduleId === 'string' &&
+    typeof b.seat === 'number' &&
+    typeof b.createdAt === 'number' &&
+    VALID_STATUS.includes(b.status as BookingStatus)
+  )
+}
+
 function seedIfEmpty(): void {
   try {
     if (localStorage.getItem(SEED_KEY)) return
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw && JSON.parse(raw).length > 0) return
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      if (Array.isArray(parsed) && parsed.length > 0) return
+    }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(SEED_BOOKINGS))
     localStorage.setItem(SEED_KEY, '1')
   } catch {
@@ -92,7 +109,7 @@ export function getBookings(): Booking[] {
     if (!raw) return []
     const parsed = JSON.parse(raw)
     if (!Array.isArray(parsed)) return []
-    return parsed as Booking[]
+    return parsed.filter(isBooking)
   } catch {
     return []
   }

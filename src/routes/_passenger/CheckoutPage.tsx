@@ -149,7 +149,7 @@ export default function CheckoutPage() {
     if (intervalRef.current) clearInterval(intervalRef.current)
 
     const booking: Booking = {
-      id: `BK-${Date.now()}`,
+      id: `BK-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       scheduleId: scheduleId!,
       seat: seatNum,
       seatLabel,

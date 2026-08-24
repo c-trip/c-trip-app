@@ -17,6 +17,7 @@ const schedules: Record<string, Schedule> = {
     driverName: 'Carlos Silva',
     vehicleType: 'VIP',
     boardingCutoffMinutes: 30,
+    boardingPoint: 'Terminal de Viana',
   },
   'angorreal-1': {
     id: 'angorreal-1',
@@ -34,6 +35,7 @@ const schedules: Record<string, Schedule> = {
     driverName: 'João Mendes',
     vehicleType: 'Normal',
     boardingCutoffMinutes: 30,
+    boardingPoint: 'Terminal da Kalemba',
   },
   'labarca-1': {
     id: 'labarca-1',
@@ -51,6 +53,7 @@ const schedules: Record<string, Schedule> = {
     driverName: 'Pedro Santos',
     vehicleType: 'Executive',
     boardingCutoffMinutes: 30,
+    boardingPoint: 'Terminal de Viana',
   },
   'macon-2': {
     id: 'macon-2',
@@ -68,6 +71,7 @@ const schedules: Record<string, Schedule> = {
     driverName: 'António Ferreira',
     vehicleType: 'VIP',
     boardingCutoffMinutes: 30,
+    boardingPoint: 'Terminal Rodoviário de Benguela',
   },
   'angorreal-2': {
     id: 'angorreal-2',
@@ -85,6 +89,7 @@ const schedules: Record<string, Schedule> = {
     driverName: 'Manuel Costa',
     vehicleType: 'Normal',
     boardingCutoffMinutes: 30,
+    boardingPoint: 'Terminal Rodoviário de Benguela',
   },
   'macon-3': {
     id: 'macon-3',
@@ -102,6 +107,7 @@ const schedules: Record<string, Schedule> = {
     driverName: 'Ricardo Almeida',
     vehicleType: 'VIP',
     boardingCutoffMinutes: 30,
+    boardingPoint: 'Rodoviária do Zango',
   },
   'labarca-2': {
     id: 'labarca-2',
@@ -119,6 +125,7 @@ const schedules: Record<string, Schedule> = {
     driverName: 'Fernando Oliveira',
     vehicleType: 'Executive',
     boardingCutoffMinutes: 30,
+    boardingPoint: 'Terminal de Viana',
   },
   'angorreal-3': {
     id: 'angorreal-3',
@@ -136,6 +143,7 @@ const schedules: Record<string, Schedule> = {
     driverName: 'Paulo Dias',
     vehicleType: 'Normal',
     boardingCutoffMinutes: 30,
+    boardingPoint: 'Terminal da Kalemba',
   },
   'macon-future-1': {
     id: 'macon-future-1',
@@ -153,6 +161,7 @@ const schedules: Record<string, Schedule> = {
     driverName: 'António Gomes',
     vehicleType: 'VIP',
     boardingCutoffMinutes: 30,
+    boardingPoint: 'Terminal de Viana',
   },
   'angorreal-future-1': {
     id: 'angorreal-future-1',
@@ -170,6 +179,7 @@ const schedules: Record<string, Schedule> = {
     driverName: 'Ricardo Tavares',
     vehicleType: 'Normal',
     boardingCutoffMinutes: 30,
+    boardingPoint: 'Terminal da Kalemba',
   },
 }
 
@@ -230,8 +240,8 @@ const seatMaps: Record<string, SeatMap> = {
   },
   'angorreal-future-1': {
     totalSeats: 40,
-    available: [1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40],
-    occupied: [5],
+    available: [1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40],
+    occupied: [7],
     reserved: [],
   },
 }

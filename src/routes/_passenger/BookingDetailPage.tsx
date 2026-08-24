@@ -1,43 +1,41 @@
-import { useMemo, useState } from 'react'
-import { useParams, useNavigate } from 'react-router'
-import {
-  IconArrowLeft,
-  IconBus,
-  IconUser,
-  IconId,
-  IconPhone,
-  IconClock,
-  IconArmchair,
-  IconCoin,
-  IconReceipt,
-} from '@tabler/icons-react'
-import { gooeyToast } from 'goey-toast'
-import { getBookingById, updateBookingStatus } from '@/lib/bookings'
-import { getScheduleById } from '@/data/mockSeats'
-import type { BookingStatus } from '@/types'
+import { useMemo, useState } from "react";
+import { useParams, useNavigate } from "react-router";
+import { IconArrowLeft, IconCircle , IconAlertTriangle , IconQrcode } from "@tabler/icons-react";
+import { gooeyToast } from "goey-toast";
+import { getBookingById, updateBookingStatus } from "@/lib/bookings";
+import { getScheduleById } from "@/data/mockSeats";
+import type { BookingStatus } from "@/types";
 
-function formatDate(dateStr: string): string {
-  const [y, m, d] = dateStr.split('-')
-  const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
-  return `${d} ${months[parseInt(m, 10) - 1]} ${y}`
-}
 
-const STATUS_STYLE: Record<BookingStatus, { bg: string; text: string; label: string }> = {
-  confirmada: { bg: 'bg-[#1B7A3D]/10', text: 'text-[#1B7A3D]', label: 'Confirmada' },
-  pendente: { bg: 'bg-[#F59E0B]/10', text: 'text-[#F59E0B]', label: 'Pendente' },
-  cancelada: { bg: 'bg-red-100', text: 'text-red-600', label: 'Cancelada' },
-  concluida: { bg: 'bg-blue-100', text: 'text-blue-600', label: 'Concluída' },
-}
+ 
+
+const STATUS_STYLE: Record<
+  BookingStatus,
+  { bg: string; text: string; label: string }
+> = {
+  confirmada: {
+    bg: "bg-[#1B7A3D]/10",
+    text: "text-[#1B7A3D]",
+    label: "Confirmada",
+  },
+  pendente: {
+    bg: "bg-[#F59E0B]/10",
+    text: "text-[#F59E0B]",
+    label: "Pendente",
+  },
+  cancelada: { bg: "bg-red-100", text: "text-red-600", label: "Cancelada" },
+  concluida: { bg: "bg-blue-100", text: "text-blue-600", label: "Concluída" },
+};
 
 export default function BookingDetailPage() {
-  const { bookingId } = useParams<{ bookingId: string }>()
-  const navigate = useNavigate()
-  const [booking, setBooking] = useState(() => getBookingById(bookingId ?? ''))
+  const { bookingId } = useParams<{ bookingId: string }>();
+  const navigate = useNavigate();
+  const [booking, setBooking] = useState(() => getBookingById(bookingId ?? ""));
 
   const schedule = useMemo(() => {
-    if (!booking) return undefined
-    return getScheduleById(booking.scheduleId)
-  }, [booking])
+    if (!booking) return undefined;
+    return getScheduleById(booking.scheduleId);
+  }, [booking]);
 
   if (!booking || !schedule) {
     return (
@@ -50,7 +48,9 @@ export default function BookingDetailPage() {
             >
               <IconArrowLeft className="h-5 w-5 text-gray-700" />
             </button>
-            <h1 className="text-lg font-bold text-gray-900">Reserva não encontrada</h1>
+            <h1 className="text-lg font-bold text-gray-900">
+              Reserva não encontrada
+            </h1>
           </div>
         </header>
         <main className="flex flex-1 flex-col items-center justify-center gap-4 px-6 py-20 text-center">
@@ -58,25 +58,29 @@ export default function BookingDetailPage() {
             Esta reserva não existe ou foi removida.
           </p>
           <button
-            onClick={() => navigate('/bookings')}
+            onClick={() => navigate("/bookings")}
             className="h-12 rounded-xl bg-[#1B7A3D] px-6 text-sm font-semibold text-white transition-colors hover:bg-[#15632F]"
           >
             Ver as minhas reservas
           </button>
         </main>
       </div>
-    )
+    );
   }
 
-  const style = STATUS_STYLE[booking.status]
-  const canCancel = booking.status === 'confirmada' || booking.status === 'pendente'
-  const canViewTicket = booking.status === 'confirmada' || booking.status === 'concluida'
+  const style = STATUS_STYLE[booking.status];
+  const canCancel =
+    booking.status === "confirmada" || booking.status === "pendente";
+  const canViewTicket =
+    booking.status === "confirmada" || booking.status === "concluida";
 
   const handleCancel = () => {
-    updateBookingStatus(booking.id, 'cancelada')
-    setBooking({ ...booking, status: 'cancelada' })
-    gooeyToast.success('Reserva cancelada', { description: 'A sua reserva foi cancelada com sucesso.' })
-  }
+    updateBookingStatus(booking.id, "cancelada");
+    setBooking({ ...booking, status: "cancelada" });
+    gooeyToast.success("Reserva cancelada", {
+      description: "A sua reserva foi cancelada com sucesso.",
+    });
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 font-outfit flex flex-col">
@@ -84,110 +88,162 @@ export default function BookingDetailPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate(-1)}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 transition-colors hover:bg-gray-200"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 transition-colors 
+            hover:bg-gray-200"
           >
             <IconArrowLeft className="h-5 w-5 text-gray-700" />
           </button>
-          <h1 className="text-lg font-bold text-gray-900">Detalhe da Reserva</h1>
+          <div className="flex flex-col">
+            <h1 className="text-lg font-bold text-gray-900">
+              Detalhe da Reserva
+            </h1>
+            <p className="text-xs text-[#4B5563] font-semibold">
+              Bilhete ID: {booking.id}
+            </p>
+          </div>
         </div>
       </header>
 
-      <main className="px-5 py-5 flex flex-col gap-4 flex-1">
+      <main className="px-5 py-2 flex flex-col gap-4 flex-1 mt-4">
         <div className="rounded-2xl border border-gray-200 bg-white p-5">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-base font-bold text-[#111827]">{schedule.operatorName}</span>
-            <span className={`text-xs font-semibold px-3 py-1 rounded-full ${style.bg} ${style.text}`}>
+          <div className="flex items-center justify-between mb-4 border-b-2 pb-4 border-[#E5E7EB]">
+            <span className="text-[18px] font-bold text-[#111827]">
+              {schedule.route}
+            </span>
+            <span
+              className={`text-xs font-semibold px-3 py-1 rounded-full ${style.bg} ${style.text}`}
+            >
               {style.label}
             </span>
           </div>
 
-          <div className="flex items-center gap-3 mb-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-green-gradient-start/10">
-              <IconBus className="h-6 w-6 text-green-gradient-end" />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-[#111827]">{schedule.route}</p>
-              <p className="text-xs text-gray-400">{schedule.vehicleType}</p>
-            </div>
-          </div>
-
           <div className="flex items-center justify-between mb-4">
-            <div>
-              <p className="text-lg font-bold text-[#111827]">{schedule.departureTime}</p>
-              <p className="text-[10px] text-gray-400">{formatDate(schedule.departureDate)}</p>
-            </div>
-            <div className="flex flex-col items-center gap-1">
-              <p className="text-[10px] text-gray-400">{schedule.duration}</p>
-              <div className="h-0.5 w-16 bg-gray-200" />
-            </div>
-            <div>
-              <p className="text-lg font-bold text-[#111827]">{schedule.arrivalTime}</p>
-              <p className="text-[10px] text-gray-400">Chegada</p>
+            <p className="text-[13px] font-normal text-[#4B5563]">
+              Companhia de Transporte{" "}
+            </p>
+            <p className="text-[13px] text-[#111827] font-bold">
+              {schedule.operatorName}
+            </p>
+          </div>
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-[13px] font-normal text-[#4B5563]">
+              Data da Partida{" "}
+            </p>
+            <div className="text-[13px] text-[#111827] font-bold flex gap-1">
+              <p>{schedule.departureDate},</p>
+              <p>{schedule.departureTime}</p>
             </div>
           </div>
-
-          <div className="border-t border-dashed border-gray-200 pt-4 space-y-3">
-            <DetailRow icon={<IconBus className="h-4 w-4" />} label="Viatura" value={`${schedule.busModel} · ${schedule.busPlate}`} />
-            <DetailRow icon={<IconUser className="h-4 w-4" />} label="Motorista" value={schedule.driverName} />
-            <DetailRow icon={<IconArmchair className="h-4 w-4" />} label="Lugar" value={`${booking.seatLabel} · ${schedule.vehicleType}`} />
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-[13px] font-normal text-[#4B5563]">
+              Lugar de Embarque{" "}
+            </p>
+            <p className="text-[13px] text-[#111827] font-bold">
+              {schedule.boardingPoint}, {schedule.origin}
+            </p>
+          </div>
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-[13px] font-normal text-[#4B5563]">
+              Lugar Reservado{" "}
+            </p>
+            <div className="text-[13px] text-[#1B7A3D] font-bold">
+              <div className="flex gap-1">
+                <p>Lugar {booking.seatLabel}</p>
+                <p>({booking.passengerName})</p>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="rounded-2xl border border-gray-200 bg-white p-5">
-          <h2 className="text-sm font-bold text-gray-900 mb-3">Dados do Passageiro</h2>
-          <div className="space-y-3">
-            <DetailRow icon={<IconUser className="h-4 w-4" />} label="Nome" value={booking.passengerName} />
-            <DetailRow icon={<IconId className="h-4 w-4" />} label="BI / Passaporte" value={booking.passengerBI} />
-            <DetailRow icon={<IconPhone className="h-4 w-4" />} label="Telefone" value={booking.passengerPhone} />
-          </div>
+        <div className="flex flex-col gap-2 bg-white p-4 rounded-2xl border border-[#E5E7EB]">
+          <p className="text-[#111827] text-[14px] font-bold">
+            Estado da Reserva
+          </p>
+
+          {booking.status === 'cancelada' ? (
+            <div className="flex items-center gap-2 px-4">
+              <IconCircle className="size-3 text-red-500" />
+              <div className="flex flex-col">
+                <p className="text-[13px] font-semibold text-red-600">Reserva Cancelada</p>
+                <p className="text-[11px] text-[#9CA3AF]">Esta reserva foi cancelada</p>
+              </div>
+            </div>
+          ) : booking.status === 'concluida' ? (
+            <>
+              <div className="flex items-center gap-2 px-4">
+                <IconCircle className="size-3 text-[#10B981]" />
+                <div className="flex flex-col">
+                  <p className="text-[13px] font-semibold">Reservado e Pago</p>
+                  <div className="flex text-[11px]">
+                    <span>{schedule.departureDate},</span>
+                    <span className="ml-1">{schedule.departureTime}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 px-4">
+                <IconCircle className="size-3 text-[#10B981]" />
+                <div className="flex flex-col">
+                  <p className="text-[13px] font-semibold">Embarque Concluído</p>
+                  <p className="text-[11px] text-[#10B981]">Concluído</p>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center gap-2 px-4">
+                <IconCircle className="size-3 text-[#10B981]" />
+                <div className="flex flex-col">
+                  <p className="text-[13px] font-semibold">Reservado e Pago</p>
+                  <div className="flex text-[11px]">
+                    <span>{schedule.departureDate},</span>
+                    <span className="ml-1">{schedule.departureTime}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 px-4">
+                <IconCircle className="size-3 text-[#D1D5DB]" />
+                <div className="flex flex-col">
+                  <p className="text-[13px] font-semibold text-[#4B5563]">Embarque Iniciado</p>
+                  <p className="text-[11px] text-[#9CA3AF]">Pendente</p>
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
-        <div className="rounded-2xl border border-gray-200 bg-white p-5">
-          <h2 className="text-sm font-bold text-gray-900 mb-3">Pagamento</h2>
-          <div className="space-y-3">
-            <DetailRow icon={<IconCoin className="h-4 w-4" />} label="Método" value={booking.paymentMethod.toUpperCase()} />
-            <DetailRow icon={<IconReceipt className="h-4 w-4" />} label="Referência" value={booking.id} />
-            <DetailRow icon={<IconClock className="h-4 w-4" />} label="Criado em" value={new Date(booking.createdAt).toLocaleString('pt-BR')} />
-          </div>
-          <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-4">
-            <span className="text-sm text-gray-500">Total</span>
-            <span className="text-xl font-extrabold text-[#1B7A3D]">{booking.price}</span>
-          </div>
+        <div className="flex place-items-start justify-center bg-[#FEF3C7] p-3
+        rounded-xl gap-2 items-center">
+          <IconAlertTriangle className="text-[#F59E0B] size-5" />
+          <p className="text-[#111827] text-xs font-normal w-[306px]">Cancelamento gratuito disponível até 24h antes da partida com reembolso de 100%</p>
         </div>
       </main>
 
-      <footer className="sticky bottom-0 flex items-center gap-3 border-t-2 border-gray-200 bg-white p-5">
+      <footer className="sticky bottom-0 flex flex-col items-center gap-3 border-t-2 border-gray-200 bg-white p-5">
         {canViewTicket && (
           <button
-            onClick={() => navigate(`/ticket-qr/${booking.scheduleId}?seat=${booking.seat}`)}
-            className="flex-1 h-12 rounded-xl bg-[#1B7A3D] text-sm font-semibold text-white transition-colors hover:bg-[#15632F]"
+            onClick={() =>
+              navigate(`/ticket-qr/${booking.scheduleId}?seat=${booking.seat}`)
+            }
+            className="w-full h-12 rounded-xl text-sm font-semibold
+             text-white transition-colors flex gap-2 justify-center items-center hover:opacity-90"
+            style={{ background: 'linear-gradient(90deg, #6B9E8C 0%, #3A6356 100%)' }}
           >
-            Ver Bilhete
+            <IconQrcode/>
+            Ver Bilhete QR
           </button>
         )}
         {canCancel && (
           <button
             onClick={handleCancel}
-            className="flex-1 h-12 rounded-xl border-2 border-red-300 bg-white text-sm font-semibold text-red-600 transition-colors hover:bg-red-50"
+            className="w-full h-12 rounded-xl border-2 border-red-300 bg-white text-sm font-semibold 
+            text-red-600 transition-colors hover:bg-red-50"
           >
             Cancelar Reserva
           </button>
         )}
       </footer>
     </div>
-  )
+  );
 }
 
-function DetailRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
-  return (
-    <div className="flex items-center gap-3">
-      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 text-gray-500">
-        {icon}
-      </div>
-      <div className="flex flex-col">
-        <p className="text-[10px] text-gray-400">{label}</p>
-        <p className="text-xs font-medium text-[#111827]">{value}</p>
-      </div>
-    </div>
-  )
-}
+
