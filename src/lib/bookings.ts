@@ -137,15 +137,16 @@ export function saveBooking(booking: Booking): boolean {
   }
 }
 
-export function updateBookingStatus(id: string, status: BookingStatus): void {
+export function updateBookingStatus(id: string, status: BookingStatus): boolean {
   const bookings = getBookings()
   const idx = bookings.findIndex((b) => b.id === id)
-  if (idx === -1) return
+  if (idx === -1) return false
   bookings[idx] = { ...bookings[idx], status }
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(bookings))
+    return true
   } catch {
-    /* ignore */
+    return false
   }
 }
 

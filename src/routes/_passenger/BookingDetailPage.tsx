@@ -39,14 +39,7 @@ export default function BookingDetailPage() {
 
   const [canCancel] = useState(() => {
     if (!booking || !schedule) return false
-    const departureAt = new Date(
-      `${schedule.departureDate}T${schedule.departureTime}`,
-    ).getTime()
-    const canCancelUntil = departureAt - 24 * 60 * 60 * 1000
-    return (
-      (booking.status === "confirmada" || booking.status === "pendente") &&
-      Date.now() <= canCancelUntil
-    )
+    return booking.status === "confirmada" || booking.status === "pendente"
   });
 
   if (!booking || !schedule) {
@@ -87,7 +80,23 @@ export default function BookingDetailPage() {
 
   const handleCancel = () => {
     if (!canCancel) return;
-    updateBookingStatus(booking.id, "cancelada");
+    const departureAt = new Date(
+      `${schedule.departureDate}T${schedule.departureTime}`,
+    ).getTime()
+    const canCancelUntil = departureAt - 24 * 60 * 60 * 1000
+    if (Date.now() > canCancelUntil) {
+      gooeyToast.error("Prazo expirado", {
+        description: "Já não é possível cancelar esta reserva.",
+      });
+      return;
+    }
+    const updated = updateBookingStatus(booking.id, "cancelada");
+    if (!updated) {
+      gooeyToast.error("Erro ao cancelar", {
+        description: "Não foi possível cancelar a reserva. Tente novamente.",
+      });
+      return;
+    }
     setBooking({ ...booking, status: "cancelada" });
     gooeyToast.success("Reserva cancelada", {
       description: "A sua reserva foi cancelada com sucesso.",

@@ -146,7 +146,6 @@ export default function CheckoutPage() {
       return
     }
     setIsSubmitting(true)
-    if (intervalRef.current) clearInterval(intervalRef.current)
 
     const booking: Booking = {
       id: `BK-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -170,6 +169,7 @@ export default function CheckoutPage() {
       return
     }
 
+    if (intervalRef.current) clearInterval(intervalRef.current)
     removeHeldSeat(scheduleId!, seatNum)
     localStorage.removeItem(holdKey)
     gooeyToast.success('Pagamento processado', {
