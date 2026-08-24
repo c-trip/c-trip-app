@@ -161,7 +161,14 @@ export default function CheckoutPage() {
       createdAt: Date.now(),
       paymentMethod: selectedPayment as PaymentMethod,
     }
-    saveBooking(booking)
+    const saved = saveBooking(booking)
+    if (!saved) {
+      gooeyToast.error('Erro ao guardar reserva', {
+        description: 'Não foi possível guardar a reserva. Tente novamente.',
+      })
+      setIsSubmitting(false)
+      return
+    }
 
     removeHeldSeat(scheduleId!, seatNum)
     localStorage.removeItem(holdKey)

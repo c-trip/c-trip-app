@@ -37,6 +37,18 @@ export default function BookingDetailPage() {
     return getScheduleById(booking.scheduleId);
   }, [booking]);
 
+  const [canCancel] = useState(() => {
+    if (!booking || !schedule) return false
+    const departureAt = new Date(
+      `${schedule.departureDate}T${schedule.departureTime}`,
+    ).getTime()
+    const canCancelUntil = departureAt - 24 * 60 * 60 * 1000
+    return (
+      (booking.status === "confirmada" || booking.status === "pendente") &&
+      Date.now() <= canCancelUntil
+    )
+  });
+
   if (!booking || !schedule) {
     return (
       <div className="min-h-screen bg-gray-50 font-outfit">
@@ -69,12 +81,12 @@ export default function BookingDetailPage() {
   }
 
   const style = STATUS_STYLE[booking.status];
-  const canCancel =
-    booking.status === "confirmada" || booking.status === "pendente";
+
   const canViewTicket =
     booking.status === "confirmada" || booking.status === "concluida";
 
   const handleCancel = () => {
+    if (!canCancel) return;
     updateBookingStatus(booking.id, "cancelada");
     setBooking({ ...booking, status: "cancelada" });
     gooeyToast.success("Reserva cancelada", {
@@ -211,11 +223,13 @@ export default function BookingDetailPage() {
           )}
         </div>
 
-        <div className="flex place-items-start justify-center bg-[#FEF3C7] p-3
-        rounded-xl gap-2 items-center">
-          <IconAlertTriangle className="text-[#F59E0B] size-5" />
-          <p className="text-[#111827] text-xs font-normal w-[306px]">Cancelamento gratuito disponível até 24h antes da partida com reembolso de 100%</p>
-        </div>
+        {canCancel && (
+          <div className="flex place-items-start justify-center bg-[#FEF3C7] p-3
+          rounded-xl gap-2 items-center">
+            <IconAlertTriangle className="text-[#F59E0B] size-5" />
+            <p className="text-[#111827] text-xs font-normal w-[306px]">Cancelamento gratuito disponível até 24h antes da partida com reembolso de 100%</p>
+          </div>
+        )}
       </main>
 
       <footer className="sticky bottom-0 flex flex-col items-center gap-3 border-t-2 border-gray-200 bg-white p-5">

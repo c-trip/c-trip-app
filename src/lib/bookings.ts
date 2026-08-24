@@ -1,4 +1,4 @@
-import type { Booking, BookingStatus } from '@/types'
+import type { Booking, BookingStatus, PaymentMethod } from '@/types'
 
 const STORAGE_KEY = 'c_trip_bookings'
 
@@ -73,6 +73,7 @@ const SEED_BOOKINGS: Booking[] = [
 ]
 
 const VALID_STATUS: readonly BookingStatus[] = ['confirmada', 'pendente', 'cancelada', 'concluida']
+const VALID_PAYMENT: readonly PaymentMethod[] = ['mcx']
 
 function isBooking(value: unknown): value is Booking {
   if (typeof value !== 'object' || value === null) return false
@@ -81,8 +82,14 @@ function isBooking(value: unknown): value is Booking {
     typeof b.id === 'string' &&
     typeof b.scheduleId === 'string' &&
     typeof b.seat === 'number' &&
+    typeof b.seatLabel === 'string' &&
+    typeof b.passengerName === 'string' &&
+    typeof b.passengerBI === 'string' &&
+    typeof b.passengerPhone === 'string' &&
+    typeof b.price === 'string' &&
     typeof b.createdAt === 'number' &&
-    VALID_STATUS.includes(b.status as BookingStatus)
+    VALID_STATUS.includes(b.status as BookingStatus) &&
+    VALID_PAYMENT.includes(b.paymentMethod as PaymentMethod)
   )
 }
 
@@ -119,13 +126,14 @@ export function getBookingById(id: string): Booking | undefined {
   return getBookings().find((b) => b.id === id)
 }
 
-export function saveBooking(booking: Booking): void {
+export function saveBooking(booking: Booking): boolean {
   const bookings = getBookings()
   bookings.push(booking)
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(bookings))
+    return true
   } catch {
-    /* localStorage may be full or unavailable */
+    return false
   }
 }
 
