@@ -43,8 +43,16 @@ export default function TicketsPage() {
               return (
                 <Card
                   key={ticket.id}
+                  role="button"
+                  tabIndex={0}
                   className="p-0 cursor-pointer hover:scale-[1.01] border-[#E5E7EB] active:scale-[0.99] transition-transform"
                   onClick={() => navigate(`/ticket-qr/${ticket.scheduleId}?seat=${ticket.seat}`)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      navigate(`/ticket-qr/${ticket.scheduleId}?seat=${ticket.seat}`)
+                    }
+                  }}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between mb-2">
@@ -81,7 +89,7 @@ export default function TicketsPage() {
                         <div>
                           <p className="text-[10px] text-gray-400 font-medium">Preço</p>
                           <p className="text-sm font-bold text-[#111827]">
-                            {ticket.price.toLocaleString('pt-AO')} Kz
+                            {ticket.price}
                           </p>
                         </div>
                       </div>

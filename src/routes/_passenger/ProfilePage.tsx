@@ -2,7 +2,6 @@ import { useNavigate } from 'react-router'
 import {
   IconUser,
   IconBell,
-  IconInfoCircle,
   IconLogout,
   IconChevronRight,
   IconMail,
@@ -26,11 +25,6 @@ export default function ProfilePage() {
       label: 'Notificações',
       icon: IconBell,
       onClick: () => navigate('/notifications'),
-    },
-    {
-      label: 'Sobre o C-Trip',
-      icon: IconInfoCircle,
-      onClick: () => {},
     },
   ]
 
