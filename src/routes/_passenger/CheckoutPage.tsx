@@ -36,7 +36,7 @@ export default function CheckoutPage() {
   const [bi, setBi] = useState('')
   const [telefone, setTelefone] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [selectedPayment, setSelectedPayment] = useState<string | null>(null)
+  const [selectedPayment, setSelectedPayment] = useState<PaymentMethod | null>(null)
   const redirectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -158,7 +158,7 @@ export default function CheckoutPage() {
       status: 'confirmada',
       price: schedule.price,
       createdAt: Date.now(),
-      paymentMethod: selectedPayment as PaymentMethod,
+      paymentMethod: selectedPayment,
     }
     const saved = saveBooking(booking)
     if (!saved) {

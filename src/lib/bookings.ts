@@ -128,6 +128,13 @@ export function getBookingById(id: string): Booking | undefined {
 
 export function saveBooking(booking: Booking): boolean {
   const bookings = getBookings()
+  const hasConflict = bookings.some(
+    (b) =>
+      b.scheduleId === booking.scheduleId &&
+      b.seat === booking.seat &&
+      (b.status === 'confirmada' || b.status === 'pendente'),
+  )
+  if (hasConflict) return false
   bookings.push(booking)
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(bookings))
