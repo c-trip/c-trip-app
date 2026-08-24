@@ -609,10 +609,10 @@ export default function TicketQrPage() {
             </button>
           </div>
           <button
-            onClick={() => navigate('/search')}
+            onClick={() => navigate('/bookings')}
             className="h-12 w-full rounded-xl bg-[#1B7A3D] text-[16px] font-semibold text-white transition-colors hover:bg-[#15632F]"
           >
-            Voltar ao Inicio
+            Ver as Minhas Reservas
           </button>
         </footer>
       </main>

@@ -36,6 +36,7 @@ export interface Schedule {
   driverName: string
   vehicleType: VehicleType
   boardingCutoffMinutes: number
+  boardingPoint: string
 }
 
 export interface SeatMap {
@@ -43,4 +44,22 @@ export interface SeatMap {
   available: number[]
   occupied: number[]
   reserved: number[]
+}
+
+export type BookingStatus = 'confirmada' | 'pendente' | 'cancelada' | 'concluida'
+
+export type PaymentMethod = 'mcx'
+
+export interface Booking {
+  id: string
+  scheduleId: string
+  seat: number
+  seatLabel: string
+  passengerName: string
+  passengerBI: string
+  passengerPhone: string
+  status: BookingStatus
+  price: string
+  createdAt: number
+  paymentMethod: PaymentMethod
 }

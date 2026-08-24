@@ -4,7 +4,9 @@ import { IconArrowLeft, IconUser, IconId, IconPhone, IconCheck, IconClock, IconC
 import { gooeyToast } from 'goey-toast'
 import { getScheduleById, getSeatMapBySchedule } from '@/data/mockSeats'
 import { readTimestamp, removeHeldSeat, HOLD_TOTAL_SECONDS } from '@/lib/seatHolds'
+import { saveBooking } from '@/lib/bookings'
 import { getSeatLabel } from '@/lib/seats'
+import type { Booking, PaymentMethod } from '@/types'
 
 export default function CheckoutPage() {
   const { scheduleId } = useParams<{ scheduleId: string }>()
@@ -34,7 +36,7 @@ export default function CheckoutPage() {
   const [bi, setBi] = useState('')
   const [telefone, setTelefone] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [selectedPayment, setSelectedPayment] = useState<string | null>(null)
+  const [selectedPayment, setSelectedPayment] = useState<PaymentMethod | null>(null)
   const redirectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -128,6 +130,7 @@ export default function CheckoutPage() {
   const handleSubmit = async () => {
     if (isDisabled) return
     if (!validate()) return
+    if (!schedule) return
     const current = readTimestamp(holdKey)
     if (!current || current > Date.now() || Date.now() - current >= totalSeconds * 1000) {
       if (intervalRef.current) {
@@ -143,8 +146,30 @@ export default function CheckoutPage() {
       return
     }
     setIsSubmitting(true)
+
+    const booking: Booking = {
+      id: `BK-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      scheduleId: scheduleId!,
+      seat: seatNum,
+      seatLabel,
+      passengerName: nome,
+      passengerBI: bi,
+      passengerPhone: telefone,
+      status: 'confirmada',
+      price: schedule.price,
+      createdAt: Date.now(),
+      paymentMethod: selectedPayment,
+    }
+    const saved = saveBooking(booking)
+    if (!saved) {
+      gooeyToast.error('Erro ao guardar reserva', {
+        description: 'Não foi possível guardar a reserva. Tente novamente.',
+      })
+      setIsSubmitting(false)
+      return
+    }
+
     if (intervalRef.current) clearInterval(intervalRef.current)
-    // TODO: API POST /bookings with { scheduleId, seat, nome, bi, telefone }
     removeHeldSeat(scheduleId!, seatNum)
     localStorage.removeItem(holdKey)
     gooeyToast.success('Pagamento processado', {
