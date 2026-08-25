@@ -52,7 +52,7 @@ export default function OperatorLoginPage() {
           <label className="block text-sm font-medium text-gray-700 mb-2 font-outfit">
             Código de Acesso
           </label>
-          <div className="w-full h-12 flex items-center gap-2 py-2 px-4 rounded-xl bg-gray-50">
+          <div className="w-full h-12 flex items-center gap-2 py-2 px-4 rounded-xl bg-gray-100">
             <IconKey className="text-[#9CA3AF]" />
             <input
               type="text"
