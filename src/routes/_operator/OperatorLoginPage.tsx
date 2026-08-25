@@ -11,11 +11,13 @@ export default function OperatorLoginPage() {
   const [code, setCode] = useState('')
   const [hasError, setHasError] = useState(false)
 
+/** Filtra input para apenas dígitos, limita a 6 caracteres e limpa estado de erro. */
   const handleChange = (value: string) => {
     setCode(value.replace(/\D/g, '').slice(0, 6))
     if (hasError) setHasError(false)
   }
 
+  /** Valida o código de acesso contra o servidor e navega para a área do operador. */
   const handleSubmit = () => {
     if (code.length !== 6) {
       setHasError(true)
