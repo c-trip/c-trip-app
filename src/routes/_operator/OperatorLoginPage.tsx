@@ -73,15 +73,18 @@ export default function OperatorLoginPage() {
           <button
             type="button"
             onClick={handleSubmit}
+            disabled={code.length < 6}
             style={{
               height: 48,
               borderRadius: 14,
               background: 'linear-gradient(90deg, #6B9E8C 0%, #3A6356 100%)',
               fontFamily: "'Outfit', sans-serif",
               fontWeight: 700,
+              opacity: code.length < 6 ? 0.5 : 1,
             }}
             className="w-full mt-8 px-6 text-base text-white
-             transition-opacity hover:opacity-90 active:opacity-80"
+             transition-opacity hover:opacity-90 active:opacity-80
+             disabled:cursor-not-allowed disabled:hover:opacity-50 disabled:active:opacity-50"
           >
             Entrar
           </button>
