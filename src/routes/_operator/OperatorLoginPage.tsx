@@ -53,13 +53,14 @@ export default function OperatorLoginPage() {
         </header>
 
         <section className="w-full max-w-sm text-left mt-8">
-          <label className="block text-sm font-medium text-gray-700 mb-2 font-outfit">
+          <label htmlFor="operator-access-code" className="block text-sm font-medium text-gray-700 mb-2 font-outfit">
             Código de Acesso
           </label>
           <div className={`w-full h-12 flex items-center gap-2 py-2 px-4 rounded-xl border bg-gray-100
             ${hasError ? 'border-red-500' : 'border-transparent'}`}>
             <IconKey className="text-[#9CA3AF]" />
             <input
+              id="operator-access-code"
               type="text"
               inputMode="numeric"
               value={code}
