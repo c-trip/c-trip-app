@@ -48,7 +48,7 @@ export default function WelcomePage() {
 
           <button
             type="button"
-            onClick={() => navigate('/auth/login')}
+            onClick={() => navigate('/operator/login')}
             style={{
               height: 48,
               borderRadius: 14,
