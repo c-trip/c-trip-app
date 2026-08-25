@@ -1,4 +1,8 @@
-import { IconMapPin , IconClock} from '@tabler/icons-react'
+import { useNavigate } from 'react-router'
+import { IconMapPin, IconClock, IconChevronRight } from '@tabler/icons-react'
+import { getOperatorTodaySchedules } from '@/data/mockOperatorSchedules'
+import type { OperatorSchedule } from '@/data/mockOperatorSchedules'
+import { Card, CardContent } from '@/components/ui/card'
 
 function formatDate(): string {
   const now = new Date()
@@ -6,7 +10,16 @@ function formatDate(): string {
   return `hoje, ${now.getDate()} ${months[now.getMonth()]}`
 }
 
+const STATUS_STYLE: Record<OperatorSchedule['status'], { bg: string; text: string; label: string }> = {
+  scheduled: { bg: 'bg-[#1B7A3D]/10', text: 'text-[#1B7A3D]', label: 'Agendada' },
+  boarding: { bg: 'bg-[#F59E0B]/10', text: 'text-[#F59E0B]', label: 'Embarque' },
+  departed: { bg: 'bg-gray-100', text: 'text-gray-500', label: 'Partiu' },
+}
+
 export default function OperatorDayTrips() {
+  const navigate = useNavigate()
+  const schedules = getOperatorTodaySchedules()
+
   return (
     <div className="min-h-screen bg-gray-50 font-outfit">
       <header
@@ -18,22 +31,87 @@ export default function OperatorDayTrips() {
             <IconMapPin className="size-4" />
             <span className="text-[13px] font-semibold">Terminal de Viana</span>
           </div>
-          <div className='bg-[#FFFFFF33] py-1.5  px-2.5 rounded-4xl flex items-center justify-center 
+          <div className='bg-[#FFFFFF33] py-1.5 px-2.5 rounded-4xl flex items-center justify-center
           gap-1 border border-[#FFFFFF1F]'>
-         <IconClock className='size-3'/> 
-          <span className="text-xs font-semibold opacity-90">{formatDate()}</span>
+            <IconClock className='size-3' />
+            <span className="text-xs font-semibold opacity-90">{formatDate()}</span>
           </div>
         </div>
 
-      <div className=" mt-2">
-        <h1 className="text-[34px] font-extrabold text-white">Painel do Dia</h1>
+        <div className="mt-2">
+          <h1 className="text-[34px] font-extrabold text-white">Painel do Dia</h1>
 
-        <div className="flex items-end justify-between gap-3 mb-6">
-          <span className="text-sm text-[#FFFFFFB3] whitespace-nowrap">Visão geral em tempo real</span>
-          <div className="h-px w-[100px] bg-[#FFFFFFB3]" />
+          <div className="flex items-end justify-between gap-3 mb-6">
+            <span className="text-sm text-[#FFFFFFB3] whitespace-nowrap">Visão geral em tempo real</span>
+            <div className="h-px w-[100px] bg-[#FFFFFFB3]" />
+          </div>
         </div>
-      </div>
       </header>
+
+      <main className="px-5 py-6 pb-28">
+        <div className='flex items-center justify-between'>
+        <h2 className="text-[15px] font-bold text-[#111827] mb-4">Viagens de Hoje</h2>
+        <p className='text-[13px] text-[#1B7A3D] font-semibold'>{schedules.length} autocarros</p>
+
+        </div>
+        <div className="flex flex-col gap-3">
+          {schedules.map((schedule) => {
+            const style = STATUS_STYLE[schedule.status]
+            return (
+              <Card
+                key={schedule.id}
+                role="button"
+                tabIndex={0}
+                className="p-0 cursor-pointer hover:scale-[1.01] border-[#E5E7EB] 
+                active:scale-[0.99] transition-transform"
+                onClick={() => navigate(`/operator/walkin?schedule=${schedule.id}`)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    navigate(`/operator/walkin?schedule=${schedule.id}`)
+                  }
+                }}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-3">
+                      <span className="text-base font-bold text-[#111827]">
+                        {schedule.route}
+                      </span>
+                    </div>
+                    <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full
+                       ${style.bg} ${style.text}`}>
+                      {style.label}
+                    </span>
+                  </div>
+                  <div className='flex items-center gap-4 justify-baseline mb-2'>
+                    <div className='flex flex-col '>
+                      <span className='text-[11px] text-[#4B5563] font-medium'>Hora</span>
+                      <p className='text-[14px] text-[#111827] font-bold'>{schedule.departureTime}</p>
+                    </div>
+                    <div className='flex flex-col'>
+                      <span className='text-[11px] text-[#4B5563] font-medium'>Matrícula</span>
+                      <p className='text-[14px] text-[#111827] font-bold'>{schedule.busPlate}</p>
+                    </div>
+                     <div className='flex flex-col'>
+                      <span className='text-[11px] text-[#4B5563] font-medium'>Embarque</span>
+                      <p className='text-[14px] text-[#1B7A3D] font-bold'>
+                        {schedule.availableSeats}/{schedule.totalSeats} Passageiros
+                        </p>
+                    </div>
+                    
+                  </div>
+
+                  <div className="flex items-center justify-between border-t border-[#E5E7EB] pt-1">
+                    <p className='font-semibold text-xs text-[#1B7A3D]'>Vender Bilhete</p>
+                    <IconChevronRight className="size-5   text-[#1B7A3D]" />
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })}
+        </div>
+      </main>
     </div>
   )
 }
