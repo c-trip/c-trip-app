@@ -38,6 +38,7 @@ import OperatorTasks from '../routes/_operator/OperatorTasks'
 import OperatorsPage from '../routes/_public/OperatorsPage'
 
 import TabBarLayout from '../components/TabBarLayout'
+import OperatorTabBarLayout from '../components/OperatorTabBarLayout'
 
 export default function Router() {
   return (
@@ -79,12 +80,14 @@ export default function Router() {
       <Route path="/gestor/payments" element={<GestorPayments />} />
 
       <Route path="/operator/login" element={<OperatorLoginPage />} />
-      <Route path="/operator" element={<OperatorDayTrips />} />
-      <Route path="/operator/scan" element={<OperatorScan />} />
-      <Route path="/operator/walkin" element={<OperatorWalkIn />} />
-      <Route path="/operator/reprint" element={<OperatorReprint />} />
-      <Route path="/operator/manifest" element={<OperatorManifest />} />
-      <Route path="/operator/tasks" element={<OperatorTasks />} />
+      <Route element={<OperatorTabBarLayout />}>
+        <Route path="/operator" element={<OperatorDayTrips />} />
+        <Route path="/operator/scan" element={<OperatorScan />} />
+        <Route path="/operator/walkin" element={<OperatorWalkIn />} />
+        <Route path="/operator/reprint" element={<OperatorReprint />} />
+        <Route path="/operator/manifest" element={<OperatorManifest />} />
+        <Route path="/operator/tasks" element={<OperatorTasks />} />
+      </Route>
 
       <Route path="*" element={<Navigate to="/welcome" replace />} />
     </Routes>

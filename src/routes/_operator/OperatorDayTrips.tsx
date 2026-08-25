@@ -103,7 +103,7 @@ export default function OperatorDayTrips() {
                   </div>
 
                   <div className="flex items-center justify-between border-t border-[#E5E7EB] pt-1">
-                    <p className='font-semibold text-xs text-[#1B7A3D]'>Vender Bilhete</p>
+                    <p className='font-semibold text-xs text-[#1B7A3D]'>Ver Manisfesto do Passageiro</p>
                     <IconChevronRight className="size-5   text-[#1B7A3D]" />
                   </div>
                 </CardContent>
