@@ -27,6 +27,7 @@ import GestorFleet from '../routes/_gestor/GestorFleet'
 import GestorTeam from '../routes/_gestor/GestorTeam'
 import GestorPayments from '../routes/_gestor/GestorPayments'
 
+import OperatorLoginPage from '../routes/_operator/OperatorLoginPage'
 import OperatorDayTrips from '../routes/_operator/OperatorDayTrips'
 import OperatorWalkIn from '../routes/_operator/OperatorWalkIn'
 import OperatorReprint from '../routes/_operator/OperatorReprint'
@@ -77,6 +78,7 @@ export default function Router() {
       <Route path="/gestor/team" element={<GestorTeam />} />
       <Route path="/gestor/payments" element={<GestorPayments />} />
 
+      <Route path="/operator/login" element={<OperatorLoginPage />} />
       <Route path="/operator" element={<OperatorDayTrips />} />
       <Route path="/operator/scan" element={<OperatorScan />} />
       <Route path="/operator/walkin" element={<OperatorWalkIn />} />
