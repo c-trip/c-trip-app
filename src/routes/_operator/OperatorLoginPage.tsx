@@ -9,19 +9,23 @@ const MOCK_OPERATOR = { name: 'Carlos Mendes', company: 'Macon' }
 export default function OperatorLoginPage() {
   const navigate = useNavigate()
   const [code, setCode] = useState('')
+  const [hasError, setHasError] = useState(false)
 
   const handleChange = (value: string) => {
     setCode(value.replace(/\D/g, '').slice(0, 6))
+    if (hasError) setHasError(false)
   }
 
   const handleSubmit = () => {
     if (code.length !== 6) {
+      setHasError(true)
       gooeyToast.error('Código incompleto', {
         description: 'O código deve ter 6 dígitos.',
       })
       return
     }
     if (code !== VALID_CODE) {
+      setHasError(true)
       gooeyToast.error('Código inválido', {
         description: 'O código de acesso não é válido.',
       })
@@ -52,7 +56,8 @@ export default function OperatorLoginPage() {
           <label className="block text-sm font-medium text-gray-700 mb-2 font-outfit">
             Código de Acesso
           </label>
-          <div className="w-full h-12 flex items-center gap-2 py-2 px-4 rounded-xl bg-gray-100">
+          <div className={`w-full h-12 flex items-center gap-2 py-2 px-4 rounded-xl border bg-gray-100
+            ${hasError ? 'border-red-500' : 'border-transparent'}`}>
             <IconKey className="text-[#9CA3AF]" />
             <input
               type="text"
