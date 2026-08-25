@@ -13,7 +13,7 @@ const tabs = [
   { path: '/operator', label: 'Painel', icon: IconLayoutDashboard, iconActive: IconLayoutDashboardFilled },
   { path: '/operator/scan', label: 'Scanner', icon: IconQrcode, iconActive: IconQrcode },
   { path: '/operator/walkin', label: 'Venda', icon: IconTicket, iconActive: IconTicketFilled },
-  { path: '/operator/tasks', label: 'Calendário', icon: IconCalendar, iconActive: IconCalendarFilled },
+  { path: '/operator/calendar', label: 'Calendário', icon: IconCalendar, iconActive: IconCalendarFilled },
 ]
 
 export default function OperatorBottomTabBar() {
@@ -38,7 +38,7 @@ export default function OperatorBottomTabBar() {
               key={tab.path}
               onClick={() => navigate(tab.path)}
               className={`flex flex-col items-center gap-1 rounded-full transition-all ${
-                active ? 'bg-[#1B7A3D] px-6 py-2' : 'px-3 py-2'
+                active ? 'bg-[#1B7A3D] px-8 py-2' : 'px-3 py-2'
               }`}
             >
               <Icon className={`h-6 w-6 ${active ? 'text-white' : 'text-gray-400'}`} />

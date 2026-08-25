@@ -6,8 +6,18 @@ export interface OperatorSchedule extends Schedule {
   status: 'scheduled' | 'boarding' | 'departed'
 }
 
+/** Obtém a data local no formato YYYY-MM-DD (evita UTC). */
+function getLocalDate(): string {
+  const now = new Date()
+  return [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, '0'),
+    String(now.getDate()).padStart(2, '0'),
+  ].join('-')
+}
+
 export function getOperatorTodaySchedules(): OperatorSchedule[] {
-  const today = new Date().toISOString().split('T')[0]
+  const today = getLocalDate()
   const allSchedules: OperatorSchedule[] = [
     {
       id: 'macon-1',
@@ -47,9 +57,9 @@ export function getOperatorTodaySchedules(): OperatorSchedule[] {
       vehicleType: 'VIP',
       boardingCutoffMinutes: 30,
       boardingPoint: 'Terminal Rodoviário de Benguela',
-      availableSeats: 40,
+      availableSeats: 15,
       totalSeats: 40,
-      status: 'scheduled',
+      status: 'boarding',
     },
     {
       id: 'macon-3',

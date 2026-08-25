@@ -34,6 +34,7 @@ import OperatorReprint from '../routes/_operator/OperatorReprint'
 import OperatorScan from '../routes/_operator/OperatorScan'
 import OperatorManifest from '../routes/_operator/OperatorManifest'
 import OperatorTasks from '../routes/_operator/OperatorTasks'
+import OperatorCalendarPage from '../routes/_operator/OperatorCalendarPage'
 
 import OperatorsPage from '../routes/_public/OperatorsPage'
 
@@ -87,6 +88,7 @@ export default function Router() {
         <Route path="/operator/reprint" element={<OperatorReprint />} />
         <Route path="/operator/manifest" element={<OperatorManifest />} />
         <Route path="/operator/tasks" element={<OperatorTasks />} />
+        <Route path="/operator/calendar" element={<OperatorCalendarPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/welcome" replace />} />

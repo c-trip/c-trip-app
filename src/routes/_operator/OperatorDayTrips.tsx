@@ -64,11 +64,11 @@ export default function OperatorDayTrips() {
                 tabIndex={0}
                 className="p-0 cursor-pointer hover:scale-[1.01] border-[#E5E7EB] 
                 active:scale-[0.99] transition-transform"
-                onClick={() => navigate(`/operator/walkin?schedule=${schedule.id}`)}
+                onClick={() => navigate(`/operator/manifest?schedule=${schedule.id}`)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault()
-                    navigate(`/operator/walkin?schedule=${schedule.id}`)
+                    navigate(`/operator/manifest?schedule=${schedule.id}`)
                   }
                 }}
               >
@@ -96,14 +96,14 @@ export default function OperatorDayTrips() {
                      <div className='flex flex-col'>
                       <span className='text-[11px] text-[#4B5563] font-medium'>Embarque</span>
                       <p className='text-[14px] text-[#1B7A3D] font-bold'>
-                        {schedule.availableSeats}/{schedule.totalSeats} Passageiros
+                        {schedule.availableSeats}/{schedule.totalSeats} lugares
                         </p>
                     </div>
                     
                   </div>
 
                   <div className="flex items-center justify-between border-t border-[#E5E7EB] pt-1">
-                    <p className='font-semibold text-xs text-[#1B7A3D]'>Ver Manisfesto do Passageiro</p>
+                    <p className='font-semibold text-xs text-[#1B7A3D]'>Ver Manifesto</p>
                     <IconChevronRight className="size-5   text-[#1B7A3D]" />
                   </div>
                 </CardContent>
