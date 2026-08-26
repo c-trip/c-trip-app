@@ -28,7 +28,13 @@ export default function OperatorWalkIn() {
     setForm((prev) => ({ ...prev, [field]: value }))
   }
 
-  const isValid = form.name.trim().length >= 2 && form.seatNumber.trim().length > 0 && selectedSchedule
+  const seatNumber = Number(form.seatNumber)
+  const isValid =
+    form.name.trim().length >= 2 &&
+    selectedSchedule !== null &&
+    Number.isInteger(seatNumber) &&
+    seatNumber >= 1 &&
+    seatNumber <= selectedSchedule.totalSeats
 
   const handleSubmit = async () => {
     if (!isValid || submitting) return
