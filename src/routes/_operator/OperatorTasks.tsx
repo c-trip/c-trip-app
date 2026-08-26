@@ -70,7 +70,7 @@ export default function OperatorTasks() {
   const navigate = useNavigate()
   const [tasks, setTasks] = useState<FleetTask[]>(MOCK_TASKS)
   const [activeTab, setActiveTab] = useState<TaskTab>('all')
-  const [pendingTaskId, setPendingTaskId] = useState<string | null>(null)
+  const [pendingTaskIds, setPendingTaskIds] = useState<Set<string>>(() => new Set())
 
   const pending = tasks.filter((t) => t.status === 'pending')
   const inProgress = tasks.filter((t) => t.status === 'in_progress')
@@ -79,7 +79,7 @@ export default function OperatorTasks() {
   const filtered = activeTab === 'all' ? tasks : tasks.filter((t) => t.status === activeTab)
 
   const handleStatusChange = async (taskId: string, newStatus: TaskStatus) => {
-    setPendingTaskId(taskId)
+    setPendingTaskIds((prev) => new Set(prev).add(taskId))
     try {
       // Mock — substituir por PATCH /fleet/tasks/{task_id}
       await new Promise((r) => setTimeout(r, 600))
@@ -95,7 +95,11 @@ export default function OperatorTasks() {
         description: 'Tente novamente.',
       })
     } finally {
-      setPendingTaskId(null)
+      setPendingTaskIds((prev) => {
+        const next = new Set(prev)
+        next.delete(taskId)
+        return next
+      })
     }
   }
 
@@ -177,12 +181,12 @@ export default function OperatorTasks() {
                     {nextStatus && (
                       <button
                         type="button"
-                        disabled={pendingTaskId === task.taskId}
+                        disabled={pendingTaskIds.has(task.taskId)}
                         onClick={() => handleStatusChange(task.taskId, nextStatus)}
                         className="w-full flex items-center justify-between py-2.5 px-3 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <span className="text-xs font-semibold text-[#1B7A3D]">
-                          {pendingTaskId === task.taskId
+                          {pendingTaskIds.has(task.taskId)
                             ? 'A processar...'
                             : nextStatus === 'in_progress' ? 'Iniciar tarefa' : 'Marcar como concluída'}
                         </span>
