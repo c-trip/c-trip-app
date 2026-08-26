@@ -12,8 +12,8 @@ function formatDate(): string {
 
 const STATUS_STYLE: Record<OperatorSchedule['status'], { bg: string; text: string; label: string }> = {
   scheduled: { bg: 'bg-[#EFF6FF]', text: 'text-[#3B82F6]', label: 'A iniciar' },
-  boarding: { bg: 'bg-[#D1FAE5]', text: 'text-[#10B981]', label: 'Em rota' },
-  departed: { bg: 'bg-[#F3F4F6]', text: 'text-[#6B7280]', label: 'Chegou' },
+  boarding: { bg: 'bg-[#D1FAE5]', text: 'text-[#10B981]', label: 'Embarque' },
+  departed: { bg: 'bg-[#F3F4F6]', text: 'text-[#6B7280]', label: 'Partiu' },
 }
 
 export default function OperatorDayTrips() {
