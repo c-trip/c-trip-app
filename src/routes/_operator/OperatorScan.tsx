@@ -52,8 +52,7 @@ export default function OperatorScan() {
       });
       permStream.getTracks().forEach((t) => t.stop());
 
-      const { Html5Qrcode, Html5QrcodeSupportedFormats } =
-        await import("html5-qrcode");
+      const { Html5Qrcode } = await import("html5-qrcode");
 
       const devices = await Html5Qrcode.getCameras();
       if (!devices || devices.length === 0) {
@@ -77,7 +76,6 @@ export default function OperatorScan() {
           fps: 10,
           qrbox: { width: 250, height: 250 },
           aspectRatio: 1.0,
-          formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
         },
         async (decodedText) => {
           scanner.pause(true);
