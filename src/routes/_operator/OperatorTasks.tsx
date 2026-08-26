@@ -70,6 +70,7 @@ export default function OperatorTasks() {
   const navigate = useNavigate()
   const [tasks, setTasks] = useState<FleetTask[]>(MOCK_TASKS)
   const [activeTab, setActiveTab] = useState<TaskTab>('all')
+  const [pendingTaskId, setPendingTaskId] = useState<string | null>(null)
 
   const pending = tasks.filter((t) => t.status === 'pending')
   const inProgress = tasks.filter((t) => t.status === 'in_progress')
@@ -78,6 +79,7 @@ export default function OperatorTasks() {
   const filtered = activeTab === 'all' ? tasks : tasks.filter((t) => t.status === activeTab)
 
   const handleStatusChange = async (taskId: string, newStatus: TaskStatus) => {
+    setPendingTaskId(taskId)
     try {
       // Mock — substituir por PATCH /fleet/tasks/{task_id}
       await new Promise((r) => setTimeout(r, 600))
@@ -92,6 +94,8 @@ export default function OperatorTasks() {
       gooeyToast.error('Erro ao actualizar', {
         description: 'Tente novamente.',
       })
+    } finally {
+      setPendingTaskId(null)
     }
   }
 
@@ -151,7 +155,7 @@ export default function OperatorTasks() {
               const nextStatus = getNextStatus(task.status)
 
               return (
-                <Card key={task.taskId} className={`p-0 border-[#E5E7EB] ${task.status === 'done' ? 'opacity-60' : ''}`}>
+                <Card key={task.taskId} className="p-0 border-[#E5E7EB]">
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center gap-2.5">
@@ -173,11 +177,14 @@ export default function OperatorTasks() {
                     {nextStatus && (
                       <button
                         type="button"
+                        disabled={pendingTaskId === task.taskId}
                         onClick={() => handleStatusChange(task.taskId, nextStatus)}
-                        className="w-full flex items-center justify-between py-2.5 px-3 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors"
+                        className="w-full flex items-center justify-between py-2.5 px-3 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <span className="text-xs font-semibold text-[#1B7A3D]">
-                          {nextStatus === 'in_progress' ? 'Iniciar tarefa' : 'Marcar como concluída'}
+                          {pendingTaskId === task.taskId
+                            ? 'A processar...'
+                            : nextStatus === 'in_progress' ? 'Iniciar tarefa' : 'Marcar como concluída'}
                         </span>
                         <IconChevronRight className="size-4 text-[#1B7A3D]" />
                       </button>
