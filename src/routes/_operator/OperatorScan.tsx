@@ -1,116 +1,152 @@
-import { useState, useRef } from 'react'
-import { useNavigate } from 'react-router'
-import { IconArrowLeft, IconCamera } from '@tabler/icons-react'
+import { useState, useRef } from "react";
+import { useNavigate } from "react-router";
+import { IconArrowLeft, IconCamera } from "@tabler/icons-react";
 
-type ScanResult = 'permission' | 'loading' | 'idle' | 'denied' | 'validating' | 'success' | 'error' | 'already-boarded'
+type ScanResult =
+  | "permission"
+  | "loading"
+  | "idle"
+  | "denied"
+  | "validating"
+  | "success"
+  | "error"
+  | "already-boarded";
 
 interface ValidateResponse {
-  status: 'allowed' | 'already_boarded' | 'invalid'
-  passengerName?: string
-  seat?: number
-  route?: string
+  status: "allowed" | "already_boarded" | "invalid";
+  passengerName?: string;
+  seat?: number;
+  route?: string;
 }
 
 async function validateQr(qrHash: string): Promise<ValidateResponse> {
   // Mock — substituir por POST /boarding/validate quando a API estiver pronta
-  await new Promise((r) => setTimeout(r, 1200))
+  await new Promise((r) => setTimeout(r, 1200));
 
-  if (qrHash.includes('valid')) {
-    return { status: 'allowed', passengerName: 'Ana Silva', seat: 1, route: 'Luanda → Benguela' }
+  if (qrHash.includes("valid")) {
+    return {
+      status: "allowed",
+      passengerName: "Ana Silva",
+      seat: 1,
+      route: "Luanda → Benguela",
+    };
   }
-  if (qrHash.includes('boarded')) {
-    return { status: 'already_boarded' }
+  if (qrHash.includes("boarded")) {
+    return { status: "already_boarded" };
   }
-  return { status: 'invalid' }
+  return { status: "invalid" };
 }
 
 export default function OperatorScan() {
-  const navigate = useNavigate()
-  const [scanState, setScanState] = useState<ScanResult>('permission')
-  const [scannedData, setScannedData] = useState<ValidateResponse | null>(null)
-  const scannerRef = useRef<import('html5-qrcode').Html5Qrcode | null>(null)
-  const startedRef = useRef(false)
+  const navigate = useNavigate();
+  const [scanState, setScanState] = useState<ScanResult>("permission");
+  const [scannedData, setScannedData] = useState<ValidateResponse | null>(null);
+  const scannerRef = useRef<import("html5-qrcode").Html5Qrcode | null>(null);
+  const startedRef = useRef(false);
 
   const startCamera = async () => {
-    setScanState('loading')
+    setScanState("loading");
     try {
-      const permStream = await navigator.mediaDevices.getUserMedia({ video: true })
-      permStream.getTracks().forEach((t) => t.stop())
+      const permStream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+      });
+      permStream.getTracks().forEach((t) => t.stop());
 
-      const { Html5Qrcode, Html5QrcodeSupportedFormats } = await import('html5-qrcode')
+      const { Html5Qrcode, Html5QrcodeSupportedFormats } =
+        await import("html5-qrcode");
 
-      const devices = await Html5Qrcode.getCameras()
+      const devices = await Html5Qrcode.getCameras();
       if (!devices || devices.length === 0) {
-        setScanState('denied')
-        return
+        setScanState("denied");
+        return;
       }
 
       const rear = devices.find(
-        (d) => d.label.toLowerCase().includes('back') || d.label.toLowerCase().includes('traseira'),
-      )
-      const cameraId = rear?.id || devices[devices.length - 1].id
+        (d) =>
+          d.label.toLowerCase().includes("back") ||
+          d.label.toLowerCase().includes("traseira"),
+      );
+      const cameraId = rear?.id || devices[devices.length - 1].id;
 
-      const scanner = new Html5Qrcode('qr-scanner-region', { verbose: false })
-      scannerRef.current = scanner
+      const scanner = new Html5Qrcode("qr-scanner-region", { verbose: false });
+      scannerRef.current = scanner;
 
       await scanner.start(
         cameraId,
-        { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0, formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE] },
+        {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+          aspectRatio: 1.0,
+          formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
+        },
         async (decodedText) => {
-          scanner.pause(true)
-          setScanState('validating')
+          scanner.pause(true);
+          setScanState("validating");
           try {
-            const result = await validateQr(decodedText)
-            setScannedData(result)
-            if (result.status === 'allowed') setScanState('success')
-            else if (result.status === 'already_boarded') setScanState('already-boarded')
-            else setScanState('error')
+            const result = await validateQr(decodedText);
+            setScannedData(result);
+            if (result.status === "allowed") setScanState("success");
+            else if (result.status === "already_boarded")
+              setScanState("already-boarded");
+            else setScanState("error");
           } catch {
-            setScanState('error')
+            setScanState("error");
           }
         },
         () => {},
-      )
+      );
 
-      startedRef.current = true
-      setScanState('idle')
+      startedRef.current = true;
+      setScanState("idle");
     } catch {
-      setScanState('denied')
+      setScanState("denied");
     }
-  }
+  };
 
   const cleanupScanner = () => {
     if (scannerRef.current) {
       if (startedRef.current && scannerRef.current.isScanning) {
-        try { scannerRef.current.pause(true) } catch { /* ignore */ }
-        try { scannerRef.current.stop().catch(() => {}) } catch { /* ignore */ }
+        try {
+          scannerRef.current.pause(true);
+        } catch {
+          /* ignore */
+        }
+        try {
+          scannerRef.current.stop().catch(() => {});
+        } catch {
+          /* ignore */
+        }
       }
-      try { scannerRef.current.clear() } catch { /* ignore */ }
-      scannerRef.current = null
+      try {
+        scannerRef.current.clear();
+      } catch {
+        /* ignore */
+      }
+      scannerRef.current = null;
     }
-    startedRef.current = false
+    startedRef.current = false;
 
-    const region = document.getElementById('qr-scanner-region')
+    const region = document.getElementById("qr-scanner-region");
     if (region) {
-      region.querySelectorAll('video').forEach((v) => {
-        const stream = v.srcObject as MediaStream | null
-        stream?.getTracks().forEach((t) => t.stop())
-        v.remove()
-      })
-      region.querySelectorAll('canvas').forEach((c) => c.remove())
+      region.querySelectorAll("video").forEach((v) => {
+        const stream = v.srcObject as MediaStream | null;
+        stream?.getTracks().forEach((t) => t.stop());
+        v.remove();
+      });
+      region.querySelectorAll("canvas").forEach((c) => c.remove());
     }
-  }
+  };
 
   const handleRetry = () => {
-    cleanupScanner()
-    setScannedData(null)
-    setScanState('permission')
-  }
+    cleanupScanner();
+    setScannedData(null);
+    setScanState("permission");
+  };
 
   const handleGoBack = () => {
-    cleanupScanner()
-    navigate('/operator')
-  }
+    cleanupScanner();
+    navigate("/operator");
+  };
 
   return (
     <div className="min-h-screen bg-black font-outfit">
@@ -124,20 +160,25 @@ export default function OperatorScan() {
           >
             <IconArrowLeft className="size-5 text-white" />
           </button>
-          <h1 className="text-[22px] font-bold text-white text-center flex-1">Escanear Bilhete</h1>
+          <h1 className="text-[22px] font-bold text-white text-center flex-1">
+            Escanear Bilhete
+          </h1>
         </div>
       </header>
 
       <main className="px-5 pb-8 flex flex-col items-center">
-        {scanState === 'permission' && (
+        {scanState === "permission" && (
           <div className="flex flex-col items-center gap-6 py-16">
             <div className="size-24 rounded-full bg-white/10 flex items-center justify-center">
               <IconCamera className="size-12 text-white" />
             </div>
             <div className="text-center">
-              <p className="text-white font-bold text-lg mb-1">Escanear QR Code</p>
+              <p className="text-white font-bold text-lg mb-1">
+                Escanear QR Code
+              </p>
               <p className="text-gray-400 text-sm leading-relaxed max-w-[260px]">
-                Toque no botão abaixo para activar a câmara e escanear o bilhete do passageiro.
+                Toque no botão abaixo para activar a câmara e escanear o bilhete
+                do passageiro.
               </p>
             </div>
             <button
@@ -157,17 +198,30 @@ export default function OperatorScan() {
           </div>
         )}
 
-        {scanState === 'denied' && (
+        {scanState === "denied" && (
           <div className="flex flex-col items-center gap-6 py-16">
             <div className="size-24 rounded-full bg-white/10 flex items-center justify-center">
-              <svg className="size-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15.182 16.318A4.486 4.486 0 0012.016 15a4.486 4.486 0 00-3.198 1.318M21 12a9 9 0 11-18 0 9 9 0 0118 0zM9.75 9.75c0 .414-.168.75-.375.75S9 10.164 9 9.75 9.168 9 9.375 9s.375.336.375.75zm-.375 0h.008v.015h-.008V9.75zm5.625 0c0 .414-.168.75-.375.75s-.375-.336-.375-.75.168-.75.375-.75.375.336.375.75zm-.375 0h.008v.015h-.008V9.75z" />
+              <svg
+                className="size-12 text-gray-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={1.5}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15.182 16.318A4.486 4.486 0 0012.016 15a4.486 4.486 0 00-3.198 1.318M21 12a9 9 0 11-18 0 9 9 0 0118 0zM9.75 9.75c0 .414-.168.75-.375.75S9 10.164 9 9.75 9.168 9 9.375 9s.375.336.375.75zm-.375 0h.008v.015h-.008V9.75zm5.625 0c0 .414-.168.75-.375.75s-.375-.336-.375-.75.168-.75.375-.75.375.336.375.75zm-.375 0h.008v.015h-.008V9.75z"
+                />
               </svg>
             </div>
             <div className="text-center">
-              <p className="text-white font-bold text-lg mb-1">Câmara Indisponível</p>
+              <p className="text-white font-bold text-lg mb-1">
+                Câmara Indisponível
+              </p>
               <p className="text-gray-400 text-sm leading-relaxed max-w-[260px]">
-                Permita o acesso à câmara nas definições do navegador e tente novamente.
+                Permita o acesso à câmara nas definições do navegador e tente
+                novamente.
               </p>
             </div>
             <button
@@ -187,49 +241,68 @@ export default function OperatorScan() {
           </div>
         )}
 
-        {scanState === 'loading' && (
+        {scanState === "loading" && (
           <div className="flex flex-col items-center gap-4 py-20">
             <div className="size-12 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             <span className="text-white text-sm">A iniciar câmara...</span>
           </div>
         )}
 
-        {(scanState === 'idle' || scanState === 'loading') && (
+        {(scanState === "idle" || scanState === "loading") && (
           <>
             <div
               className="relative w-full overflow-hidden bg-black rounded-2xl"
-              style={{ aspectRatio: '1 / 1', maxWidth: 290 }}
+              style={{ aspectRatio: "1 / 1", maxWidth: 290 }}
             >
-              <div id="qr-scanner-region" className="w-full h-full [&>video]:w-full [&>video]:h-full [&>video]:object-cover" />
+              <div
+                id="qr-scanner-region"
+                className="w-full h-full [&>video]:w-full [&>video]:h-full [&>video]:object-cover"
+              />
 
-              {scanState === 'loading' && (
+              {scanState === "loading" && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/70 z-10">
                   <div className="flex flex-col items-center gap-3">
                     <div className="size-8 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    <span className="text-white text-sm font-outfit">A iniciar câmara...</span>
+                    <span className="text-white text-sm font-outfit">
+                      A iniciar câmara...
+                    </span>
                   </div>
                 </div>
               )}
             </div>
             <div className="mt-6 text-center">
-              <p className="text-white text-sm font-semibold mb-1">Aponte a câmara ao QR code do passageiro</p>
-              <p className="text-gray-400 text-xs">Mantenha a câmara estável e o código dentro da área verde</p>
+              <p className="text-white text-sm font-semibold mb-1">
+                Aponte a câmara ao QR code do passageiro
+              </p>
+              <p className="text-gray-400 text-xs">
+                Mantenha a câmara estável e o código dentro da área verde
+              </p>
             </div>
           </>
         )}
 
-        {scanState === 'validating' && (
+        {scanState === "validating" && (
           <div className="flex flex-col items-center gap-4 py-20">
             <div className="size-12 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             <span className="text-white text-sm">A validar bilhete...</span>
           </div>
         )}
 
-        {scanState === 'success' && scannedData && (
+        {scanState === "success" && scannedData && (
           <div className="flex flex-col items-center gap-5 py-12 w-full max-w-xs">
             <div className="size-20 rounded-full bg-[#1B7A3D] flex items-center justify-center animate-scale-in">
-              <svg className="size-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              <svg
+                className="size-10 text-white"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={3}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M5 13l4 4L19 7"
+                />
               </svg>
             </div>
             <div className="text-center">
@@ -239,66 +312,120 @@ export default function OperatorScan() {
             <div className="w-full bg-white/10 rounded-xl p-4 space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-400">Passageiro</span>
-                <span className="text-white font-semibold">{scannedData.passengerName}</span>
+                <span className="text-white font-semibold">
+                  {scannedData.passengerName}
+                </span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-400">Lugar</span>
-                <span className="text-white font-semibold">{scannedData.seat}</span>
+                <span className="text-white font-semibold">
+                  {scannedData.seat}
+                </span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-400">Rota</span>
-                <span className="text-white font-semibold">{scannedData.route}</span>
+                <span className="text-white font-semibold">
+                  {scannedData.route}
+                </span>
               </div>
             </div>
-            <button type="button" onClick={handleRetry} className="w-full py-3 bg-white text-black font-semibold rounded-xl hover:bg-gray-100 transition-colors">
+            <button
+              type="button"
+              onClick={handleRetry}
+              className="w-full py-3 bg-white text-black font-semibold rounded-xl hover:bg-gray-100 transition-colors"
+            >
               Escanear outro
             </button>
-            <button type="button" onClick={handleGoBack} className="w-full py-3 bg-white/10 text-white font-semibold rounded-xl hover:bg-white/20 transition-colors">
+            <button
+              type="button"
+              onClick={handleGoBack}
+              className="w-full py-3 bg-white/10 text-white font-semibold rounded-xl hover:bg-white/20 transition-colors"
+            >
               Voltar ao painel
             </button>
           </div>
         )}
 
-        {scanState === 'already-boarded' && (
+        {scanState === "already-boarded" && (
           <div className="flex flex-col items-center gap-5 py-12 w-full max-w-xs">
             <div className="size-20 rounded-full bg-yellow-500 flex items-center justify-center animate-scale-in">
-              <svg className="size-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+              <svg
+                className="size-10 text-white"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"
+                />
               </svg>
             </div>
             <div className="text-center">
               <p className="text-white font-bold text-lg">Já Embarcado</p>
-              <p className="text-gray-400 text-sm mt-1">Este passageiro já fez check-in</p>
+              <p className="text-gray-400 text-sm mt-1">
+                Este passageiro já fez check-in
+              </p>
             </div>
-            <button type="button" onClick={handleRetry} className="w-full py-3 bg-white text-black font-semibold rounded-xl hover:bg-gray-100 transition-colors">
+            <button
+              type="button"
+              onClick={handleRetry}
+              className="w-full py-3 bg-white text-black font-semibold rounded-xl hover:bg-gray-100 transition-colors"
+            >
               Escanear outro
             </button>
-            <button type="button" onClick={handleGoBack} className="w-full py-3 bg-white/10 text-white font-semibold rounded-xl hover:bg-white/20 transition-colors">
+            <button
+              type="button"
+              onClick={handleGoBack}
+              className="w-full py-3 bg-white/10 text-white font-semibold rounded-xl hover:bg-white/20 transition-colors"
+            >
               Voltar ao painel
             </button>
           </div>
         )}
 
-        {scanState === 'error' && (
+        {scanState === "error" && (
           <div className="flex flex-col items-center gap-5 py-12 w-full max-w-xs">
             <div className="size-20 rounded-full bg-red-500 flex items-center justify-center animate-scale-in">
-              <svg className="size-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              <svg
+                className="size-10 text-white"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </div>
             <div className="text-center">
               <p className="text-white font-bold text-lg">Bilhete Inválido</p>
-              <p className="text-gray-400 text-sm mt-1">QR code não reconhecido</p>
+              <p className="text-gray-400 text-sm mt-1">
+                QR code não reconhecido
+              </p>
             </div>
-            <button type="button" onClick={handleRetry} className="w-full py-3 bg-white text-black font-semibold rounded-xl hover:bg-gray-100 transition-colors">
+            <button
+              type="button"
+              onClick={handleRetry}
+              className="w-full py-3 bg-white text-black font-semibold rounded-xl hover:bg-gray-100 transition-colors"
+            >
               Tentar novamente
             </button>
-            <button type="button" onClick={handleGoBack} className="w-full py-3 bg-white/10 text-white font-semibold rounded-xl hover:bg-white/20 transition-colors">
+            <button
+              type="button"
+              onClick={handleGoBack}
+              className="w-full py-3 bg-white/10 text-white font-semibold rounded-xl hover:bg-white/20 transition-colors"
+            >
               Voltar ao painel
             </button>
           </div>
         )}
       </main>
     </div>
-  )
+  );
 }
