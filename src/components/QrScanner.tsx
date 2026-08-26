@@ -34,7 +34,7 @@ function ScannerInner({ onScan, fps = 10, qrboxSize = 250 }: QrScannerProps) {
 
     const setup = async () => {
       try {
-        const { Html5Qrcode, Html5QrcodeSupportedFormats } = await import('html5-qrcode')
+        const { Html5Qrcode } = await import('html5-qrcode')
         if (cancelled) return
 
         const scanner = new Html5Qrcode('qr-scanner-region', { verbose: false })
@@ -57,7 +57,6 @@ function ScannerInner({ onScan, fps = 10, qrboxSize = 250 }: QrScannerProps) {
             fps,
             qrbox: { width: qrboxSize, height: qrboxSize },
             aspectRatio: 1.0,
-            formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
           },
           (decodedText) => {
             if (cancelled) return
