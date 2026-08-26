@@ -35,6 +35,7 @@ export default function OperatorReprint() {
   const [selectedSchedule, setSelectedSchedule] = useState<OperatorSchedule | null>(null)
   const [search, setSearch] = useState('')
   const [reprintedIds, setReprintedIds] = useState<Set<string>>(new Set())
+  const [reprintingId, setReprintingId] = useState<string | null>(null)
 
   const passengers = selectedSchedule ? getMockReprintPassengers(selectedSchedule.id) : []
   const query = search.toLowerCase()
@@ -46,6 +47,8 @@ export default function OperatorReprint() {
   )
 
   const handleReprint = async (passenger: ReprintPassenger) => {
+    if (reprintingId === passenger.bookingId) return
+    setReprintingId(passenger.bookingId)
     try {
       // Mock — substituir por POST /boarding/qr/reprint
       await new Promise((r) => setTimeout(r, 800))
@@ -58,6 +61,8 @@ export default function OperatorReprint() {
       gooeyToast.error('Erro ao reimprimir', {
         description: 'Tente novamente.',
       })
+    } finally {
+      setReprintingId(null)
     }
   }
 
@@ -145,11 +150,12 @@ export default function OperatorReprint() {
                         ) : (
                           <button
                             type="button"
+                            disabled={reprintingId === passenger.bookingId}
                             onClick={() => handleReprint(passenger)}
-                            className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-[#1B7A3D] text-white text-xs font-semibold rounded-lg hover:bg-[#15632F] transition-colors active:scale-95"
+                            className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-[#1B7A3D] text-white text-xs font-semibold rounded-lg hover:bg-[#15632F] transition-colors active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             <IconPrinter className="size-3.5" />
-                            Imprimir
+                            {reprintingId === passenger.bookingId ? 'A imprimir…' : 'Imprimir'}
                           </button>
                         )}
                       </CardContent>

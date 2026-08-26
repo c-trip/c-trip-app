@@ -32,6 +32,7 @@ export default function OperatorWalkIn() {
   const isValid =
     form.name.trim().length >= 2 &&
     selectedSchedule !== null &&
+    selectedSchedule.availableSeats > 0 &&
     Number.isInteger(seatNumber) &&
     seatNumber >= 1 &&
     seatNumber <= selectedSchedule.totalSeats
@@ -158,7 +159,7 @@ export default function OperatorWalkIn() {
 
           {showSchedulePicker && (
             <div className="mt-2 bg-white border border-gray-200 rounded-xl overflow-hidden">
-              {schedules.map((s) => (
+              {schedules.filter((s) => s.availableSeats > 0).map((s) => (
                 <button
                   key={s.id}
                   type="button"
@@ -187,6 +188,7 @@ export default function OperatorWalkIn() {
           <div className="relative">
             <IconUser className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
+              id="walkin-name"
               type="text"
               value={form.name}
               onChange={(e) => setField('name', e.target.value)}
@@ -198,6 +200,7 @@ export default function OperatorWalkIn() {
           <div className="relative">
             <IconPhone className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
+              id="walkin-phone"
               type="tel"
               value={form.phone}
               onChange={(e) => setField('phone', e.target.value)}
@@ -209,6 +212,7 @@ export default function OperatorWalkIn() {
           <div className="relative">
             <IconId className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
+              id="walkin-idoc"
               type="text"
               value={form.idDoc}
               onChange={(e) => setField('idDoc', e.target.value)}
@@ -218,8 +222,9 @@ export default function OperatorWalkIn() {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-[#6B7280] uppercase tracking-wide mb-2">Lugar</label>
+            <label htmlFor="walkin-seat" className="block text-xs font-bold text-[#6B7280] uppercase tracking-wide mb-2">Lugar</label>
             <input
+              id="walkin-seat"
               type="number"
               min={1}
               max={selectedSchedule?.totalSeats ?? 50}
