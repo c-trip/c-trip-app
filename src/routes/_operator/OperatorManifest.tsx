@@ -1,6 +1,6 @@
 import { useSearchParams, useNavigate } from 'react-router'
 import { IconArrowLeft, IconUser, IconBus } from '@tabler/icons-react'
-import { getOperatorTodaySchedules } from '@/data/mockOperatorSchedules'
+import { findScheduleById } from '@/data/mockOperatorSchedules'
 import { Card, CardContent } from '@/components/ui/card'
 
 interface ManifestPassenger {
@@ -28,8 +28,7 @@ export default function OperatorManifest() {
   const navigate = useNavigate()
   const scheduleId = searchParams.get('schedule')
 
-  const schedules = getOperatorTodaySchedules()
-  const schedule = schedules.find((s) => s.id === scheduleId)
+  const schedule = scheduleId ? findScheduleById(scheduleId) : undefined
 
   if (!schedule) {
     return (
@@ -59,6 +58,7 @@ export default function OperatorManifest() {
           <button
             type="button"
             onClick={() => navigate('/operator')}
+            aria-label="Voltar ao painel"
             className="p-1 rounded-full hover:bg-gray-100"
           >
             <IconArrowLeft className="size-5 text-gray-600" />
@@ -96,7 +96,7 @@ export default function OperatorManifest() {
           {passengers.map((passenger) => (
             <Card
               key={passenger.bookingId}
-              className={`p-0 border-[#E5E7EB] ${passenger.status === 'cancelled' ? 'opacity-50' : ''}`}
+              className="p-0 border-[#E5E7EB]"
             >
               <CardContent className="p-3 flex items-center gap-3">
                 <div className="size-8 rounded-full bg-[#1B7A3D]/10 flex items-center justify-center">

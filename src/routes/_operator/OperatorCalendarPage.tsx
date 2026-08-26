@@ -6,7 +6,7 @@ import {
   IconBus,
 } from "@tabler/icons-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { getOperatorTodaySchedules } from "@/data/mockOperatorSchedules";
+import { getOperatorTodaySchedules, getFutureSchedules } from "@/data/mockOperatorSchedules";
 import type { OperatorSchedule } from "@/data/mockOperatorSchedules";
 
 const WEEKDAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
@@ -43,70 +43,16 @@ const STATUS_STYLE: Record<OperatorSchedule['status'], { bg: string; text: strin
   departed: { bg: 'bg-[#F3F4F6]', text: 'text-[#4B5563]', label: 'Partiu' },
 }
 
-/** Calcula YYYY-MM-DD a partir de um objecto Date local. */
-function dateKey(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
-
 /** Dados mockados de viagens por data (simula API GET /boarding/schedules). */
 function getMockSchedulesByDate(): Record<string, OperatorSchedule[]> {
-  const today = new Date()
-
-  const tomorrow = new Date(today)
-  tomorrow.setDate(today.getDate() + 1)
-
-  const day3 = new Date(today)
-  day3.setDate(today.getDate() + 3)
-
-  return {
-    [dateKey(today)]: getOperatorTodaySchedules(),
-    [dateKey(tomorrow)]: [
-      {
-        id: 'macon-tomorrow',
-        operatorName: 'Macon',
-        route: 'Luanda → Benguela',
-        origin: 'Luanda',
-        destination: 'Benguela',
-        departureDate: dateKey(tomorrow),
-        departureTime: '07:30',
-        arrivalTime: '12:00',
-        duration: '4h 30min',
-        price: '3 500 Kz',
-        busModel: 'Mercedes Sprinter',
-        busPlate: 'LD-11-22-D',
-        driverName: 'António Gomes',
-        vehicleType: 'VIP',
-        boardingCutoffMinutes: 30,
-        boardingPoint: 'Terminal de Viana',
-        availableSeats: 35,
-        totalSeats: 40,
-        status: 'scheduled',
-      },
-    ],
-    [dateKey(day3)]: [
-      {
-        id: 'macon-day3',
-        operatorName: 'Macon',
-        route: 'Luanda → Huambo',
-        origin: 'Luanda',
-        destination: 'Huambo',
-        departureDate: dateKey(day3),
-        departureTime: '06:00',
-        arrivalTime: '13:00',
-        duration: '7h',
-        price: '4 500 Kz',
-        busModel: 'Mercedes Sprinter',
-        busPlate: 'LD-90-34-F',
-        driverName: 'Ricardo Almeida',
-        vehicleType: 'VIP',
-        boardingCutoffMinutes: 30,
-        boardingPoint: 'Rodoviária do Zango',
-        availableSeats: 30,
-        totalSeats: 40,
-        status: 'scheduled',
-      },
-    ],
+  const all = [...getOperatorTodaySchedules(), ...getFutureSchedules()]
+  const byDate: Record<string, OperatorSchedule[]> = {}
+  for (const s of all) {
+    const key = s.departureDate
+    if (!byDate[key]) byDate[key] = []
+    byDate[key].push(s)
   }
+  return byDate
 }
 
 export default function OperatorCalendarPage() {
