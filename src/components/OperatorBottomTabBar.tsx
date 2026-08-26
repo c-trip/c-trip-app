@@ -26,7 +26,7 @@ export default function OperatorBottomTabBar() {
   }
 
   return (
-    <nav className="fixed bottom-2 left-4 right-4 z-50 border border-gray-200 bg-white/80
+    <nav className="fixed bottom-2 left-4 right-4 z-50 border border-gray-200 bg-white/80 font-outfit
     backdrop-blur-xl safe-area-pb rounded-4xl">
       <div className="mx-auto flex max-w-lg items-center justify-around py-2">
         {tabs.map((tab) => {
@@ -37,6 +37,7 @@ export default function OperatorBottomTabBar() {
             <button
               key={tab.path}
               onClick={() => navigate(tab.path)}
+              aria-current={active ? 'page' : undefined}
               className={`flex flex-col items-center gap-1 rounded-full transition-all ${
                 active ? 'bg-[#1B7A3D] px-8 py-2' : 'px-3 py-2'
               }`}

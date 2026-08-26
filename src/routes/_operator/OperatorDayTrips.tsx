@@ -42,7 +42,7 @@ export default function OperatorDayTrips() {
           <h1 className="text-[34px] font-extrabold text-white">Painel do Dia</h1>
 
           <div className="flex items-end justify-between gap-3 mb-6">
-            <span className="text-sm text-[#FFFFFFB3] whitespace-nowrap">Visão geral em tempo real</span>
+            <span className="text-sm text-[#FFFFFFB3] whitespace-nowrap">Visão geral das viagens de hoje</span>
             <div className="h-px w-[100px] bg-[#FFFFFFB3]" />
           </div>
         </div>
