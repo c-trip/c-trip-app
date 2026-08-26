@@ -83,13 +83,13 @@ export default function Router() {
       <Route path="/operator/login" element={<OperatorLoginPage />} />
       <Route element={<OperatorTabBarLayout />}>
         <Route path="/operator" element={<OperatorDayTrips />} />
-        <Route path="/operator/scan" element={<OperatorScan />} />
         <Route path="/operator/walkin" element={<OperatorWalkIn />} />
         <Route path="/operator/reprint" element={<OperatorReprint />} />
         <Route path="/operator/tasks" element={<OperatorTasks />} />
         <Route path="/operator/calendar" element={<OperatorCalendarPage />} />
       </Route>
       <Route path="/operator/manifest" element={<OperatorManifest />} />
+      <Route path="/operator/scan" element={<OperatorScan />} />
 
       <Route path="*" element={<Navigate to="/welcome" replace />} />
     </Routes>
