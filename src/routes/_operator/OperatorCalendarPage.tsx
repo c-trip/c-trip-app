@@ -6,6 +6,7 @@ import {
   IconBus,
 } from "@tabler/icons-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { getOperatorTodaySchedules } from "@/data/mockOperatorSchedules";
 import type { OperatorSchedule } from "@/data/mockOperatorSchedules";
 
 const WEEKDAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
@@ -36,104 +37,76 @@ function formatDateKey(year: number, month: number, day: number): string {
   return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
+const STATUS_STYLE: Record<OperatorSchedule['status'], { bg: string; text: string; label: string }> = {
+  scheduled: { bg: 'bg-[#EFF6FF]', text: 'text-[#3B82F6]', label: 'A iniciar' },
+  boarding: { bg: 'bg-[#D1FAE5]', text: 'text-[#10B981]', label: 'Em rota' },
+  departed: { bg: 'bg-[#F3F4F6]', text: 'text-[#6B7280]', label: 'Chegou' },
+}
+
+/** Calcula YYYY-MM-DD a partir de um objecto Date local. */
+function dateKey(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 /** Dados mockados de viagens por data (simula API GET /boarding/schedules). */
 function getMockSchedulesByDate(): Record<string, OperatorSchedule[]> {
-  const today = new Date();
-  const y = today.getFullYear();
-  const m = today.getMonth();
+  const today = new Date()
+
+  const tomorrow = new Date(today)
+  tomorrow.setDate(today.getDate() + 1)
+
+  const day3 = new Date(today)
+  day3.setDate(today.getDate() + 3)
 
   return {
-    [formatDateKey(y, m, today.getDate())]: [
+    [dateKey(today)]: getOperatorTodaySchedules(),
+    [dateKey(tomorrow)]: [
       {
-        id: "macon-1",
-        operatorName: "Macon",
-        route: "Luanda → Benguela",
-        origin: "Luanda",
-        destination: "Benguela",
-        departureDate: formatDateKey(y, m, today.getDate()),
-        departureTime: "08:00",
-        arrivalTime: "12:30",
-        duration: "4h 30min",
-        price: "3 500 Kz",
-        busModel: "Mercedes Sprinter",
-        busPlate: "LD-34-56-B",
-        driverName: "Carlos Silva",
-        vehicleType: "VIP",
+        id: 'macon-tomorrow',
+        operatorName: 'Macon',
+        route: 'Luanda → Benguela',
+        origin: 'Luanda',
+        destination: 'Benguela',
+        departureDate: dateKey(tomorrow),
+        departureTime: '07:30',
+        arrivalTime: '12:00',
+        duration: '4h 30min',
+        price: '3 500 Kz',
+        busModel: 'Mercedes Sprinter',
+        busPlate: 'LD-11-22-D',
+        driverName: 'António Gomes',
+        vehicleType: 'VIP',
         boardingCutoffMinutes: 30,
-        boardingPoint: "Terminal de Viana",
-        availableSeats: 25,
-        totalSeats: 40,
-        status: "scheduled",
-      },
-      {
-        id: "macon-2",
-        operatorName: "Macon",
-        route: "Benguela → Huambo",
-        origin: "Benguela",
-        destination: "Huambo",
-        departureDate: formatDateKey(y, m, today.getDate()),
-        departureTime: "10:00",
-        arrivalTime: "13:00",
-        duration: "3h",
-        price: "2 800 Kz",
-        busModel: "Mercedes Sprinter",
-        busPlate: "BE-78-23-D",
-        driverName: "António Ferreira",
-        vehicleType: "VIP",
-        boardingCutoffMinutes: 30,
-        boardingPoint: "Terminal Rodoviário de Benguela",
-        availableSeats: 15,
-        totalSeats: 40,
-        status: "boarding",
-      },
-    ],
-    [formatDateKey(y, m, today.getDate() + 1)]: [
-      {
-        id: "macon-tomorrow",
-        operatorName: "Macon",
-        route: "Luanda → Benguela",
-        origin: "Luanda",
-        destination: "Benguela",
-        departureDate: formatDateKey(y, m, today.getDate() + 1),
-        departureTime: "07:30",
-        arrivalTime: "12:00",
-        duration: "4h 30min",
-        price: "3 500 Kz",
-        busModel: "Mercedes Sprinter",
-        busPlate: "LD-11-22-D",
-        driverName: "António Gomes",
-        vehicleType: "VIP",
-        boardingCutoffMinutes: 30,
-        boardingPoint: "Terminal de Viana",
+        boardingPoint: 'Terminal de Viana',
         availableSeats: 35,
         totalSeats: 40,
-        status: "scheduled",
+        status: 'scheduled',
       },
     ],
-    [formatDateKey(y, m, today.getDate() + 3)]: [
+    [dateKey(day3)]: [
       {
-        id: "macon-day3",
-        operatorName: "Macon",
-        route: "Luanda → Huambo",
-        origin: "Luanda",
-        destination: "Huambo",
-        departureDate: formatDateKey(y, m, today.getDate() + 3),
-        departureTime: "06:00",
-        arrivalTime: "13:00",
-        duration: "7h",
-        price: "4 500 Kz",
-        busModel: "Mercedes Sprinter",
-        busPlate: "LD-90-34-F",
-        driverName: "Ricardo Almeida",
-        vehicleType: "VIP",
+        id: 'macon-day3',
+        operatorName: 'Macon',
+        route: 'Luanda → Huambo',
+        origin: 'Luanda',
+        destination: 'Huambo',
+        departureDate: dateKey(day3),
+        departureTime: '06:00',
+        arrivalTime: '13:00',
+        duration: '7h',
+        price: '4 500 Kz',
+        busModel: 'Mercedes Sprinter',
+        busPlate: 'LD-90-34-F',
+        driverName: 'Ricardo Almeida',
+        vehicleType: 'VIP',
         boardingCutoffMinutes: 30,
-        boardingPoint: "Rodoviária do Zango",
+        boardingPoint: 'Rodoviária do Zango',
         availableSeats: 30,
         totalSeats: 40,
-        status: "scheduled",
+        status: 'scheduled',
       },
     ],
-  };
+  }
 }
 
 export default function OperatorCalendarPage() {
@@ -151,19 +124,26 @@ export default function OperatorCalendarPage() {
   const selectedDateKey = formatDateKey(currentYear, currentMonth, selectedDay);
   const selectedSchedules = schedulesByDate[selectedDateKey] ?? [];
 
+  const clampDay = (month: number, year: number) => {
+    const max = getDaysInMonth(year, month)
+    setSelectedDay((d) => Math.min(d, max))
+  }
+
   const prevMonth = () => {
-    if (currentMonth === 0) {
-      setCurrentMonth(11);
-      setCurrentYear((y) => y - 1);
-    } else setCurrentMonth((m) => m - 1);
-  };
+    const newMonth = currentMonth === 0 ? 11 : currentMonth - 1
+    const newYear = currentMonth === 0 ? currentYear - 1 : currentYear
+    setCurrentMonth(newMonth)
+    setCurrentYear(newYear)
+    clampDay(newMonth, newYear)
+  }
 
   const nextMonth = () => {
-    if (currentMonth === 11) {
-      setCurrentMonth(0);
-      setCurrentYear((y) => y + 1);
-    } else setCurrentMonth((m) => m + 1);
-  };
+    const newMonth = currentMonth === 11 ? 0 : currentMonth + 1
+    const newYear = currentMonth === 11 ? currentYear + 1 : currentYear
+    setCurrentMonth(newMonth)
+    setCurrentYear(newYear)
+    clampDay(newMonth, newYear)
+  }
 
   const todayKey = formatDateKey(
     today.getFullYear(),
@@ -187,6 +167,7 @@ export default function OperatorCalendarPage() {
               <button
                 type="button"
                 onClick={prevMonth}
+                aria-label="Mês anterior"
                 className="p-1 rounded-full hover:bg-gray-100"
               >
                 <IconChevronLeft className="size-5 text-gray-600" />
@@ -197,6 +178,7 @@ export default function OperatorCalendarPage() {
               <button
                 type="button"
                 onClick={nextMonth}
+                aria-label="Mês seguinte"
                 className="p-1 rounded-full hover:bg-gray-100"
               >
                 <IconChevronRight className="size-5 text-gray-600" />
@@ -261,33 +243,37 @@ export default function OperatorCalendarPage() {
 
         {selectedSchedules.length > 0 ? (
           <div className="flex flex-col gap-3">
-            {selectedSchedules.map((schedule) => (
-              <Card
-                key={schedule.id}
-                className="p-0 cursor-pointer hover:scale-[1.01] border-[#E5E7EB] active:scale-[0.99] transition-transform"
-                onClick={() =>
-                  navigate(`/operator/manifest?schedule=${schedule.id}`)
-                }
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-bold text-[#111827]">
-                      {schedule.route}
-                    </span>
-                    <span className="text-[11px] font-semibold text-[#1B7A3D]">
-                      {schedule.departureTime}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-gray-400">
-                    <IconBus className="size-3" />
-                    <span className="text-[11px]">
-                      {schedule.busPlate} · {schedule.availableSeats}/
-                      {schedule.totalSeats} lugares
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+            {selectedSchedules.map((schedule) => {
+              const statusStyle = STATUS_STYLE[schedule.status]
+              return (
+                <Card
+                  key={schedule.id}
+                  role="button"
+                  tabIndex={0}
+                  className="p-0 cursor-pointer hover:scale-[1.01] border-[#E5E7EB] active:scale-[0.99] transition-transform"
+                  onClick={() => navigate(`/operator/manifest?schedule=${schedule.id}`)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      navigate(`/operator/manifest?schedule=${schedule.id}`)
+                    }
+                  }}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-bold text-[#111827]">{schedule.route}</span>
+                      <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${statusStyle.bg} ${statusStyle.text}`}>
+                        {statusStyle.label}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-400">
+                      <IconBus className="size-3" />
+                      <span className="text-[11px]">{schedule.departureTime} · {schedule.availableSeats}/{schedule.totalSeats} lugares</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
           </div>
         ) : (
           <div className="text-center py-10 text-gray-400 text-sm">
