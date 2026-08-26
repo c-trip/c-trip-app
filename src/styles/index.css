@@ -4,6 +4,7 @@
 
 @theme {
   --font-outfit: 'Outfit', sans-serif;
+  --font-inter: 'Inter', sans-serif;
   --color-green-gradient-start: #6B9E8C;
   --color-green-gradient-end: #3A6356;
 }
