@@ -56,7 +56,7 @@ export default function OperatorManifest() {
   const boarded = passengers.filter((p) => p.status === 'boarded')
   const confirmed = passengers.filter((p) => p.status === 'confirmed')
   const boardingPercent = Math.round((boarded.length / schedule.totalSeats) * 100)
-  const missing = schedule.totalSeats - boarded.length
+  const missing = confirmed.length
 
   const query = search.toLowerCase()
   const allPassengers = passengers.filter(
@@ -67,8 +67,8 @@ export default function OperatorManifest() {
   )
 
   const tabFiltered = allPassengers.filter((p) => {
-    if (activeTab === 'boarded') return p.status === 'boarded' || p.status === 'confirmed'
-    if (activeTab === 'missing') return p.status !== 'boarded'
+    if (activeTab === 'boarded') return p.status === 'boarded'
+    if (activeTab === 'missing') return p.status === 'confirmed'
     return true
   })
 
@@ -118,7 +118,7 @@ export default function OperatorManifest() {
         <nav className="flex gap-2 mb-4" aria-label="Filtro de passageiros">
           {([
             { key: 'all', label: 'Todos', count: passengers.length },
-            { key: 'boarded', label: 'Embarcados', count: boarded.length + confirmed.length },
+            { key: 'boarded', label: 'Embarcados', count: boarded.length },
             { key: 'missing', label: 'Em falta', count: missing },
           ] as const).map((tab) => (
             <button
