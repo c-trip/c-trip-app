@@ -63,7 +63,8 @@ export default function OperatorDayTrips() {
                 role="button"
                 tabIndex={0}
                 className="p-0 cursor-pointer hover:scale-[1.01] border-[#E5E7EB] 
-                active:scale-[0.99] transition-transform"
+                active:scale-[0.99] transition-transform focus-visible:outline-none
+                focus-visible:ring-2 focus-visible:ring-[#1B7A3D] focus-visible:ring-offset-2"
                 onClick={() => navigate(`/operator/manifest?schedule=${schedule.id}`)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {

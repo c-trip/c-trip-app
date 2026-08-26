@@ -26,7 +26,7 @@ export default function OperatorBottomTabBar() {
   }
 
   return (
-    <nav className="fixed bottom-2 left-4 right-4 z-50 border border-gray-200 bg-white/80 font-outfit
+    <nav aria-label="Navegação do operador" className="fixed bottom-2 left-4 right-4 z-50 border border-gray-200 bg-white/80 font-outfit
     backdrop-blur-xl safe-area-pb rounded-4xl">
       <div className="mx-auto flex max-w-lg items-center justify-around py-2">
         {tabs.map((tab) => {
