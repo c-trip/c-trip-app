@@ -42,8 +42,8 @@ export default function OperatorBottomTabBar() {
                 active ? 'bg-[#1B7A3D] px-8 py-2' : 'px-3 py-2'
               }`}
             >
-              <Icon className={`h-6 w-6 ${active ? 'text-white' : 'text-gray-400'}`} />
-              <span className={`text-[10px] font-medium ${active ? 'text-white' : 'text-gray-400'}`}>
+              <Icon className={`h-6 w-6 ${active ? 'text-white' : 'text-gray-600'}`} />
+              <span className={`text-[10px] font-medium ${active ? 'text-white' : 'text-gray-600'}`}>
                 {tab.label}
               </span>
             </button>
