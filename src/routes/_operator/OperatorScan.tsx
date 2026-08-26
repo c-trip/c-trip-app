@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { IconArrowLeft, IconCamera } from "@tabler/icons-react";
 
@@ -19,21 +19,11 @@ interface ValidateResponse {
   route?: string;
 }
 
-async function validateQr(qrHash: string): Promise<ValidateResponse> {
+async function validateQr(): Promise<ValidateResponse> {
   // Mock — substituir por POST /boarding/validate quando a API estiver pronta
   await new Promise((r) => setTimeout(r, 1200));
 
-  if (qrHash.includes("valid")) {
-    return {
-      status: "allowed",
-      passengerName: "Ana Silva",
-      seat: 1,
-      route: "Luanda → Benguela",
-    };
-  }
-  if (qrHash.includes("boarded")) {
-    return { status: "already_boarded" };
-  }
+  // TODO: validar QR num serviço autenticado no servidor
   return { status: "invalid" };
 }
 
@@ -43,6 +33,46 @@ export default function OperatorScan() {
   const [scannedData, setScannedData] = useState<ValidateResponse | null>(null);
   const scannerRef = useRef<import("html5-qrcode").Html5Qrcode | null>(null);
   const startedRef = useRef(false);
+
+  const cleanupScanner = () => {
+    if (scannerRef.current) {
+      if (startedRef.current && scannerRef.current.isScanning) {
+        try {
+          scannerRef.current.pause(true);
+        } catch {
+          /* ignore */
+        }
+        try {
+          scannerRef.current.stop().catch(() => {});
+        } catch {
+          /* ignore */
+        }
+      }
+      try {
+        scannerRef.current.clear();
+      } catch {
+        /* ignore */
+      }
+      scannerRef.current = null;
+    }
+    startedRef.current = false;
+
+    const region = document.getElementById("qr-scanner-region");
+    if (region) {
+      region.querySelectorAll("video").forEach((v) => {
+        const stream = v.srcObject as MediaStream | null;
+        stream?.getTracks().forEach((t) => t.stop());
+        v.remove();
+      });
+      region.querySelectorAll("canvas").forEach((c) => c.remove());
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      cleanupScanner();
+    };
+  }, []);
 
   const startCamera = async () => {
     setScanState("loading");
@@ -77,11 +107,11 @@ export default function OperatorScan() {
           qrbox: { width: 250, height: 250 },
           aspectRatio: 1.0,
         },
-        async (decodedText) => {
+        async () => {
           scanner.pause(true);
           setScanState("validating");
           try {
-            const result = await validateQr(decodedText);
+            const result = await validateQr();
             setScannedData(result);
             if (result.status === "allowed") setScanState("success");
             else if (result.status === "already_boarded")
@@ -98,40 +128,6 @@ export default function OperatorScan() {
       setScanState("idle");
     } catch {
       setScanState("denied");
-    }
-  };
-
-  const cleanupScanner = () => {
-    if (scannerRef.current) {
-      if (startedRef.current && scannerRef.current.isScanning) {
-        try {
-          scannerRef.current.pause(true);
-        } catch {
-          /* ignore */
-        }
-        try {
-          scannerRef.current.stop().catch(() => {});
-        } catch {
-          /* ignore */
-        }
-      }
-      try {
-        scannerRef.current.clear();
-      } catch {
-        /* ignore */
-      }
-      scannerRef.current = null;
-    }
-    startedRef.current = false;
-
-    const region = document.getElementById("qr-scanner-region");
-    if (region) {
-      region.querySelectorAll("video").forEach((v) => {
-        const stream = v.srcObject as MediaStream | null;
-        stream?.getTracks().forEach((t) => t.stop());
-        v.remove();
-      });
-      region.querySelectorAll("canvas").forEach((c) => c.remove());
     }
   };
 
@@ -256,6 +252,10 @@ export default function OperatorScan() {
                 id="qr-scanner-region"
                 className="w-full h-full [&>video]:w-full [&>video]:h-full [&>video]:object-cover"
               />
+
+              {scanState === "idle" && (
+                <div className="qr-viewfinder" aria-hidden="true" />
+              )}
 
               {scanState === "loading" && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/70 z-10">
