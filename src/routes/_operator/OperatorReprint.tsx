@@ -124,7 +124,7 @@ export default function OperatorReprint() {
             {filtered.length > 0 ? (
               <div className="flex flex-col gap-2">
                 {filtered.map((passenger) => {
-                  const isReprinted = reprintedIds.has(passenger.bookingId)
+                  const isReprinted = passenger.printed || reprintedIds.has(passenger.bookingId)
                   return (
                     <Card key={passenger.bookingId} className="p-0 border-[#E5E7EB]">
                       <CardContent className="p-3 flex items-center gap-3">
