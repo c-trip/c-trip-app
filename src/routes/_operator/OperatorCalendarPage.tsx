@@ -270,7 +270,7 @@ export default function OperatorCalendarPage() {
                     </div>
                     <div className="flex items-center gap-2 text-gray-400">
                       <IconBus className="size-3" />
-                      <span className="text-[11px]">{schedule.departureTime} · {schedule.availableSeats}/{schedule.totalSeats} lugares</span>
+                      <span className="text-[11px]">{schedule.departureTime} · {schedule.availableSeats}/{schedule.totalSeats} disponíveis</span>
                     </div>
                   </CardContent>
                 </Card>

@@ -97,7 +97,7 @@ export default function OperatorDayTrips() {
                      <div className='flex flex-col'>
                       <span className='text-[11px] text-[#4B5563] font-medium'>Embarque</span>
                       <p className='text-[14px] text-[#1B7A3D] font-bold'>
-                        {schedule.availableSeats}/{schedule.totalSeats} lugares
+                        {schedule.availableSeats}/{schedule.totalSeats} disponíveis
                         </p>
                     </div>
                     

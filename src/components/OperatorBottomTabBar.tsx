@@ -21,7 +21,7 @@ export default function OperatorBottomTabBar() {
   const navigate = useNavigate()
 
   const isActive = (path: string) => {
-    if (path === '/operator') return location.pathname === '/operator'
+    if (path === '/operator') return location.pathname === '/operator' || location.pathname.startsWith('/operator/manifest')
     return location.pathname.startsWith(path)
   }
 
