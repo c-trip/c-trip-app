@@ -116,7 +116,7 @@ export default function OperatorCalendarPage() {
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
   const [selectedDay, setSelectedDay] = useState(today.getDate());
 
-  const schedulesByDate = useMemo(() => getMockSchedulesByDate(), []);
+  const schedulesByDate = useMemo(() => getMockSchedulesByDate(), [todayKey]);
 
   const daysInMonth = getDaysInMonth(currentYear, currentMonth);
   const firstDay = getFirstDayOfMonth(currentYear, currentMonth);
