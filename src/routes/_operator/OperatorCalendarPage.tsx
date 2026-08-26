@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router";
 import {
   IconChevronLeft,
@@ -116,7 +116,7 @@ export default function OperatorCalendarPage() {
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
   const [selectedDay, setSelectedDay] = useState(today.getDate());
 
-  const schedulesByDate = useMemo(() => getMockSchedulesByDate(), [todayKey]);
+  const schedulesByDate = getMockSchedulesByDate();
 
   const daysInMonth = getDaysInMonth(currentYear, currentMonth);
   const firstDay = getFirstDayOfMonth(currentYear, currentMonth);
