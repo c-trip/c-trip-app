@@ -33,6 +33,7 @@ export default function OperatorScan() {
   const [scannedData, setScannedData] = useState<ValidateResponse | null>(null);
   const scannerRef = useRef<import("html5-qrcode").Html5Qrcode | null>(null);
   const startedRef = useRef(false);
+  const cancelledRef = useRef(false);
 
   const cleanupScanner = () => {
     if (scannerRef.current) {
@@ -70,21 +71,27 @@ export default function OperatorScan() {
 
   useEffect(() => {
     return () => {
+      cancelledRef.current = true;
       cleanupScanner();
     };
   }, []);
 
   const startCamera = async () => {
+    cancelledRef.current = false;
     setScanState("loading");
     try {
       const permStream = await navigator.mediaDevices.getUserMedia({
         video: true,
       });
+      if (cancelledRef.current) { permStream.getTracks().forEach((t) => t.stop()); return; }
       permStream.getTracks().forEach((t) => t.stop());
 
       const { Html5Qrcode } = await import("html5-qrcode");
+      if (cancelledRef.current) return;
 
       const devices = await Html5Qrcode.getCameras();
+      if (cancelledRef.current) return;
+
       if (!devices || devices.length === 0) {
         setScanState("denied");
         return;
@@ -108,26 +115,32 @@ export default function OperatorScan() {
           aspectRatio: 1.0,
         },
         async () => {
+          if (cancelledRef.current) return;
           scanner.pause(true);
           setScanState("validating");
           try {
             const result = await validateQr();
+            if (cancelledRef.current) return;
             setScannedData(result);
             if (result.status === "allowed") setScanState("success");
             else if (result.status === "already_boarded")
               setScanState("already-boarded");
             else setScanState("error");
           } catch {
-            setScanState("error");
+            if (!cancelledRef.current) setScanState("error");
           }
         },
         () => {},
       );
 
+      if (cancelledRef.current) {
+        try { scanner.stop().catch(() => {}); } catch { /* ignore */ }
+        return;
+      }
       startedRef.current = true;
       setScanState("idle");
     } catch {
-      setScanState("denied");
+      if (!cancelledRef.current) setScanState("denied");
     }
   };
 
