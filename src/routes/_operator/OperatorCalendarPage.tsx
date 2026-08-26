@@ -212,6 +212,7 @@ export default function OperatorCalendarPage() {
                     key={day}
                     type="button"
                     onClick={() => setSelectedDay(day)}
+                    aria-pressed={isSelected}
                     className={`relative flex flex-col items-center justify-center py-2 rounded-lg text-sm transition-colors ${
                       isSelected
                         ? "bg-[#1B7A3D] text-white font-bold"
