@@ -4,7 +4,7 @@ import PopularRoutes from '../../components/PopularRoutes'
 
 export default function SearchPage() {
   return (
-    <div className="min-h-screen bg-gray-50 font-outfit">
+    <div className="min-h-screen bg-[#F9FAFB] font-outfit">
       <header className="relative w-full">
         <HeaderCarousel />
       </header>

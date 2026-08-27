@@ -7,6 +7,8 @@ import { readTimestamp, removeHeldSeat, HOLD_TOTAL_SECONDS } from '@/lib/seatHol
 import { saveBooking } from '@/lib/bookings'
 import { getSeatLabel } from '@/lib/seats'
 import type { Booking, PaymentMethod } from '@/types'
+import StickyFooter from '@/components/StickyFooter'
+import GradientButton from '@/components/GradientButton'
 
 export default function CheckoutPage() {
   const { scheduleId } = useParams<{ scheduleId: string }>()
@@ -186,7 +188,7 @@ export default function CheckoutPage() {
 
   if (!schedule || !seatIsValid) {
     return (
-      <div className="min-h-screen bg-gray-50 font-outfit">
+      <div className="min-h-screen bg-[#F9FAFB] font-outfit">
         <header className="sticky top-0 z-10 border-b border-gray-200 bg-white px-4 py-4">
           <div className="flex items-center gap-3">
             <button
@@ -204,7 +206,7 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 font-outfit flex flex-col">
+    <div className="min-h-screen bg-[#F9FAFB] font-outfit flex flex-col">
       <header className="sticky top-0 z-20 border-b border-gray-200 bg-white px-4 py-4">
         <div className="flex items-center gap-3">
           <button
@@ -336,21 +338,20 @@ export default function CheckoutPage() {
         </fieldset>
       </form>
 
-      <footer className="sticky bottom-0 flex flex-col items-center gap-3 border-t-2 border-[#E5E7EB] bg-white p-6">
+      <StickyFooter>
         <div className="flex justify-between w-full max-w-[350px]">
           <span className="text-sm font-normal text-[#4B5563] font-outfit">Total a pagar</span>
           <span className="text-xl font-extrabold text-[#1B7A3D] font-outfit">{schedule.price}</span>
         </div>
-        <button
+        <GradientButton
           type="submit"
           form="checkout-form"
           disabled={isDisabled}
-          className="w-full max-w-[350px] rounded-xl h-12 font-semibold text-[16px] text-white
-           bg-[#1B7A3D] hover:bg-[#15632F] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="max-w-[350px]"
         >
           Confirmar e Pagar
-        </button>
-      </footer>
+        </GradientButton>
+      </StickyFooter>
     </div>
   )
 }

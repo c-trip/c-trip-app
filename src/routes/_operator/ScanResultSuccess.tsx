@@ -1,5 +1,8 @@
 import { useLocation, useNavigate } from "react-router";
 import { IconCheck } from '@tabler/icons-react';
+import RouteDisplay from '@/components/RouteDisplay';
+import StickyFooter from '@/components/StickyFooter';
+import GradientButton from '@/components/GradientButton';
 
 interface ScannedTicket extends Record<string, unknown> {
   passengerName?: string;
@@ -49,19 +52,16 @@ export default function ScanResultSuccess() {
       </div>
       <div className="pt-4 flex flex-col gap-1 border-t border-[#E5E7EB] w-full">
         <p className="text-[11px] text-[#4B5563] font-semibold">SERVIÇO MACON</p>
-        <span className="text-sm font-bold text-[#111827]">Luanda -&gt; Benguela * 06:00</span>
+        <RouteDisplay route={ticket?.route ?? 'Luanda → Benguela'} className="text-sm font-bold text-[#111827]" />
       </div>
       </div>
 
     </div>
-      <footer className="sticky bottom-0 flex w-full justify-center items-center
-      h-[146px] bg-[#064E3B] p-10">
-       <button onClick={() => navigate("/operator/scan")}
-        className=" w-full  h-12 text-white text-base font-bold
-        bg-gradient-to-r from-[#6B9E8C] to-[#3A6356] rounded-xl">
-        Escanear Próximo
-       </button>
-      </footer>
+      <StickyFooter className="h-[146px] justify-center p-10 bg-[#064E3B] border-t-0">
+        <GradientButton onClick={() => navigate("/operator/scan")}>
+          Escanear Próximo
+        </GradientButton>
+      </StickyFooter>
     </div>
   );
 }

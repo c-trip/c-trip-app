@@ -29,7 +29,7 @@ export default function ProfilePage() {
   ]
 
   return (
-    <div className="min-h-screen bg-gray-50 font-outfit">
+    <div className="min-h-screen bg-[#F9FAFB] font-outfit">
       <header className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 pt-4 pb-4">
         <h1 className="text-[22px] font-extrabold text-[#111827]">Perfil</h1>
       </header>

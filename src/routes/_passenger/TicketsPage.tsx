@@ -5,6 +5,7 @@ import { getBookings } from '@/lib/bookings'
 import { getScheduleById } from '@/data/mockSeats'
 import { Card, CardContent } from '@/components/ui/card'
 import type { BookingStatus } from '@/types'
+import RouteDisplay from '@/components/RouteDisplay'
 
 function formatDate(dateStr: string): string {
   const [y, m, d] = dateStr.split('-')
@@ -29,7 +30,7 @@ export default function TicketsPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-gray-50 font-outfit">
+    <div className="min-h-screen bg-[#F9FAFB] font-outfit">
       <header className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 pt-4 pb-4">
         <h1 className="text-[22px] font-extrabold text-[#111827]">Os Meus Bilhetes</h1>
       </header>
@@ -57,7 +58,11 @@ export default function TicketsPage() {
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-base font-bold text-[#111827]">
-                        {schedule?.route ?? 'Rota'}
+                        {schedule ? (
+                          <RouteDisplay origin={schedule.origin} destination={schedule.destination} />
+                        ) : (
+                          'Rota'
+                        )}
                       </span>
                       <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${style.bg} ${style.text}`}>
                         {style.label}

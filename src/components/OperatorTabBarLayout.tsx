@@ -20,7 +20,7 @@ export default function OperatorTabBarLayout() {
   }
 
   return (
-    <div className="pb-24">
+    <div className="min-h-screen bg-[#F9FAFB] pb-24">
       <Outlet />
       <OperatorBottomTabBar />
     </div>

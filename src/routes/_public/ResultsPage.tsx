@@ -22,7 +22,7 @@ export default function ResultsPage() {
   }))
 
   return (
-    <div className="min-h-screen bg-gray-50 font-outfit">
+    <div className="min-h-screen bg-[#F9FAFB] font-outfit">
       <header className="sticky top-0 z-10 border-b border-gray-200 bg-white px-4 py-4">
         <div className="flex items-center gap-3">
           <button

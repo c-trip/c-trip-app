@@ -3,6 +3,7 @@ import { IconMapPin, IconClock, IconChevronRight } from '@tabler/icons-react'
 import { getOperatorTodaySchedules } from '@/data/mockOperatorSchedules'
 import type { OperatorSchedule } from '@/data/mockOperatorSchedules'
 import { Card, CardContent } from '@/components/ui/card'
+import RouteDisplay from '@/components/RouteDisplay'
 
 function formatDate(): string {
   const now = new Date()
@@ -12,8 +13,8 @@ function formatDate(): string {
 
 const STATUS_STYLE: Record<OperatorSchedule['status'], { bg: string; text: string; label: string }> = {
   scheduled: { bg: 'bg-[#EFF6FF]', text: 'text-[#1D4ED8]', label: 'A iniciar' },
-  boarding: { bg: 'bg-[#D1FAE5]', text: 'text-[#047857]', label: 'Embarque' },
-  departed: { bg: 'bg-[#F3F4F6]', text: 'text-[#4B5563]', label: 'Partiu' },
+  boarding: { bg: 'bg-[#F3F4F6]', text: 'text-[#6B7280]', label: 'Chegou' },
+  departed: { bg: 'bg-[#D1FAE5]', text: 'text-[#047857]', label: 'Em rota' },
 }
 
 export default function OperatorDayTrips() {
@@ -21,7 +22,7 @@ export default function OperatorDayTrips() {
   const schedules = getOperatorTodaySchedules()
 
   return (
-    <div className="min-h-screen bg-gray-50 font-outfit">
+    <div className="min-h-screen bg-[#F9FAFB] font-outfit">
       <header
         className="px-5 pt-10 flex flex-col gap-2 rounded-b-3xl h-[186px]"
         style={{ background: 'linear-gradient(280deg, #2E8B57 0%, #1B7A3D 40%, #0B2F1A 100%)' }}
@@ -50,8 +51,8 @@ export default function OperatorDayTrips() {
 
       <main className="px-5 py-6 pb-28">
         <div className='flex items-center justify-between'>
-        <h2 className="text-[15px] font-bold text-[#111827] mb-4">Viagens de Hoje</h2>
-        <p className='text-[13px] text-[#1B7A3D] font-semibold'>{schedules.length} autocarros</p>
+        <h2 className="text-[15px] font-bold text-[#111827] mb-4">Partidas de Hoje</h2>
+        <p className='text-[13px] text-[#1B7A3D] font-semibold'>{schedules.length} Autocarros</p>
 
         </div>
         <div className="flex flex-col gap-3">
@@ -62,7 +63,7 @@ export default function OperatorDayTrips() {
                 key={schedule.id}
                 role="button"
                 tabIndex={0}
-                className="p-0 cursor-pointer hover:scale-[1.01] border-[#E5E7EB] 
+                className="p-0 cursor-pointer bg-white hover:scale-[1.01] border-[#E5E7EB] 
                 active:scale-[0.99] transition-transform focus-visible:outline-none
                 focus-visible:ring-2 focus-visible:ring-[#1B7A3D] focus-visible:ring-offset-2"
                 onClick={() => navigate(`/operator/manifest?schedule=${schedule.id}`)}
@@ -76,9 +77,12 @@ export default function OperatorDayTrips() {
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-3">
-                      <span className="text-base font-bold text-[#111827]">
-                        {schedule.route}
-                      </span>
+                      <RouteDisplay
+                        origin={schedule.origin}
+                        destination={schedule.destination}
+                        className="text-base font-bold text-[#111827]"
+                        iconClassName="size-5"
+                      />
                     </div>
                     <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full
                        ${style.bg} ${style.text}`}>
@@ -96,15 +100,17 @@ export default function OperatorDayTrips() {
                     </div>
                      <div className='flex flex-col'>
                       <span className='text-[11px] text-[#4B5563] font-medium'>Embarque</span>
-                      <p className='text-[14px] text-[#1B7A3D] font-bold'>
+                      <p
+                        className={`text-[14px] font-bold ${schedule.status === 'departed' ? 'text-[#1B7A3D]' : 'text-[#111827]'}`}
+                      >
                         {schedule.availableSeats}/{schedule.totalSeats} disponíveis
-                        </p>
+                      </p>
                     </div>
                     
                   </div>
 
                   <div className="flex items-center justify-between border-t border-[#E5E7EB] pt-1">
-                    <p className='font-semibold text-xs text-[#1B7A3D]'>Ver Manifesto</p>
+                    <p className='font-semibold text-xs text-[#1B7A3D]'>Ver Manifesto do Passageiro</p>
                     <IconChevronRight className="size-5   text-[#1B7A3D]" />
                   </div>
                 </CardContent>

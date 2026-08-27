@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { IconArrowLeft, IconCamera } from "@tabler/icons-react";
+import RouteDisplay from "@/components/RouteDisplay";
 
 type ScanResult =
   | "permission"
@@ -330,7 +331,7 @@ export default function OperatorScan() {
               <div className="flex justify-between text-sm">
                 <span className="text-gray-400">Rota</span>
                 <span className="text-white font-semibold">
-                  {scannedData.route}
+                  <RouteDisplay route={scannedData.route} />
                 </span>
               </div>
             </div>

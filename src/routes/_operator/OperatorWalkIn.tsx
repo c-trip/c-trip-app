@@ -13,6 +13,9 @@ import { getOperatorTodaySchedules } from "@/data/mockOperatorSchedules";
 import type { OperatorSchedule } from "@/data/mockOperatorSchedules";
 import { getSeatMapBySchedule } from "@/data/mockSeats";
 import { readActiveHeldSeats } from "@/lib/seatHolds";
+import RouteDisplay from "@/components/RouteDisplay";
+import StickyFooter from "@/components/StickyFooter";
+import GradientButton from "@/components/GradientButton";
 
 type SeatStatus = "available" | "occupied" | "reserved" | "held";
 
@@ -225,9 +228,9 @@ export default function OperatorWalkIn() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gray-50 font-outfit">
-        <header className="sticky top-0 z-50 bg-gray-50 px-5 pt-3 pb-4 border-b border-gray-200">
-          <div className="flex items-center gap-2">
+      <div className="min-h-screen bg-[#F9FAFB] font-outfit">
+        <header className="sticky top-0 z-50 bg-[#FFFFFF] px-5 pt-3 pb-4 border-b border-gray-200">
+          <div className="flex items-center gap-2 bg-white">
             <button
               type="button"
               onClick={() => navigate("/operator")}
@@ -255,7 +258,11 @@ export default function OperatorWalkIn() {
             </p>
             {selectedSchedule && (
               <p className="text-gray-400 text-xs mt-1">
-                {selectedSchedule.route} · {selectedSchedule.departureTime}
+                <RouteDisplay
+                  origin={selectedSchedule.origin}
+                  destination={selectedSchedule.destination}
+                />{" "}
+                · {selectedSchedule.departureTime}
               </p>
             )}
           </div>
@@ -281,9 +288,9 @@ export default function OperatorWalkIn() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 font-outfit">
+    <div className="min-h-screen bg-[#F9FAFB] font-outfit">
 
-      <header className="sticky top-0 z-50 bg-gray-50 px-5 pt-3 pb-4 border-b border-gray-200">
+      <header className="sticky top-0 z-50 bg-white px-5 pt-3 pb-4 border-b border-gray-200">
         <div className="flex justify-baseline gap-2">
           <button
             type="button"
@@ -291,7 +298,7 @@ export default function OperatorWalkIn() {
             aria-label="Voltar ao painel"
             className="p-1 rounded-full hover:bg-gray-100"
           >
-            <IconArrowLeft className="size-5 text-[#111827]" />
+            <IconArrowLeft className="size-7 text-[#111827]" />
           </button>
           <div className="flex flex-col">
             <h1 className="text-[22px] font-bold text-[#111827] ">
@@ -323,7 +330,11 @@ export default function OperatorWalkIn() {
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-[#111827]">
-                    {selectedSchedule.route} ({selectedSchedule.operatorName })
+                    <RouteDisplay
+                      origin={selectedSchedule.origin}
+                      destination={selectedSchedule.destination}
+                    />{" "}
+                    ({selectedSchedule.operatorName})
                   </p>
                   <p className="text-[11px] text-gray-500">
                     {selectedSchedule.departureTime} ·{" "}
@@ -369,7 +380,7 @@ export default function OperatorWalkIn() {
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-semibold text-[#111827]">
-                        {s.route}
+                        <RouteDisplay origin={s.origin} destination={s.destination} />
                       </p>
                       <p className="text-[11px] text-gray-500">
                         {s.departureTime} · {s.busPlate}
@@ -406,24 +417,7 @@ export default function OperatorWalkIn() {
                   ),
                 )}
               </div>
-              <div className="flex justify-center gap-5 text-[10px] text-gray-500 flex-wrap">
-                <span className="flex items-center gap-1">
-                  <div className="size-3 rounded bg-[#1B7A3D]" />
-                  Livre
-                </span>
-                <span className="flex items-center gap-1">
-                  <div className="size-3 rounded bg-[#F59E0B]" />
-                  Reservado
-                </span>
-                <span className="flex items-center gap-1">
-                  <div className="size-3 rounded bg-[#C2410C]" />
-                  Retido
-                </span>
-                <span className="flex items-center gap-1">
-                  <div className="size-3 rounded bg-[#F3F4F6]" />
-                  Ocupado
-                </span>
-              </div>
+           
             </>
           ) : (
             <div className="border border-[#E5E7EB] bg-white h-28 rounded-xl p-3 flex items-center justify-center">
@@ -486,32 +480,26 @@ export default function OperatorWalkIn() {
         </section>
       </main>
 
-      <footer className="fixed bottom-20 left-0 right-0 z-50 flex flex-col gap-4 p-6 bg-white border-t border-gray-200">
-        <div className="flex justify-between gap-1 items-center">
+      <StickyFooter className="fixed bottom-[70px] left-0 right-0 z-50">
+        <div className="flex justify-between gap-1 items-center w-full">
           <div>
-            <p className="text-xs text-[#4B5563] font-normal">Valor a Pagar</p>
-            <p className="text-[11px] text-gray-400">Multicaixa / Cash</p>
+            <p className="text-sm text-[#4B5563] font-normal font-inter">Valor a Pagar (Multicaixa / Cash)</p>
           </div>
           <p className="text-[#1B7A3D] text-[22px] font-extrabold font-outfit">
-            {selectedSchedule ? selectedSchedule.price : "—"}
+            {selectedSchedule ? selectedSchedule.price : " "}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={!isValid || submitting}
-          className="w-full py-3.5 bg-[#1B7A3D] text-white font-semibold rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#15632F] active:scale-[0.98]"
-        >
+        <GradientButton onClick={handleSubmit} disabled={!isValid || submitting}>
           {submitting ? (
             <span className="flex items-center justify-center gap-2">
               <span className="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               A processar...
             </span>
           ) : (
-            "Confirmar Venda"
+            "Emitir e Imprimir Bilhete"
           )}
-        </button>
-      </footer>
+        </GradientButton>
+      </StickyFooter>
     </div>
   );
 }

@@ -5,6 +5,9 @@ import { gooeyToast } from 'goey-toast'
 import { getScheduleById, getSeatMapBySchedule } from '@/data/mockSeats'
 import { getSeatLabel } from '@/lib/seats'
 import { generateTicketQR } from '@/lib/qr'
+import RouteDisplay from '@/components/RouteDisplay'
+import StickyFooter from '@/components/StickyFooter'
+import GradientButton from '@/components/GradientButton'
 
 function getQrCacheKey(scheduleId: string, seat: string): string {
   return `qr_ticket_${scheduleId}_${seat}`
@@ -325,7 +328,7 @@ export default function TicketQrPage() {
 
   if (!schedule || !seatIsValid) {
     return (
-      <div className="min-h-screen bg-gray-50 font-outfit flex flex-col">
+      <div className="min-h-screen bg-[#F9FAFB] font-outfit flex flex-col">
         <header className="sticky top-0 z-10 border-b border-gray-200 bg-white px-4 py-4">
           <div className="flex items-center gap-3">
             <button
@@ -510,7 +513,7 @@ export default function TicketQrPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 font-outfit flex flex-col">
+    <div className="min-h-screen bg-[#F9FAFB] font-outfit flex flex-col">
       <header className="sticky top-0 z-20 border-b border-gray-200 bg-white px-4 py-4">
         <h1 className="text-center text-lg font-bold">Bilhete confirmado</h1>
       </header>
@@ -539,7 +542,7 @@ export default function TicketQrPage() {
 
           <div className="px-4 py-4">
             <p className="text-xl font-extrabold text-gray-900">
-              {schedule.origin} → {schedule.destination}
+              <RouteDisplay origin={schedule.origin} destination={schedule.destination} />
             </p>
             <p className="mt-1 text-xs text-gray-400">
               {schedule.departureDate} · {schedule.departureTime} – {schedule.arrivalTime} · {schedule.duration}
@@ -585,9 +588,8 @@ export default function TicketQrPage() {
           </div>
         </section>
 
-        <footer className="fixed bottom-0 inset-x-0 z-10 flex flex-col items-center gap-4 border-t-2
-         border-gray-200 bg-white p-6">
-          <div className="flex items-center gap-2">
+        <StickyFooter className="fixed bottom-0 inset-x-0">
+          <div className="flex items-center gap-2 w-full justify-center">
             <button
               ref={triggerRef}
               onClick={() => void handleShare()}
@@ -608,13 +610,10 @@ export default function TicketQrPage() {
               <p className="text-sm font-semibold">{isDownloading ? 'A baixar...' : 'Baixar'}</p>
             </button>
           </div>
-          <button
-            onClick={() => navigate('/bookings')}
-            className="h-12 w-full rounded-xl bg-[#1B7A3D] text-[16px] font-semibold text-white transition-colors hover:bg-[#15632F]"
-          >
+          <GradientButton onClick={() => navigate('/bookings')}>
             Ver as Minhas Reservas
-          </button>
-        </footer>
+          </GradientButton>
+        </StickyFooter>
       </main>
 
       {isShareOpen && (

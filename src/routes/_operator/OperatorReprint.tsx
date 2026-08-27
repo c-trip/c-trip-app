@@ -5,6 +5,7 @@ import { gooeyToast } from 'goey-toast'
 import { getOperatorTodaySchedules } from '@/data/mockOperatorSchedules'
 import type { OperatorSchedule } from '@/data/mockOperatorSchedules'
 import { Card, CardContent } from '@/components/ui/card'
+import RouteDisplay from '@/components/RouteDisplay'
 
 interface ReprintPassenger {
   bookingId: string
@@ -71,7 +72,7 @@ export default function OperatorReprint() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 font-outfit">
+    <div className="min-h-screen bg-[#F9FAFB] font-outfit">
       <header className="sticky top-0 z-50 bg-gray-50 px-5 pt-3 pb-4 border-b border-gray-200">
         <div className="flex items-center gap-2">
           <button
@@ -101,7 +102,7 @@ export default function OperatorReprint() {
                     : 'bg-white text-[#111827] border-gray-200 hover:border-[#1B7A3D]'
                 }`}
               >
-                {s.route} · {s.departureTime}
+                <RouteDisplay origin={s.origin} destination={s.destination} /> · {s.departureTime}
               </button>
             ))}
           </div>

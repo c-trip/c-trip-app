@@ -4,6 +4,9 @@ import { IconArrowLeft } from '@tabler/icons-react'
 import { getScheduleById, getSeatMapBySchedule } from '@/data/mockSeats'
 import { Card, CardContent } from '@/components/ui/card'
 import { readTimestamp, addHeldSeat, removeHeldSeat, HOLD_TOTAL_SECONDS } from '@/lib/seatHolds'
+import RouteDisplay from '@/components/RouteDisplay'
+import StickyFooter from '@/components/StickyFooter'
+import GradientButton from '@/components/GradientButton'
 
 function getSeatLabel(seatNum: number): string {
   const row = Math.ceil(seatNum / 4)
@@ -99,7 +102,7 @@ export default function HoldPage() {
 
   if (!schedule || !seatIsValid) {
     return (
-      <div className="min-h-screen bg-gray-50 font-outfit flex flex-col">
+      <div className="min-h-screen bg-[#F9FAFB] font-outfit flex flex-col">
         <header className="sticky top-0 z-10 border-b border-gray-200 bg-white px-4 py-4">
           <div className="flex items-center gap-3">
             <button
@@ -119,7 +122,7 @@ export default function HoldPage() {
   const seatLabel = getSeatLabel(seatNum)
 
   return (
-    <div className="min-h-screen bg-gray-50 font-outfit flex flex-col">
+    <div className="min-h-screen bg-[#F9FAFB] font-outfit flex flex-col">
       <header className="sticky top-0 z-20 border-b border-gray-200 bg-white px-4 py-4">
         <div className="flex items-center gap-3">
           <button
@@ -165,7 +168,9 @@ export default function HoldPage() {
       <main className="px-6 py-10 flex flex-col items-center gap-6 flex-1">
         <Card className="rounded-2xl border border-gray-200 bg-white w-full max-w-[350px]">
           <CardContent className="flex flex-col gap-3">
-            <h2 className="text-lg font-bold text-gray-900">{schedule.route}</h2>
+            <h2 className="text-lg font-bold text-gray-900">
+              <RouteDisplay origin={schedule.origin} destination={schedule.destination} />
+            </h2>
             <div className="border-t border-[#E5E7EB]" />
 
             <div className="flex justify-between text-xs">
@@ -193,9 +198,8 @@ export default function HoldPage() {
         </Card>
       </main>
 
-      <footer className="sticky bottom-0 flex justify-center items-center
-       border-t-2 border-[#E5E7EB] bg-white p-6">
-        <button
+      <StickyFooter>
+        <GradientButton
           disabled={isExpired}
           onClick={() => {
             if (isExpired) return
@@ -208,12 +212,11 @@ export default function HoldPage() {
             }
             navigate(`/checkout/${schedule.id}?seat=${seatNum}`)
           }}
-          className="w-full max-w-[350px] rounded-xl h-12 font-semibold text-[16px] text-white
-           bg-[#1B7A3D] hover:bg-[#15632F] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="max-w-[350px]"
         >
           Ir para o checkout
-        </button>
-      </footer>
+        </GradientButton>
+      </StickyFooter>
     </div>
   )
 }

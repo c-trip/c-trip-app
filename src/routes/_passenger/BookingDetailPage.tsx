@@ -5,6 +5,9 @@ import { gooeyToast } from "goey-toast";
 import { getBookingById, updateBookingStatus } from "@/lib/bookings";
 import { getScheduleById } from "@/data/mockSeats";
 import type { BookingStatus } from "@/types";
+import RouteDisplay from "@/components/RouteDisplay";
+import StickyFooter from "@/components/StickyFooter";
+import GradientButton from "@/components/GradientButton";
 
 
  
@@ -44,7 +47,7 @@ export default function BookingDetailPage() {
 
   if (!booking || !schedule) {
     return (
-      <div className="min-h-screen bg-gray-50 font-outfit">
+      <div className="min-h-screen bg-[#F9FAFB] font-outfit">
         <header className="sticky top-0 z-10 border-b border-gray-200 bg-white px-4 py-4">
           <div className="flex items-center gap-3">
             <button
@@ -104,7 +107,7 @@ export default function BookingDetailPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 font-outfit flex flex-col">
+    <div className="min-h-screen bg-[#F9FAFB] font-outfit flex flex-col">
       <header className="sticky top-0 z-10 border-b border-gray-200 bg-white px-4 py-4">
         <div className="flex items-center gap-3">
           <button
@@ -129,7 +132,7 @@ export default function BookingDetailPage() {
         <div className="rounded-2xl border border-gray-200 bg-white p-5">
           <div className="flex items-center justify-between mb-4 border-b-2 pb-4 border-[#E5E7EB]">
             <span className="text-[18px] font-bold text-[#111827]">
-              {schedule.route}
+              <RouteDisplay origin={schedule.origin} destination={schedule.destination} />
             </span>
             <span
               className={`text-xs font-semibold px-3 py-1 rounded-full ${style.bg} ${style.text}`}
@@ -241,19 +244,16 @@ export default function BookingDetailPage() {
         )}
       </main>
 
-      <footer className="sticky bottom-0 flex flex-col items-center gap-3 border-t-2 border-gray-200 bg-white p-5">
+      <StickyFooter>
         {canViewTicket && (
-          <button
+          <GradientButton
             onClick={() =>
               navigate(`/ticket-qr/${booking.scheduleId}?seat=${booking.seat}`)
             }
-            className="w-full h-12 rounded-xl text-sm font-semibold
-             text-white transition-colors flex gap-2 justify-center items-center hover:opacity-90"
-            style={{ background: 'linear-gradient(90deg, #6B9E8C 0%, #3A6356 100%)' }}
           >
-            <IconQrcode/>
+            <IconQrcode />
             Ver Bilhete QR
-          </button>
+          </GradientButton>
         )}
         {canCancel && (
           <button
@@ -264,7 +264,7 @@ export default function BookingDetailPage() {
             Cancelar Reserva
           </button>
         )}
-      </footer>
+      </StickyFooter>
     </div>
   );
 }
