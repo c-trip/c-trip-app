@@ -20,12 +20,7 @@ import ProfilePage from '../routes/_passenger/ProfilePage'
 import NotificationsPage from '../routes/_passenger/NotificationsPage'
 import TicketsPage from '../routes/_passenger/TicketsPage'
 
-import GestorDashboard from '../routes/_gestor/GestorDashboard'
-import GestorRoutes from '../routes/_gestor/GestorRoutes'
-import GestorSchedules from '../routes/_gestor/GestorSchedules'
-import GestorFleet from '../routes/_gestor/GestorFleet'
-import GestorTeam from '../routes/_gestor/GestorTeam'
-import GestorPayments from '../routes/_gestor/GestorPayments'
+
 
 import OperatorLoginPage from '../routes/_operator/OperatorLoginPage'
 import OperatorDayTrips from '../routes/_operator/OperatorDayTrips'
@@ -73,12 +68,7 @@ export default function Router() {
       <Route path="/search-results/:origin" element={<OperatorsPage />} />
       <Route path="/search-results/:origin/:destination" element={<OperatorsPage />} />
 
-      <Route path="/gestor" element={<GestorDashboard />} />
-      <Route path="/gestor/routes" element={<GestorRoutes />} />
-      <Route path="/gestor/schedules" element={<GestorSchedules />} />
-      <Route path="/gestor/fleet" element={<GestorFleet />} />
-      <Route path="/gestor/team" element={<GestorTeam />} />
-      <Route path="/gestor/payments" element={<GestorPayments />} />
+      
 
       <Route path="/operator/login" element={<OperatorLoginPage />} />
       <Route element={<OperatorTabBarLayout />}>
