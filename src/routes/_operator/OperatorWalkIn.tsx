@@ -20,11 +20,13 @@ function SeatButton({
   label,
   status,
   selected,
+  dimmed,
   onClick,
 }: {
   label: string;
   status: SeatStatus;
   selected: boolean;
+  dimmed: boolean;
   onClick: () => void;
 }) {
   const base =
@@ -76,6 +78,18 @@ function SeatButton({
         onClick={onClick}
         aria-pressed
         className={`${base} text-white bg-[#15632F] scale-110 ring-2 ring-white shadow-lg`}
+      >
+        {label}
+      </button>
+    );
+  }
+
+  if (dimmed) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className={`${base} text-white bg-[#1B7A3D] opacity-40 hover:opacity-100`}
       >
         {label}
       </button>
@@ -287,7 +301,7 @@ export default function OperatorWalkIn() {
         </div>
       </header>
 
-      <main className="px-5 py-5 pb-36">
+      <main className="px-5 py-5 pb-44">
         <section className="mb-6">
           <label className="block text-xs font-bold text-[#6B7280] uppercase tracking-wide mb-2">
             Viagem
@@ -378,6 +392,11 @@ export default function OperatorWalkIn() {
                       label={seatLabel(seat)}
                       status={renumberSeats(seat)}
                       selected={selectedSeat === seatLabel(seat)}
+                      dimmed={
+                        selectedSeat !== null &&
+                        seatLabel(seat) !== selectedSeat &&
+                        renumberSeats(seat) === "available"
+                      }
                       onClick={() => handleSeatClick(seat)}
                     />
                   ),
@@ -430,6 +449,7 @@ export default function OperatorWalkIn() {
                 type="text"
                 value={form.name}
                 onChange={(e) => setField("name", e.target.value)}
+                placeholder="Nome completo"
                 className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-outfit placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1B7A3D]/30 focus:border-[#1B7A3D]"
               />
             </div>
@@ -451,6 +471,7 @@ export default function OperatorWalkIn() {
                 type="text"
                 value={form.idDoc}
                 onChange={(e) => setField("idDoc", e.target.value)}
+                placeholder="Digite o número do seu BI"
                 className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 
                 rounded-xl text-sm font-outfit placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1B7A3D]/30 focus:border-[#1B7A3D]"
               />
@@ -461,7 +482,7 @@ export default function OperatorWalkIn() {
         </section>
       </main>
 
-      <footer className="fixed bottom-0 left-0 right-0 z-50 flex flex-col gap-4 p-6 bg-white border-t border-gray-200">
+      <footer className="fixed bottom-20 left-0 right-0 z-50 flex flex-col gap-4 p-6 bg-white border-t border-gray-200">
         <div className="flex justify-between gap-1 items-center">
           <div>
             <p className="text-xs text-[#4B5563] font-normal">Valor a Pagar</p>
