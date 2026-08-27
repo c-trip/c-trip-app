@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router";
-import { IconArrowLeft } from "@tabler/icons-react";
+import { IconCheck } from '@tabler/icons-react';
 
 interface ScannedTicket extends Record<string, unknown> {
   passengerName?: string;
@@ -12,54 +12,56 @@ export default function ScanResultSuccess() {
   const location = useLocation();
   const ticket = (location.state as ScannedTicket | null) ?? null;
 
-  const goBack = () => navigate("/operator/scan");
-  const goToPanel = () => navigate("/operator");
-
   return (
-    <div className="min-h-screen bg-black font-outfit">
-      <header className="sticky top-0 z-50 bg-black px-5 pt-3 pb-4">
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={goBack}
-            aria-label="Voltar ao scanner"
-            className="p-1 rounded-full hover:bg-white/10"
-          >
-            <IconArrowLeft className="size-5 text-white" />
-          </button>
-          <h1 className="text-[22px] font-bold text-white text-center flex-1">
-            Bilhete Scanado
-          </h1>
-          <span className="text-[10px] font-bold uppercase tracking-wide text-white/60 bg-white/10 rounded-full px-2 py-1">
-            Protótipo
-          </span>
+    <div className="bg-[#064E3B]">
+
+    <div className="min-h-screen bg-[#064E3B] font-outfit flex flex-col 
+    items-center justify-center gap-4">
+      <div
+        className="h-[100px] w-[100px] bg-[#FFFFFF] rounded-full 
+       flex items-center justify-center shadow-[#00000033]"
+      >
+       <IconCheck className="h-12 w-12 text-[#064E3B]"/>
+      </div>
+      <div className="flex items-center  justify-center mt-4 flex-col">
+        <h1 className="text-[32px] font-black text-white">PERMITIDO</h1>
+        <p className="text-sm text-[#A7F3D0] font-semibold">BOARDING PASS VÁLIDO</p>
+      </div>
+      <div className="bg-white w-[338px] h-[219px] rounded-2xl shadow-[#00000033]
+      mt-4 p-6 flex flex-col items-baseline justify-baseline">
+        <div className="flex flex-col gap-1">
+      <p className="text-[11px] font-semibold text-[#4B5563]">PASSAGEIRO</p>
+         <h1 className="text-xl text-[#111827] font-extrabold">{ticket?.passengerName ?? "Manuel D. Santos"}</h1>
         </div>
-      </header>
-
-      <main className="px-5 pb-8">
-        {ticket ? (
-          <div className="w-full max-w-xs mx-auto">
-            <p className="text-white font-semibold text-center">
-              Passageiro: {ticket.passengerName ?? "—"}
-            </p>
-            <p className="text-gray-400 text-sm text-center mt-1">
-              Lugar: {ticket.seat ?? "—"} · Rota: {ticket.route ?? "—"}
-            </p>
-          </div>
-        ) : (
-          <p className="text-gray-400 text-sm text-center py-16">
-            Sem informação do bilhete. Escaneie novamente.
+      <div className="flex justify-baseline items-baseline mb-3 mt-2">
+        <div className="flex flex-col w-[139px]">
+          <p className="text-[#4B5563] text-[11px] font-extrabold">
+            LUGAR
           </p>
-        )}
+          <h1 className="text-[#1B7A3D] text-2xl font-extrabold">{ticket?.seat ?? "12A"}</h1>
+        </div>
+        <div className="flex flex-col flex-1">
+          <p className="text-[#4B5563] text-[11px] font-extrabold">
+            CLASSE
+          </p>
+          <h1 className="text-[#1B7A3D] text-base  font-extrabold">Classe Padrão</h1>
+        </div>
+      </div>
+      <div className="pt-4 flex flex-col gap-1 border-t border-[#E5E7EB] w-full">
+        <p className="text-[11px] text-[#4B5563] font-semibold">SERVIÇO MACON</p>
+        <span className="text-sm font-bold text-[#111827]">Luanda -&gt; Benguela * 06:00</span>
+      </div>
+      </div>
 
-        <button
-          type="button"
-          onClick={goToPanel}
-          className="w-full max-w-xs mx-auto block py-3 bg-white/10 text-white font-semibold rounded-xl hover:bg-white/20 transition-colors mt-8"
-        >
-          Voltar ao painel
-        </button>
-      </main>
+    </div>
+      <footer className="sticky bottom-0 flex w-full justify-center items-center
+      h-[146px] bg-[#064E3B] p-10">
+       <button onClick={() => navigate("/operator/scan")}
+        className=" w-full  h-12 text-white text-base font-bold
+        bg-gradient-to-r from-[#6B9E8C] to-[#3A6356] rounded-xl">
+        Escanear Próximo
+       </button>
+      </footer>
     </div>
   );
 }
