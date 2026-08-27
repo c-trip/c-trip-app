@@ -116,7 +116,7 @@ export default function OperatorScan() {
         },
         async () => {
           if (cancelledRef.current) return;
-          scanner.pause(true);
+          cleanupScanner();
           setScanState("validating");
           try {
             const result = await validateQr();
@@ -245,13 +245,6 @@ export default function OperatorScan() {
             >
               Voltar ao Painel
             </button>
-          </div>
-        )}
-
-        {scanState === "loading" && (
-          <div className="flex flex-col items-center gap-4 py-20">
-            <div className="size-12 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            <span className="text-white text-sm">A iniciar câmara...</span>
           </div>
         )}
 
