@@ -10,7 +10,7 @@ Plataforma de bilhética para transportes coletivos (Viagem Lda). Frontend web c
 
 ## Estrutura de pastas
 
-```
+```text
 src/
 ├── app/                 # Núcleo de arranque global (providers, router)
 │   ├── providers.tsx    # Providers de topo (RouterProvider, etc.)
@@ -41,7 +41,7 @@ src/
 
 | Área | Pasta | Rotas |
 |---|---|---|
-| Público | `_public` | `/welcome`, `/search`, `/search/results`, `/search-results/:origin[/:destination]`, `/schedules/:scheduleId`, `/hold/:scheduleId/:routeSlug/:companySlug` |
+| Público | `_public` | `/welcome`, `/search`, `/search/results`, `/search-results/:origin`, `/search-results/:origin/:destination`, `/schedules/:scheduleId`, `/hold/:scheduleId/:routeSlug/:companySlug` |
 | Autenticação | `_auth` | `/auth/login`, `/auth/register` |
 | Passageiro | `_passenger` | `/checkout/:scheduleId`, `/ticket-qr/:scheduleId`, `/payment/:bookingId`, `/ticket/:bookingId`, `/bookings`, `/bookings/:bookingId`, `/tickets`, `/profile`, `/notifications` |
 | Operador | `_operator` | `/operator/login`, `/operator`, `/operator/walkin`, `/operator/reprint`, `/operator/manifest`, `/operator/scan`, `/operator/tasks`, `/operator/calendar` |
