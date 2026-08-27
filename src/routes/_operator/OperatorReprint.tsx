@@ -26,7 +26,7 @@ function getMockReprintPassengers(scheduleId: string): ReprintPassenger[] {
       { bookingId: 'bk-r06', seat: 7, name: 'Ricardo Neto', printed: true },
     ],
   }
-  return seeds[scheduleId] ?? seeds['macon-1']
+  return seeds[scheduleId] ?? []
 }
 
 export default function OperatorReprint() {
@@ -35,7 +35,7 @@ export default function OperatorReprint() {
   const [selectedSchedule, setSelectedSchedule] = useState<OperatorSchedule | null>(null)
   const [search, setSearch] = useState('')
   const [reprintedIds, setReprintedIds] = useState<Set<string>>(new Set())
-  const [reprintingId, setReprintingId] = useState<string | null>(null)
+  const [reprintingIds, setReprintingIds] = useState<Set<string>>(() => new Set())
 
   const passengers = selectedSchedule ? getMockReprintPassengers(selectedSchedule.id) : []
   const query = search.toLowerCase()
@@ -47,8 +47,8 @@ export default function OperatorReprint() {
   )
 
   const handleReprint = async (passenger: ReprintPassenger) => {
-    if (reprintingId === passenger.bookingId) return
-    setReprintingId(passenger.bookingId)
+    if (reprintingIds.has(passenger.bookingId)) return
+    setReprintingIds((prev) => new Set(prev).add(passenger.bookingId))
     try {
       // Mock — substituir por POST /boarding/qr/reprint
       await new Promise((r) => setTimeout(r, 800))
@@ -62,7 +62,11 @@ export default function OperatorReprint() {
         description: 'Tente novamente.',
       })
     } finally {
-      setReprintingId(null)
+      setReprintingIds((prev) => {
+        const next = new Set(prev)
+        next.delete(passenger.bookingId)
+        return next
+      })
     }
   }
 
@@ -108,6 +112,7 @@ export default function OperatorReprint() {
             <div className="relative mb-4">
               <IconSearch className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
+                aria-label="Buscar por nome ou lugar"
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -150,12 +155,12 @@ export default function OperatorReprint() {
                         ) : (
                           <button
                             type="button"
-                            disabled={reprintingId === passenger.bookingId}
+                            disabled={reprintingIds.has(passenger.bookingId)}
                             onClick={() => handleReprint(passenger)}
                             className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-[#1B7A3D] text-white text-xs font-semibold rounded-lg hover:bg-[#15632F] transition-colors active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             <IconPrinter className="size-3.5" />
-                            {reprintingId === passenger.bookingId ? 'A imprimir…' : 'Imprimir'}
+                            {reprintingIds.has(passenger.bookingId) ? 'A imprimir…' : 'Imprimir'}
                           </button>
                         )}
                       </CardContent>
