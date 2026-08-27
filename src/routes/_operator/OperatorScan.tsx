@@ -118,8 +118,11 @@ export default function OperatorScan() {
             const result = await validateQr(decodedText);
             if (cancelledRef.current) return;
             setScannedData(result);
-            if (result.status === "allowed") setScanState("success");
-            else if (result.status === "already_boarded")
+            if (result.status === "allowed") {
+              navigate("/operator/scan-result-success", { state: result });
+              return;
+            }
+            if (result.status === "already_boarded")
               setScanState("already-boarded");
             else setScanState("error");
           } catch {
