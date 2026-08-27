@@ -1,16 +1,20 @@
 language: pt-BR
 
 reviews:
-  enabled: false
-
-path_instructions:
-  - path: "src/routes/**"
-    instructions: "Verificar se as rotas seguem o padrão do projecto, se os componentes são devidamente tipados e se usam hooks correctos do React Router."
-  - path: "src/components/**"
-    instructions: "Verificar acessibilidade, performance, que usa componentes shadcn/ui existentes quando possível e que segue o design system do projecto (cores green-gradient, font-outfit)."
-  - path: "src/types/**"
-    instructions: "Verificar se os tipos são consistentes, sem 'any' e sem vírgulas trailing."
-  - path: "src/data/**"
-    instructions: "Verificar se os dados mock são consistentes com os tipos definidos em types/index.ts."
-  - path: ".github/workflows/**"
-    instructions: "Verificar se os workflows usam versões estáveis das actions, não expõem secrets e seguem boas práticas de segurança."
+  enabled: true
+  profile: chill
+  path_instructions:
+    - path: "src/routes/**"
+      instructions: "Verificar se as rotas seguem o padrão do projecto, se os componentes são devidamente tipados e se usam hooks correctos do React Router."
+    - path: "src/components/**"
+      instructions: "Verificar acessibilidade, performance, que usa componentes shadcn/ui existentes quando possível e que segue o design system do projecto (cores green-gradient, font-outfit)."
+    - path: "src/types/**"
+      instructions: "Verificar se os tipos são consistentes, sem 'any' e sem vírgulas trailing."
+    - path: "src/data/**"
+      instructions: "Verificar se os dados mock são consistentes com os tipos definidos em types/index.ts."
+    - path: ".github/workflows/**"
+      instructions: "Verificar se os workflows usam versões estáveis das actions, não expõem secrets e seguem boas práticas de segurança."
+    - path: "src/lib/**"
+      instructions: "Verificar vulnerabilidades de segurança: XSS, CSRF, injection, dados sensíveis em localStorage, tokens expostos, validação de input, sanitização de dados. Nunca logar secrets ou chaves de API."
+    - path: "src/**"
+      instructions: "Verificar se há dados sensíveis hardcoded (tokens, passwords, chaves de API), se inputs do utilizador são sanitizados antes de usar, e se não há chamadas a APIs externas sem tratamento de erro."
