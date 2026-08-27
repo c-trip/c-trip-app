@@ -178,7 +178,9 @@ export default function OperatorReprint() {
 
         {!selectedSchedule && (
           <div className="text-center py-16 text-gray-400 text-sm">
-            Selecione uma viagem para ver os passageiros
+            {schedules.length === 0
+              ? 'Não há viagens disponíveis para reimpressão'
+              : 'Selecione uma viagem para ver os passageiros'}
           </div>
         )}
       </main>

@@ -19,8 +19,10 @@ interface ValidateResponse {
   route?: string;
 }
 
-async function validateQr(): Promise<ValidateResponse> {
-  // Mock — substituir por POST /boarding/validate quando a API estiver pronta
+async function validateQr(decodedText: string): Promise<ValidateResponse> {
+  // PROTÓTIPO — substituir por POST /boarding/validate quando a API estiver pronta.
+  // O QR lido (decodedText) será enviado ao servidor e a resposta determinará o estado.
+  void decodedText;
   await new Promise((r) => setTimeout(r, 1200));
 
   // TODO: validar QR num serviço autenticado no servidor
@@ -32,31 +34,25 @@ export default function OperatorScan() {
   const [scanState, setScanState] = useState<ScanResult>("permission");
   const [scannedData, setScannedData] = useState<ValidateResponse | null>(null);
   const scannerRef = useRef<import("html5-qrcode").Html5Qrcode | null>(null);
-  const startedRef = useRef(false);
   const cancelledRef = useRef(false);
 
-  const cleanupScanner = () => {
-    if (scannerRef.current) {
-      if (startedRef.current && scannerRef.current.isScanning) {
-        try {
-          scannerRef.current.pause(true);
-        } catch {
-          /* ignore */
+  const cleanupScanner = async () => {
+    const scanner = scannerRef.current;
+    if (scanner) {
+      try {
+        if (scanner.isScanning) {
+          await scanner.stop();
         }
-        try {
-          scannerRef.current.stop().catch(() => {});
-        } catch {
-          /* ignore */
-        }
+      } catch {
+        /* ignore */
       }
       try {
-        scannerRef.current.clear();
+        scanner.clear();
       } catch {
         /* ignore */
       }
       scannerRef.current = null;
     }
-    startedRef.current = false;
 
     const region = document.getElementById("qr-scanner-region");
     if (region) {
@@ -114,12 +110,12 @@ export default function OperatorScan() {
           qrbox: { width: 250, height: 250 },
           aspectRatio: 1.0,
         },
-        async () => {
+        async (decodedText) => {
           if (cancelledRef.current) return;
-          cleanupScanner();
+          await cleanupScanner();
           setScanState("validating");
           try {
-            const result = await validateQr();
+            const result = await validateQr(decodedText);
             if (cancelledRef.current) return;
             setScannedData(result);
             if (result.status === "allowed") setScanState("success");
@@ -134,10 +130,9 @@ export default function OperatorScan() {
       );
 
       if (cancelledRef.current) {
-        try { scanner.stop().catch(() => {}); } catch { /* ignore */ }
+        try { await scanner.stop(); } catch { /* ignore */ }
         return;
       }
-      startedRef.current = true;
       setScanState("idle");
     } catch {
       if (!cancelledRef.current) setScanState("denied");
@@ -170,6 +165,9 @@ export default function OperatorScan() {
           <h1 className="text-[22px] font-bold text-white text-center flex-1">
             Escanear Bilhete
           </h1>
+          <span className="text-[10px] font-bold uppercase tracking-wide text-white/60 bg-white/10 rounded-full px-2 py-1">
+            Protótipo
+          </span>
         </div>
       </header>
 

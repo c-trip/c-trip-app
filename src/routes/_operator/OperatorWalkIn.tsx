@@ -190,9 +190,12 @@ export default function OperatorWalkIn() {
     form.name.trim().length >= 2 &&
     selectedSchedule !== null &&
     selectedSchedule.availableSeats > 0 &&
+    seatMap !== undefined &&
     Number.isInteger(seatNumber) &&
     seatNumber >= 1 &&
-    seatNumber <= selectedSchedule.totalSeats;
+    seatNumber <= selectedSchedule.totalSeats &&
+    seatMap.available.includes(seatNumber) &&
+    !heldSet.has(seatNumber);
 
   const handleSubmit = async () => {
     if (!isValid || submitting) return;
@@ -354,6 +357,7 @@ export default function OperatorWalkIn() {
                     type="button"
                     onClick={() => {
                       setSelectedSchedule(s);
+                      setField("seatNumber", "");
                       setShowSchedulePicker(false);
                     }}
                     className={`w-full flex items-center gap-3 p-3 text-left hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 ${
