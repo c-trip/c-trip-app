@@ -3,6 +3,7 @@ language: pt-BR
 reviews:
   enabled: true
   profile: chill
+  request_changes_workflow: true
   path_instructions:
     - path: "src/routes/**"
       instructions: "Verificar se as rotas seguem o padrão do projecto, se os componentes são devidamente tipados e se usam hooks correctos do React Router."
