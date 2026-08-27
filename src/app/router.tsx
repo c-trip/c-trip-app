@@ -8,7 +8,6 @@ import HoldPage from '../routes/_public/HoldPage'
 
 import LoginPage from '../routes/_auth/LoginPage'
 import RegisterPage from '../routes/_auth/RegisterPage'
-import RegisterCompanyPage from '../routes/_auth/RegisterCompanyPage'
 
 import CheckoutPage from '../routes/_passenger/CheckoutPage'
 import PaymentPage from '../routes/_passenger/PaymentPage'
@@ -45,7 +44,6 @@ export default function Router() {
 
       <Route path="/auth/login" element={<LoginPage />} />
       <Route path="/auth/register" element={<RegisterPage />} />
-      <Route path="/auth/register/company" element={<RegisterCompanyPage />} />
 
       <Route element={<TabBarLayout />}>
         <Route path="/search" element={<SearchPage />} />
