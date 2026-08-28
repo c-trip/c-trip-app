@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router'
-import { IconArrowLeft, IconUser, IconId, IconPhone, IconCheck, IconClock, IconCircleDot } from '@tabler/icons-react'
+import { IconUser, IconId, IconPhone, IconClock, IconCircleDot } from '@tabler/icons-react'
 import { gooeyToast } from 'goey-toast'
 import { getScheduleById, getSeatMapBySchedule } from '@/data/mockSeats'
 import { readTimestamp, removeHeldSeat, HOLD_TOTAL_SECONDS } from '@/lib/seatHolds'
@@ -9,6 +9,7 @@ import { getSeatLabel } from '@/lib/seats'
 import type { Booking, PaymentMethod } from '@/types'
 import StickyFooter from '@/components/StickyFooter'
 import GradientButton from '@/components/GradientButton'
+import PageHeader from '@/components/PageHeader'
 
 export default function CheckoutPage() {
   const { scheduleId } = useParams<{ scheduleId: string }>()
@@ -189,39 +190,21 @@ export default function CheckoutPage() {
   if (!schedule || !seatIsValid) {
     return (
       <div className="min-h-screen bg-[#F9FAFB] font-outfit">
-        <header className="sticky top-0 z-10 border-b border-gray-200 bg-white px-4 py-4">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate(-1)}
-              aria-label="Voltar"
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 transition-colors hover:bg-gray-200"
-            >
-              <IconArrowLeft className="h-5 w-5 text-gray-700" />
-            </button>
-            <h1 className="text-lg font-bold text-gray-900">Checkout não disponível</h1>
-          </div>
-        </header>
+        <PageHeader
+          onBack={() => navigate(-1)}
+          title="Checkout não disponível"
+        />
       </div>
     )
   }
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] font-outfit flex flex-col">
-      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white px-4 py-4">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate(-1)}
-            aria-label="Voltar"
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 transition-colors hover:bg-gray-200"
-          >
-            <IconArrowLeft className="h-5 w-5 text-gray-700" />
-          </button>
-          <div className="flex flex-col">
-            <h1 className="text-lg font-bold">Checkout e Pagamento</h1>
-            <p className="text-xs text-gray-400">Passo final da compra</p>
-          </div>
-        </div>
-      </header>
+      <PageHeader
+        onBack={() => navigate(-1)}
+        title="Checkout e Pagamento"
+        subtitle="Passo final da compra"
+      />
 
       <div className={`sticky top-[72px] z-10 px-6 py-3 flex items-center
        gap-3 border-b ${isUrgent ? 'bg-red-50 border-red-300' : 'bg-[#FEF3C7] border-gray-200'}`}>
@@ -244,16 +227,17 @@ export default function CheckoutPage() {
 
       <form key={holdKey} id="checkout-form" onSubmit={(e) => { e.preventDefault(); handleSubmit() }} className="px-6 py-6 flex flex-col items-center gap-6 flex-1">
         <div className="w-full max-w-[350px]">
-          <h2 className="block text-sm font-medium text-gray-700 mb-3 font-outfit">
+          <h2 className="block text-[15px] font-bold text-[#111827] mb-3 font-outfit">
             Dados do Passageiro (Lugar {seatLabel})
           </h2>
 
           <div className="flex flex-col gap-4">
             <div>
-              <label htmlFor="checkout-nome" className="block text-xs font-medium text-gray-500 mb-1.5 font-outfit">
+              <label htmlFor="checkout-nome" className="block text-[13px] font-inter font-semibold text-gray-500 mb-1.5
+              text-[#4B5563]">
                 Nome completo
               </label>
-              <div className="relative">
+              <div className="relative bg-white">
                 <IconUser className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   id="checkout-nome"
@@ -261,7 +245,7 @@ export default function CheckoutPage() {
                   value={nome}
                   onChange={(e) => setNome(e.target.value)}
                   placeholder="Introduza o seu nome completo"
-                  className="w-full rounded-xl border border-gray-300 bg-gray-50 pl-10 pr-4 h-12
+                  className="w-full rounded-lg border border-[#D1D5DB] bg-white pl-10 pr-4 h-12
                    text-sm font-outfit text-gray-800 outline-none transition-colors
                    focus:border-green-500"
                 />
@@ -269,8 +253,8 @@ export default function CheckoutPage() {
             </div>
 
             <div>
-              <label htmlFor="checkout-bi" className="block text-xs font-medium text-gray-500 mb-1.5 font-outfit">
-                N.º do BI ou Passaporte
+              <label htmlFor="checkout-bi" className="block text-[13px] font-inter font-semibold mb-1.5 text-[#4B5563]">
+                Nº do BI ou Passaporte
               </label>
               <div className="relative">
                 <IconId className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -280,7 +264,7 @@ export default function CheckoutPage() {
                   value={bi}
                   onChange={(e) => setBi(e.target.value)}
                   placeholder="Ex: 001234567LA045"
-                  className="w-full rounded-xl border border-gray-300 bg-gray-50 pl-10 pr-4 h-12
+                  className="w-full rounded-lg border border-[#D1D5DB] bg-white pl-10 pr-4 h-12
                    text-sm font-outfit text-gray-800 outline-none transition-colors
                    focus:border-green-500"
                 />
@@ -288,7 +272,7 @@ export default function CheckoutPage() {
             </div>
 
             <div>
-              <label htmlFor="checkout-telefone" className="block text-xs font-medium text-gray-500 mb-1.5 font-outfit">
+              <label htmlFor="checkout-telefone" className="block text-[13px] font-inter font-semibold mb-1.5 text-[#4B5563]">
                 Telefone (Contacto de Viagem)
               </label>
               <div className="relative">
@@ -299,7 +283,7 @@ export default function CheckoutPage() {
                   value={telefone}
                   onChange={(e) => setTelefone(e.target.value)}
                   placeholder="Ex: 923 456 789"
-                  className="w-full rounded-xl border border-gray-300 bg-gray-50 pl-10 pr-4 h-12
+                  className="w-full rounded-lg border border-[#D1D5DB] bg-white pl-10 pr-4 h-12
                    text-sm font-outfit text-gray-800 outline-none transition-colors
                    focus:border-green-500"
                 />
@@ -309,7 +293,7 @@ export default function CheckoutPage() {
         </div>
 
         <fieldset className="w-full max-w-[350px]">
-          <legend className="block text-sm font-medium text-gray-700 mb-3 font-outfit">
+          <legend className="block text-[15px] font-bold text-[#111827] mb-3 font-outfit">
             Método de Pagamento
           </legend>
           <button
@@ -325,13 +309,13 @@ export default function CheckoutPage() {
                 selectedPayment === 'mcx' ? 'bg-[#1B7A3D]' : 'bg-gray-200'
               }`}>
                 {selectedPayment === 'mcx'
-                  ? <IconCheck className="h-5 w-5 text-white" />
+                  ? <IconCircleDot stroke={4} className="h-5 w-5 text-white" />
                   : <IconCircleDot className="h-5 w-5 text-gray-400" />
                 }
               </div>
               <div className="flex flex-col">
-                <span className="text-sm font-bold text-gray-900 font-outfit">Multicaixa Express (MCX)</span>
-                <span className="text-xs text-gray-400 font-outfit">Pagamento rápido e seguro em Angola</span>
+                <span className="text-sm font-bold text-[#111827] font-inter">Multicaixa Express (MCX)</span>
+                <span className="text-xs text-[#4B5563] font-normal font-inter">Pagamento rápido e seguro em Angola</span>
               </div>
             </div>
           </button>
@@ -340,8 +324,8 @@ export default function CheckoutPage() {
 
       <StickyFooter>
         <div className="flex justify-between w-full max-w-[350px]">
-          <span className="text-sm font-normal text-[#4B5563] font-outfit">Total a pagar</span>
-          <span className="text-xl font-extrabold text-[#1B7A3D] font-outfit">{schedule.price}</span>
+          <span className="text-sm font-normal text-[#4B5563] font-inter">Total a pagar</span>
+          <span className="text-[22px] font-extrabold text-[#1B7A3D] font-inter">{schedule.price}</span>
         </div>
         <GradientButton
           type="submit"

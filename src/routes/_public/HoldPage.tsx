@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router'
-import { IconArrowLeft } from '@tabler/icons-react'
 import { getScheduleById, getSeatMapBySchedule } from '@/data/mockSeats'
 import { Card, CardContent } from '@/components/ui/card'
 import { readTimestamp, addHeldSeat, removeHeldSeat, HOLD_TOTAL_SECONDS } from '@/lib/seatHolds'
 import RouteDisplay from '@/components/RouteDisplay'
 import StickyFooter from '@/components/StickyFooter'
 import GradientButton from '@/components/GradientButton'
+import PageHeader from '@/components/PageHeader'
 
 function getSeatLabel(seatNum: number): string {
   const row = Math.ceil(seatNum / 4)
@@ -103,18 +103,7 @@ export default function HoldPage() {
   if (!schedule || !seatIsValid) {
     return (
       <div className="min-h-screen bg-[#F9FAFB] font-outfit flex flex-col">
-        <header className="sticky top-0 z-10 border-b border-gray-200 bg-white px-4 py-4">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate(-1)}
-              aria-label="Voltar"
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 transition-colors hover:bg-gray-200"
-            >
-              <IconArrowLeft className="h-5 w-5 text-gray-700" />
-            </button>
-            <h1 className="text-lg font-bold text-gray-900">Reserva não encontrada</h1>
-          </div>
-        </header>
+        <PageHeader onBack={() => navigate(-1)} title="Reserva não encontrada" />
       </div>
     )
   }
@@ -123,28 +112,17 @@ export default function HoldPage() {
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] font-outfit flex flex-col">
-      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white px-4 py-4">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate(-1)}
-            aria-label="Voltar"
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 transition-colors
-             hover:bg-gray-200"
-          >
-            <IconArrowLeft className="h-5 w-5 text-gray-700" />
-          </button>
-          <div className="flex flex-col">
-            <h1 className="text-lg font-bold">Resumo do Lugar</h1>
-            <p className="text-xs text-gray-400">Processo de reserva em andamento</p>
-          </div>
-        </div>
-      </header>
+      <PageHeader
+        onBack={() => navigate(-1)}
+        title="Resumo do Lugar"
+        subtitle="Processo de reserva em andamento"
+      />
 
       <div className={`sticky top-[72px] z-10 px-6 py-3 flex items-center
        justify-items-start border-b gap-2 ${isUrgent ? 'bg-red-50 border-red-300' : 'bg-[#FEF3C7] border-gray-200'}`}>
         <div className={`h-7 w-7 border-2 p-0.5 flex border-[#F59E0B] rounded-full
          justify-center items-center bg-white ${isUrgent ? '!border-red-500' : ''}`}>
-          <p className={`font-bold text-[11px] ${isUrgent ? '!text-red-500' : 'text-[#F59E0B]'}`}>
+          <p className={`font-bold text-[11px]  font-inter ${isUrgent ? '!text-red-500' : 'text-[#F59E0B]'}`}>
             {isExpired ? '0m' : `${minutes}m`}
           </p>
         </div>
@@ -165,33 +143,33 @@ export default function HoldPage() {
         {isExpired ? 'A reserva do lugar expirou.' : ''}
       </div>
 
-      <main className="px-6 py-10 flex flex-col items-center gap-6 flex-1">
-        <Card className="rounded-2xl border border-gray-200 bg-white w-full max-w-[350px]">
+      <main className="px-5 py-10 flex flex-col items-center gap-6 flex-1">
+        <Card className="rounded-2xl border border-[#E5E7EB] bg-white w-full max-w-[350px]">
           <CardContent className="flex flex-col gap-3">
             <h2 className="text-lg font-bold text-gray-900">
-              <RouteDisplay origin={schedule.origin} destination={schedule.destination} />
+              <RouteDisplay origin={schedule.origin} destination={schedule.destination}  iconClassName='size-5'/>
             </h2>
             <div className="border-t border-[#E5E7EB]" />
 
             <div className="flex justify-between text-xs">
-              <span className="text-gray-400 text-[13px]">Companhia</span>
-              <span className="font-bold text-gray-900 text-[13px]">{schedule.operatorName}</span>
+              <span className="text-gray-400 text-[13px] font-inter font-normal">Companhia</span>
+              <span className="font-semibold font-inter text-gray-900 text-[13px]">{schedule.operatorName} Transportes</span>
             </div>
             <div className="flex justify-between text-xs">
-              <span className="text-gray-400 text-[13px]">Data e Hora</span>
-              <span className="font-bold text-gray-900 text-[13px]">{schedule.departureDate} {schedule.departureTime}</span>
+              <span className="text-gray-400 text-[13px] font-inter font-normal">Data e Hora</span>
+              <span className="font-semibold font-inter text-gray-900 text-[13px]">{schedule.departureDate}  às  {schedule.departureTime}</span>
             </div>
 
             <div className="flex justify-between text-xs">
-              <span className="text-gray-400 text-[13px]">Lugar Escolhido</span>
-              <span className="font-bold bg-[#1B7A3D1A] py-0.5 px-2
+              <span className="text-gray-400 text-[13px] font-inter font-normal">Lugar Escolhido</span>
+              <span className="font-bold bg-[#1B7A3D1A] py-0.5 px-2 font-inter
                rounded-xl text-[#1B7A3D] text-[13px]">Lugar {seatLabel}</span>
             </div>
 
             <div className="border-t border-[#E5E7EB]" />
 
             <div className="flex justify-between">
-              <span className="text-sm font-normal text-[#4B5563]">Total</span>
+              <span className="text-sm font-normal text-[#4B5563]">Total a Pagar</span>
               <span className="text-xl font-inter font-extrabold text-[#1B7A3D]">{schedule.price}</span>
             </div>
           </CardContent>

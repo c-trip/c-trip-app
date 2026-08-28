@@ -6,6 +6,7 @@ import { getScheduleById } from '@/data/mockSeats'
 import { Card, CardContent } from '@/components/ui/card'
 import type { BookingStatus } from '@/types'
 import RouteDisplay from '@/components/RouteDisplay'
+import PageHeader from '@/components/PageHeader'
 
 const TABS = [
   { value: 'ativas', label: 'Activas/Futuras' },
@@ -42,12 +43,7 @@ export default function BookingsPage() {
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] font-outfit">
-      <header className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 pt-4 pb-0">
-        <div className="flex items-center gap-3 mb-4">
-          
-          <h1 className="text-[22px] font-extrabold text-[#111827]"> Minhas Viagens</h1>
-        </div>
-
+      <PageHeader title="Minhas Viagens" className="px-4 pt-4 pb-0">
         <div className="flex gap-6 px-1">
           {TABS.map((tab) => {
             const isActive = activeTab === tab.value
@@ -68,7 +64,7 @@ export default function BookingsPage() {
             )
           })}
         </div>
-      </header>
+      </PageHeader>
 
       <main className="px-5 py-10">
         {filtered.length > 0 ? (

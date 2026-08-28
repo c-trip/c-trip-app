@@ -5,6 +5,7 @@ const luandaBenguela: Operator[] = [
   {
     id: 'macon-1',
     name: 'Macon',
+    logo: '/operators/macon.png',
     price: '3 500 Kz',
     departureTime: '08:00',
     arrivalTime: '12:30',
@@ -16,6 +17,7 @@ const luandaBenguela: Operator[] = [
   {
     id: 'angorreal-1',
     name: 'Angorreal',
+    logo: '/operators/angore-bus.jpg',
     price: '3 200 Kz',
     departureTime: '09:30',
     arrivalTime: '14:30',
@@ -27,6 +29,7 @@ const luandaBenguela: Operator[] = [
   {
     id: 'labarca-1',
     name: 'Labarca',
+    logo: '/operators/labarca.png',
     price: '4 000 Kz',
     departureTime: '07:00',
     arrivalTime: '11:00',
@@ -41,6 +44,7 @@ const benguelaHuambo: Operator[] = [
   {
     id: 'macon-2',
     name: 'Macon',
+    logo: '/operators/macon.png',
     price: '2 800 Kz',
     departureTime: '10:00',
     arrivalTime: '13:00',
@@ -52,6 +56,7 @@ const benguelaHuambo: Operator[] = [
   {
     id: 'angorreal-2',
     name: 'Angorreal',
+    logo: '/operators/angore-bus.jpg',
     price: '2 500 Kz',
     departureTime: '11:00',
     arrivalTime: '14:30',
@@ -66,6 +71,7 @@ const luandaHuambo: Operator[] = [
   {
     id: 'macon-3',
     name: 'Macon',
+    logo: '/operators/macon.png',
     price: '4 500 Kz',
     departureTime: '06:00',
     arrivalTime: '13:00',
@@ -77,6 +83,7 @@ const luandaHuambo: Operator[] = [
   {
     id: 'labarca-2',
     name: 'Labarca',
+    logo: '/operators/labarca.png',
     price: '5 000 Kz',
     departureTime: '07:30',
     arrivalTime: '14:00',
@@ -88,6 +95,7 @@ const luandaHuambo: Operator[] = [
   {
     id: 'angorreal-3',
     name: 'Angorreal',
+    logo: '/operators/angore-bus.jpg',
     price: '4 000 Kz',
     departureTime: '08:00',
     arrivalTime: '15:30',
@@ -125,8 +133,21 @@ export function getOperatorsByRoute(origin?: string, destination?: string): Oper
 
   return operators.map((op) => {
     const seatMap = getSeatMapBySchedule(op.id)
-    return seatMap
-      ? { ...op, availableSeats: seatMap.available.length }
-      : op
+    if (seatMap) op.availableSeats = seatMap.available.length
+
+    for (const [key, ops] of Object.entries(operatorsByRoute)) {
+      if (ops.some((o) => o.id === op.id)) {
+        const [originName, destinationName] = key.split('-')
+        op.origin = capitalize(originName)
+        op.destination = capitalize(destinationName)
+        break
+      }
+    }
+
+    return op
   })
+}
+
+function capitalize(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1)
 }

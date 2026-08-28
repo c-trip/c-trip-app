@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router";
-import { IconArrowLeft, IconCircle , IconAlertTriangle , IconQrcode } from "@tabler/icons-react";
+import { IconCircle , IconAlertTriangle , IconQrcode } from "@tabler/icons-react";
 import { gooeyToast } from "goey-toast";
 import { getBookingById, updateBookingStatus } from "@/lib/bookings";
 import { getScheduleById } from "@/data/mockSeats";
@@ -8,6 +8,7 @@ import type { BookingStatus } from "@/types";
 import RouteDisplay from "@/components/RouteDisplay";
 import StickyFooter from "@/components/StickyFooter";
 import GradientButton from "@/components/GradientButton";
+import PageHeader from "@/components/PageHeader";
 
 
  
@@ -48,19 +49,10 @@ export default function BookingDetailPage() {
   if (!booking || !schedule) {
     return (
       <div className="min-h-screen bg-[#F9FAFB] font-outfit">
-        <header className="sticky top-0 z-10 border-b border-gray-200 bg-white px-4 py-4">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate(-1)}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 transition-colors hover:bg-gray-200"
-            >
-              <IconArrowLeft className="h-5 w-5 text-gray-700" />
-            </button>
-            <h1 className="text-lg font-bold text-gray-900">
-              Reserva não encontrada
-            </h1>
-          </div>
-        </header>
+        <PageHeader
+          onBack={() => navigate(-1)}
+          title="Reserva não encontrada"
+        />
         <main className="flex flex-1 flex-col items-center justify-center gap-4 px-6 py-20 text-center">
           <p className="max-w-xs text-sm text-gray-500">
             Esta reserva não existe ou foi removida.
@@ -108,25 +100,15 @@ export default function BookingDetailPage() {
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] font-outfit flex flex-col">
-      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white px-4 py-4">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 transition-colors 
-            hover:bg-gray-200"
-          >
-            <IconArrowLeft className="h-5 w-5 text-gray-700" />
-          </button>
-          <div className="flex flex-col">
-            <h1 className="text-lg font-bold text-gray-900">
-              Detalhe da Reserva
-            </h1>
-            <p className="text-xs text-[#4B5563] font-semibold">
-              Bilhete ID: {booking.id}
-            </p>
-          </div>
-        </div>
-      </header>
+      <PageHeader
+        onBack={() => navigate(-1)}
+        title="Detalhe da Reserva"
+        subtitle={
+          <span className="font-semibold text-[#4B5563]">
+            Bilhete ID: {booking.id}
+          </span>
+        }
+      />
 
       <main className="px-5 py-2 flex flex-col gap-4 flex-1 mt-4">
         <div className="rounded-2xl border border-gray-200 bg-white p-5">

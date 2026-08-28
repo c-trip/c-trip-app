@@ -11,6 +11,8 @@ export interface Operator {
   id: string
   name: string
   logo?: string
+  origin?: string
+  destination?: string
   price: string
   departureTime: string
   arrivalTime: string

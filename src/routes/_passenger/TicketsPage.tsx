@@ -6,6 +6,7 @@ import { getScheduleById } from '@/data/mockSeats'
 import { Card, CardContent } from '@/components/ui/card'
 import type { BookingStatus } from '@/types'
 import RouteDisplay from '@/components/RouteDisplay'
+import PageHeader from '@/components/PageHeader'
 
 function formatDate(dateStr: string): string {
   const [y, m, d] = dateStr.split('-')
@@ -31,9 +32,7 @@ export default function TicketsPage() {
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] font-outfit">
-      <header className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 pt-4 pb-4">
-        <h1 className="text-[22px] font-extrabold text-[#111827]">Os Meus Bilhetes</h1>
-      </header>
+      <PageHeader title="Os Meus Bilhetes" />
 
       <main className="px-5 py-6 pb-28">
         {tickets.length > 0 ? (
