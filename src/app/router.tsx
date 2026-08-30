@@ -26,6 +26,7 @@ import OperatorDayTrips from '../routes/_operator/OperatorDayTrips'
 import OperatorWalkIn from '../routes/_operator/OperatorWalkIn'
 import OperatorReprint from '../routes/_operator/OperatorReprint'
 import OperatorScan from '../routes/_operator/OperatorScan'
+import ScanResultSuccess from '../routes/_operator/ScanResultSuccess'
 import OperatorManifest from '../routes/_operator/OperatorManifest'
 import OperatorTasks from '../routes/_operator/OperatorTasks'
 import OperatorCalendarPage from '../routes/_operator/OperatorCalendarPage'
@@ -78,6 +79,7 @@ export default function Router() {
       </Route>
       <Route path="/operator/manifest" element={<OperatorManifest />} />
       <Route path="/operator/scan" element={<OperatorScan />} />
+      <Route path="/operator/scan-result-success" element={<ScanResultSuccess />} />
 
       <Route path="*" element={<Navigate to="/welcome" replace />} />
     </Routes>

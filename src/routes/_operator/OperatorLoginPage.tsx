@@ -44,7 +44,7 @@ export default function OperatorLoginPage() {
   }
 
   return (
-    <div className="relative min-h-screen flex flex-col items-center px-6 overflow-hidden font-outfit">
+    <div className="relative min-h-screen bg-[#F9FAFB] flex flex-col items-center px-6 overflow-hidden font-outfit">
       <main className="flex-1 flex flex-col items-center justify-center w-full">
         <header className="relative z-10 w-full max-w-sm text-center flex flex-col items-center gap-8">
           <div className="w-16 h-16 bg-[#1B7A3D] rounded-full" />

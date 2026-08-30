@@ -1,15 +1,14 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import {
-  IconChevronLeft,
-  IconChevronRight,
-  IconBus,
-} from "@tabler/icons-react";
+import { format } from "date-fns";
+import { pt } from "date-fns/locale";
 import { Card, CardContent } from "@/components/ui/card";
+import { Calendar, CalendarDayButton } from "@/components/ui/calendar";
 import { getOperatorTodaySchedules, getFutureSchedules } from "@/data/mockOperatorSchedules";
 import type { OperatorSchedule } from "@/data/mockOperatorSchedules";
+import RouteDisplay from "@/components/RouteDisplay";
+import { cn } from "@/lib/utils";
 
-const WEEKDAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 const MONTHS = [
   "Janeiro",
   "Fevereiro",
@@ -24,18 +23,6 @@ const MONTHS = [
   "Novembro",
   "Dezembro",
 ];
-
-function getDaysInMonth(year: number, month: number): number {
-  return new Date(year, month + 1, 0).getDate();
-}
-
-function getFirstDayOfMonth(year: number, month: number): number {
-  return new Date(year, month, 1).getDay();
-}
-
-function formatDateKey(year: number, month: number, day: number): string {
-  return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-}
 
 const STATUS_STYLE: Record<OperatorSchedule['status'], { bg: string; text: string; label: string }> = {
   scheduled: { bg: 'bg-[#EFF6FF]', text: 'text-[#1D4ED8]', label: 'A iniciar' },
@@ -55,51 +42,22 @@ function getMockSchedulesByDate(): Record<string, OperatorSchedule[]> {
   return byDate
 }
 
+const capitalize = (value: string) => value.charAt(0).toUpperCase() + value.slice(1)
+
 export default function OperatorCalendarPage() {
   const navigate = useNavigate();
   const today = new Date();
-  const [currentMonth, setCurrentMonth] = useState(today.getMonth());
-  const [currentYear, setCurrentYear] = useState(today.getFullYear());
-  const [selectedDay, setSelectedDay] = useState(today.getDate());
+  const [month, setMonth] = useState<Date>(() => new Date(today.getFullYear(), today.getMonth(), 1));
+  const [selected, setSelected] = useState<Date>(today);
 
   const schedulesByDate = getMockSchedulesByDate();
 
-  const daysInMonth = getDaysInMonth(currentYear, currentMonth);
-  const firstDay = getFirstDayOfMonth(currentYear, currentMonth);
-
-  const selectedDateKey = formatDateKey(currentYear, currentMonth, selectedDay);
-  const selectedSchedules = schedulesByDate[selectedDateKey] ?? [];
-
-  const clampDay = (month: number, year: number) => {
-    const max = getDaysInMonth(year, month)
-    setSelectedDay((d) => Math.min(d, max))
-  }
-
-  const prevMonth = () => {
-    const newMonth = currentMonth === 0 ? 11 : currentMonth - 1
-    const newYear = currentMonth === 0 ? currentYear - 1 : currentYear
-    setCurrentMonth(newMonth)
-    setCurrentYear(newYear)
-    clampDay(newMonth, newYear)
-  }
-
-  const nextMonth = () => {
-    const newMonth = currentMonth === 11 ? 0 : currentMonth + 1
-    const newYear = currentMonth === 11 ? currentYear + 1 : currentYear
-    setCurrentMonth(newMonth)
-    setCurrentYear(newYear)
-    clampDay(newMonth, newYear)
-  }
-
-  const todayKey = formatDateKey(
-    today.getFullYear(),
-    today.getMonth(),
-    today.getDate(),
-  );
+  const selectedKey = format(selected, "yyyy-MM-dd");
+  const selectedSchedules = schedulesByDate[selectedKey] ?? [];
 
   return (
-    <div className="min-h-screen bg-gray-50 font-outfit">
-      <header className="sticky top-0 z-40 bg-gray-50 px-5 pt-3 pb-4 border-b border-gray-200 shadow-sm">
+    <div className="min-h-screen bg-[#F9FAFB] font-outfit">
+      <header className="sticky top-0 z-40 bg-white px-5 pt-3 pb-4 border-b border-gray-200 shadow-sm">
         <h1 className="text-[22px] font-bold text-[#111827]">
           Calendário de Viagens
         </h1>
@@ -107,86 +65,49 @@ export default function OperatorCalendarPage() {
       </header>
 
       <main className="px-5 py-6 pb-28">
-        <Card className="border-[#E5E7EB] mb-6">
+        <Card className="border-[#E5E7EB] mb-6 bg-white">
           <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-4">
-              <button
-                type="button"
-                onClick={prevMonth}
-                aria-label="Mês anterior"
-                className="p-1 rounded-full hover:bg-gray-100"
-              >
-                <IconChevronLeft className="size-5 text-gray-600" />
-              </button>
-              <h2 className="text-base font-bold text-[#111827]">
-                {MONTHS[currentMonth]} {currentYear}
-              </h2>
-              <button
-                type="button"
-                onClick={nextMonth}
-                aria-label="Mês seguinte"
-                className="p-1 rounded-full hover:bg-gray-100"
-              >
-                <IconChevronRight className="size-5 text-gray-600" />
-              </button>
-            </div>
-
-            <div className="grid grid-cols-7 gap-1 mb-2">
-              {WEEKDAYS.map((day) => (
-                <div
-                  key={day}
-                  className="text-center text-[10px] font-medium text-gray-400 py-1"
-                >
-                  {day}
-                </div>
-              ))}
-            </div>
-
-            <div className="grid grid-cols-7 gap-1">
-              {Array.from({ length: firstDay }).map((_, i) => (
-                <div key={`empty-${i}`} />
-              ))}
-              {Array.from({ length: daysInMonth }).map((_, i) => {
-                const day = i + 1;
-                const dateKey = formatDateKey(currentYear, currentMonth, day);
-                const hasTrips = !!schedulesByDate[dateKey];
-                const isSelected = day === selectedDay;
-                const isToday = dateKey === todayKey;
-
-                return (
-                  <button
-                    key={day}
-                    type="button"
-                    onClick={() => setSelectedDay(day)}
-                    aria-label={`${day} de ${MONTHS[currentMonth]} de ${currentYear}`}
-                    aria-pressed={isSelected}
-                    className={`relative flex flex-col items-center justify-center py-2 rounded-lg text-sm transition-colors ${
-                      isSelected
-                        ? "bg-[#1B7A3D] text-white font-bold"
-                        : isToday
-                          ? "bg-[#1B7A3D]/10 text-[#1B7A3D] font-semibold"
-                          : "text-[#111827] hover:bg-gray-100"
-                    }`}
-                  >
-                    {day}
-                    {hasTrips && !isSelected && (
-                      <span className="absolute bottom-1 w-1 h-1 rounded-full bg-[#1B7A3D]" />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+            <Calendar
+              mode="single"
+              locale={pt}
+              selected={selected}
+              onSelect={(day) => day && setSelected(day)}
+              defaultMonth={month}
+              onMonthChange={setMonth}
+              weekStartsOn={0}
+              showOutsideDays={false}
+              className="mx-auto w-full max-w-[350px] bg-transparent [--cell-size:2.5rem]"
+              formatters={{
+                formatCaption: (date) =>
+                  capitalize(format(date, "MMMM yyyy", { locale: pt })),
+              }}
+              classNames={{
+                day: cn("data-[selected-single=true]:rounded-full"),
+              }}
+              components={{
+                DayButton: (props) => {
+                  const key = format(props.day.date, "yyyy-MM-dd")
+                  const hasTrips = !!schedulesByDate[key]
+                  return (
+                    <CalendarDayButton {...props}>
+                      {props.children}
+                      {hasTrips && (
+                        <span className="pointer-events-none absolute bottom-1 left-1/2 
+                        -translate-x-1/2 size-1 rounded-full bg-primary !opacity-100 
+                        data-[selected-single=true]:bg-white" />
+                      )}
+                    </CalendarDayButton>
+                  )
+                },
+              }}
+            />
           </CardContent>
         </Card>
 
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-bold text-[#111827]">
-            Viagens — {selectedDay} {MONTHS[currentMonth]}
+            Partidas do dia selecionado — {selected.getDate()} {MONTHS[selected.getMonth()]}
           </h3>
-          <span className="text-[12px] text-[#1B7A3D] font-semibold">
-            {selectedSchedules.length}{" "}
-            {selectedSchedules.length === 1 ? "viagem" : "viagens"}
-          </span>
         </div>
 
         {selectedSchedules.length > 0 ? (
@@ -198,7 +119,7 @@ export default function OperatorCalendarPage() {
                   key={schedule.id}
                   role="button"
                   tabIndex={0}
-                  className="p-0 cursor-pointer hover:scale-[1.01] border-[#E5E7EB] active:scale-[0.99] transition-transform"
+                  className="p-0 cursor-pointer bg-white hover:scale-[1.01] border-[#E5E7EB] active:scale-[0.99] transition-transform"
                   onClick={() => navigate(`/operator/manifest?schedule=${schedule.id}`)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
@@ -207,17 +128,23 @@ export default function OperatorCalendarPage() {
                     }
                   }}
                 >
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-bold text-[#111827]">{schedule.route}</span>
-                      <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${statusStyle.bg} ${statusStyle.text}`}>
-                        {statusStyle.label}
+                  <CardContent className="px-4 py-2 flex justify-between items-center">
+                    <div className="flex flex-col items-baseline  justify-between mb-2">
+                      <span className="text-[15px] font-bold text-[#111827]">
+                        <RouteDisplay origin={schedule.origin} destination={schedule.destination} />
                       </span>
+
+                      <div className="flex items-center gap-2  text-gray-400">
+                        <span className="text-[13px] font-inter text-[#1B7A3D] font-semibold">{schedule.departureTime}</span>
+                        <span className=" text-[#4B5563]">·</span>
+                        <span className="text-[11px] font-inter font-normal text-[#4B5563]">{schedule.availableSeats}/{schedule.totalSeats} embarcados</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 text-gray-400">
-                      <IconBus className="size-3" />
-                      <span className="text-[11px]">{schedule.departureTime} · {schedule.availableSeats}/{schedule.totalSeats} disponíveis</span>
-                    </div>
+
+                    <span className={`text-[11px] font-semibold px-2.5 py-0.5 font-inter rounded-full ${statusStyle.bg} ${statusStyle.text}`}>
+                      {statusStyle.label}
+                    </span>
+
                   </CardContent>
                 </Card>
               )

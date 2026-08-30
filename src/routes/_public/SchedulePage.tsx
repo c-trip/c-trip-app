@@ -1,10 +1,14 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router'
-import { IconArrowLeft, IconBus } from '@tabler/icons-react'
+import { IconBus } from '@tabler/icons-react'
 import { gooeyToast } from 'goey-toast'
 import { getScheduleById, getSeatMapBySchedule } from '@/data/mockSeats'
 import { Card, CardContent } from '@/components/ui/card'
 import { readActiveHeldSeats } from '@/lib/seatHolds'
+import RouteDisplay from '@/components/RouteDisplay'
+import StickyFooter from '@/components/StickyFooter'
+import GradientButton from '@/components/GradientButton'
+import PageHeader from '@/components/PageHeader'
 
 function getSeatLabel(seatNum: number): string {
   const row = Math.ceil(seatNum / 4)
@@ -129,19 +133,8 @@ export default function SchedulePage() {
 
   if (!schedule || !seatMap) {
     return (
-      <div className="min-h-screen bg-gray-50 font-outfit">
-        <header className="sticky top-0 z-10 border-b border-gray-200 bg-white px-4 py-4">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate(-1)}
-              aria-label="Voltar"
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 transition-colors hover:bg-gray-200"
-            >
-              <IconArrowLeft className="h-5 w-5 text-gray-700" />
-            </button>
-            <h1 className="text-lg font-bold text-gray-900">Viagem não encontrada</h1>
-          </div>
-        </header>
+      <div className="min-h-screen bg-[#F9FAFB] font-outfit">
+        <PageHeader onBack={() => navigate(-1)} title="Viagem não encontrada" />
       </div>
     )
   }
@@ -190,27 +183,18 @@ export default function SchedulePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 font-outfit">
-      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white px-4 py-4">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate(-1)}
-            aria-label="Voltar"
-            className="flex h-10 w-10 items-center justify-center rounded-full
-             bg-gray-100 transition-colors hover:bg-gray-200"
-          >
-            <IconArrowLeft className="h-5 w-5 text-gray-700" />
-          </button>
-          <div className="flex flex-col">
-            <h1 className="text-lg font-bold">Escolha o Lugar</h1>
-            <div className="flex gap-1">
-              <p className="text-xs text-gray-400">{schedule.route}</p>
-              <p className="text-xs text-gray-400">• {schedule.operatorName}</p>
-              <p className="text-xs text-gray-400">• {schedule.departureTime}</p>
-            </div>
+    <div className="min-h-screen bg-[#F9FAFB] font-outfit">
+      <PageHeader
+        onBack={() => navigate(-1)}
+        title="Escolha o Lugar"
+        subtitle={
+          <div className="flex gap-1">
+            <RouteDisplay origin={schedule.origin} destination={schedule.destination} iconClassName="size-3" />
+            <p>• {schedule.operatorName}</p>
+            <p>• {schedule.departureTime}</p>
           </div>
-        </div>
-      </header>
+        }
+      />
 
       <main className="px-6 py-6 flex flex-col items-center gap-6 mt-4">
         <Card className="rounded-2xl border border-gray-200 bg-white w-[280px]">
@@ -291,8 +275,8 @@ export default function SchedulePage() {
         </div>
       </main>
 
-      <footer className="sticky bottom-0 flex items-center border-t-2 border-[#E5E7EB] bg-white p-6 z-10">
-        <button
+      <StickyFooter>
+        <GradientButton
           disabled={selectedSeat === null}
           onClick={() => {
             if (selectedSeat === null) return
@@ -306,15 +290,10 @@ export default function SchedulePage() {
             const companySlug = encodeURIComponent(schedule.operatorName.toLowerCase())
             navigate(`/hold/${schedule.id}/${routeSlug}/${companySlug}?seat=${selectedSeat}`)
           }}
-          className={`rounded-xl h-12 w-full font-semibold text-[16px] text-white transition-colors ${
-            selectedSeat !== null
-              ? 'bg-[#1B7A3D] hover:bg-[#15632F]'
-              : 'bg-[#9CA3AF] cursor-not-allowed'
-          }`}
         >
-          Continuar
-        </button>
-      </footer>
+          Continuar (Selecionar Lugar)
+        </GradientButton>
+      </StickyFooter>
     </div>
   )
 }

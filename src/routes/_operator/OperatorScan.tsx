@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { IconArrowLeft, IconCamera } from "@tabler/icons-react";
+import RouteDisplay from "@/components/RouteDisplay";
 
 type ScanResult =
   | "permission"
@@ -118,8 +119,11 @@ export default function OperatorScan() {
             const result = await validateQr(decodedText);
             if (cancelledRef.current) return;
             setScannedData(result);
-            if (result.status === "allowed") setScanState("success");
-            else if (result.status === "already_boarded")
+            if (result.status === "allowed") {
+              navigate("/operator/scan-result-success", { state: result });
+              return;
+            }
+            if (result.status === "already_boarded")
               setScanState("already-boarded");
             else setScanState("error");
           } catch {
@@ -327,7 +331,7 @@ export default function OperatorScan() {
               <div className="flex justify-between text-sm">
                 <span className="text-gray-400">Rota</span>
                 <span className="text-white font-semibold">
-                  {scannedData.route}
+                  <RouteDisplay route={scannedData.route} />
                 </span>
               </div>
             </div>

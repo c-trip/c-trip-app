@@ -110,7 +110,7 @@ export default function OperatorTasks() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 font-outfit">
+    <div className="min-h-screen bg-[#F9FAFB] font-outfit">
       <header className="sticky top-0 z-50 bg-gray-50 px-5 pt-3 pb-4 border-b border-gray-200">
         <div className="flex items-center gap-2">
           <button

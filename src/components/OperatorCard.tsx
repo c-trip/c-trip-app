@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 
 import {
@@ -10,11 +11,21 @@ import type { Operator } from '@/types'
 
 interface OperatorCardProps {
   operator: Operator
+  origin?: string
+  destination?: string
   onSelect?: (operator: Operator) => void
 }
 
-export default function OperatorCard({ operator, onSelect }: OperatorCardProps) {
+export default function OperatorCard({
+  operator,
+  origin,
+  destination,
+  onSelect,
+}: OperatorCardProps) {
   const interactive = Boolean(onSelect)
+  const [imageError, setImageError] = useState(false)
+  const originLabel = operator.origin ?? origin ?? 'Origem'
+  const destinationLabel = operator.destination ?? destination ?? 'Destino'
   return (
     <Card
       role={interactive ? 'button' : undefined}
@@ -35,8 +46,17 @@ export default function OperatorCard({ operator, onSelect }: OperatorCardProps) 
       <CardContent className="gap-2 grid grid-cols-1">
         <div className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-green-gradient-start/10">
-              <IconBus className="h-6 w-6 text-green-gradient-end" />
+            <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl bg-green-gradient-start/10">
+              {operator.logo && !imageError ? (
+                <img
+                  src={operator.logo}
+                  alt={operator.name}
+                  className="h-full w-full object-cover"
+                  onError={() => setImageError(true)}
+                />
+              ) : (
+                <IconBus className="h-6 w-6 text-green-gradient-end" />
+              )}
             </div>
             <div>
               <h3 className="text-sm font-bold text-[#111827] font-outfit">{operator.name}</h3>
@@ -56,7 +76,7 @@ export default function OperatorCard({ operator, onSelect }: OperatorCardProps) 
           <div className="flex items-center gap-2 rounded-xl ">
             <div>
               <p className="text-lg font-bold text-[#111827]">{operator.departureTime}</p>
-              <p className="text-[10px] text-gray-400">Luanda</p>
+              <p className="text-[10px] text-gray-400">{originLabel}</p>
             </div>
           </div>
 
@@ -69,7 +89,7 @@ export default function OperatorCard({ operator, onSelect }: OperatorCardProps) 
            <div className="flex items-center gap-2 rounded-xl ">
             <div>
               <p className="text-lg font-bold text-[#111827]">{operator.arrivalTime}</p>
-              <p className="text-[10px] text-gray-400">Arrivals</p>
+              <p className="text-[10px] text-gray-400">{destinationLabel}</p>
             </div>
           </div>
         </div>
@@ -80,7 +100,7 @@ export default function OperatorCard({ operator, onSelect }: OperatorCardProps) 
              <IconArmchair className="size-3 text-[#4B5563]" />
              <p className='font-medium text-[#4B5563] text-xs'>{operator.availableSeats} lugares livre</p>
           </div>
-          <p className='font-medium text-[#4B5563] text-xs'>{operator.vehicleType}</p>
+          <p className='font-medium text-[#4B5563] text-xs'>Classe Padrão</p>
         </div>
       </CardContent>
     </Card>

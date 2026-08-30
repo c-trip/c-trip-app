@@ -1,10 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
-import { IconArrowLeft, IconX, IconShare2, IconDownload, IconLoader2, IconShieldCheckFilled } from '@tabler/icons-react'
+import { IconX, IconShare2, IconDownload, IconLoader2, IconShieldCheckFilled } from '@tabler/icons-react'
 import { gooeyToast } from 'goey-toast'
 import { getScheduleById, getSeatMapBySchedule } from '@/data/mockSeats'
 import { getSeatLabel } from '@/lib/seats'
 import { generateTicketQR } from '@/lib/qr'
+import RouteDisplay from '@/components/RouteDisplay'
+import StickyFooter from '@/components/StickyFooter'
+import GradientButton from '@/components/GradientButton'
+import PageHeader from '@/components/PageHeader'
 
 function getQrCacheKey(scheduleId: string, seat: string): string {
   return `qr_ticket_${scheduleId}_${seat}`
@@ -325,19 +329,11 @@ export default function TicketQrPage() {
 
   if (!schedule || !seatIsValid) {
     return (
-      <div className="min-h-screen bg-gray-50 font-outfit flex flex-col">
-        <header className="sticky top-0 z-10 border-b border-gray-200 bg-white px-4 py-4">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate(-1)}
-              aria-label="Voltar"
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 transition-colors hover:bg-gray-200"
-            >
-              <IconArrowLeft className="h-5 w-5 text-gray-700" />
-            </button>
-            <h1 className="text-lg font-bold text-gray-900">Bilhete não disponível</h1>
-          </div>
-        </header>
+      <div className="min-h-screen bg-[#F9FAFB] font-outfit flex flex-col">
+        <PageHeader
+          onBack={() => navigate(-1)}
+          title="Bilhete não disponível"
+        />
         <main className="flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center">
           <p className="max-w-xs text-sm text-gray-500">
             Não foi possível carregar os dados deste bilhete. A viagem pode não existir ou o lugar já não é válido.
@@ -510,10 +506,9 @@ export default function TicketQrPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 font-outfit flex flex-col">
-      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white px-4 py-4">
-        <h1 className="text-center text-lg font-bold">Bilhete confirmado</h1>
-      </header>
+    <div className="min-h-screen bg-[#F9FAFB] font-outfit flex flex-col">
+      <PageHeader title="Bilhete Confirmado" className='px-6 text-lg font-bold'
+     />
 
       <main className="flex flex-1 flex-col items-center gap-6 px-6 py-6 pb-[180px]">
         <div className="flex items-center justify-center gap-1 rounded-3xl bg-[#D1FAE5] px-3 py-1">
@@ -525,27 +520,18 @@ export default function TicketQrPage() {
           aria-label="Detalhes do bilhete"
           className="w-full max-w-[350px] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm"
         >
-          <div className="flex items-center justify-between bg-[#1B7A3D] px-4 py-4">
+          <div className="flex items-center justify-between bg-[#1B7A3D1A] px-5 py-4">
             <div className="flex flex-col">
-              <span className="text-sm font-bold text-white">{schedule.operatorName}</span>
-              <span className="text-xs text-white/80">
-                {schedule.vehicleType} · {schedule.busModel}
+              <span className="text-[12px] font-semibold text-[#1B7A3D] uppercase">{schedule.operatorName} TRANSPORTES</span>
+              <span className="text-lg text-[#111827] font-bold">
+                <RouteDisplay origin={schedule.origin} destination={schedule.destination} />
               </span>
             </div>
-            <span className="rounded-full bg-white/15 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-white">
-              Confirmed
-            </span>
+           
           </div>
 
-          <div className="px-4 py-4">
-            <p className="text-xl font-extrabold text-gray-900">
-              {schedule.origin} → {schedule.destination}
-            </p>
-            <p className="mt-1 text-xs text-gray-400">
-              {schedule.departureDate} · {schedule.departureTime} – {schedule.arrivalTime} · {schedule.duration}
-            </p>
-
-            <div className="mt-4 flex flex-col items-center gap-2 rounded-xl bg-gray-50 p-4">
+          <div className=" py-4">
+            <div className="mt-4 flex flex-col items-center rounded-xl">
               {qrDataUrl ? (
                 <img
                   src={qrDataUrl}
@@ -553,46 +539,45 @@ export default function TicketQrPage() {
                   className="h-48 w-48"
                 />
               ) : (
-                <div className="h-48 w-48 animate-pulse rounded-lg bg-gray-200" aria-hidden="true" />
+                <div className="h-48 w-48 animate-pulse rounded-lg " />
               )}
-              <p className="text-[11px] text-gray-400">Lugar {seatLabel} · Valide no embarque</p>
+              <p className='mt-5 text-xs text-[#4B5563] font-inter font-medium'>REF: {schedule.busPlate}</p>
             </div>
 
-            <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-left">
-              <div className="flex flex-col">
-                <dt className="text-[11px] uppercase tracking-wide text-gray-400">Passageiro</dt>
-                <dd className="truncate text-sm font-semibold text-gray-800">{passengerName || '—'}</dd>
+            <dl className="mt-4 flex flex-col gap-4 border-t border-[#E5E7EB] pt-5">
+              <div className='flex justify-between items-center px-5'>
+
+              <div className="flex flex-col gap-0.5">
+                <dt className="text-[11px] tracking-wide text-[#4B5563] font-inter">Passageiro</dt>
+                <dd className="truncate text-sm font-semibold text-[#111827] font-inter">{passengerName || ''}</dd>
               </div>
               <div className="flex flex-col">
-                <dt className="text-[11px] uppercase tracking-wide text-gray-400">Lugar</dt>
-                <dd className="text-sm font-semibold text-gray-800">{seatLabel}</dd>
+                <dt className="text-[11px]  tracking-wide text-[#4B5563] font-inter">Nº do Lugar</dt>
+                <dd className="text-[13px] font-bold text-[#1B7A3D] font-inter">Lugar {seatLabel}</dd>
+              </div>
+              </div>
+              <div className='flex justify-between items-center px-5'>
+
+              <div className="flex flex-col gap-0.5">
+                <dt className="text-[11px] capitalize tracking-wide  text-[#4B5563] font-inter font-normal">data da viagem</dt>
+                <dd className="truncate text-sm font-semibold text-[#111827] font-inter">{schedule.departureDate}</dd>
               </div>
               <div className="flex flex-col">
-                <dt className="text-[11px] uppercase tracking-wide text-gray-400">Referência</dt>
-                <dd className="truncate text-sm font-semibold text-gray-800">{ticketRef}</dd>
+                <dt className="text-[11px] capitalize tracking-wide text-[#4B5563] font-inter font-normal">hora da partida</dt>
+                <dd className="text-sm font-semibold text-[#111827] font-inter">{schedule.departureTime}</dd>
               </div>
-              <div className="flex flex-col">
-                <dt className="text-[11px] uppercase tracking-wide text-gray-400">Viatura</dt>
-                <dd className="text-sm font-semibold text-gray-800">{schedule.busPlate}</dd>
               </div>
             </dl>
           </div>
-
-          <div className="border-t border-dashed border-gray-200 px-4 py-3">
-            <p className="text-center text-[11px] text-gray-400">
-              Chegue {schedule.boardingCutoffMinutes} minutos antes da partida
-            </p>
-          </div>
         </section>
 
-        <footer className="fixed bottom-0 inset-x-0 z-10 flex flex-col items-center gap-4 border-t-2
-         border-gray-200 bg-white p-6">
-          <div className="flex items-center gap-2">
+        <StickyFooter className="fixed bottom-0 inset-x-0">
+          <div className="flex items-center gap-4 w-full justify-center">
             <button
               ref={triggerRef}
               onClick={() => void handleShare()}
               disabled={!qrDataUrl || isSharing || isDownloading}
-              className="flex h-11 w-[171px] items-center justify-center gap-2 rounded-xl border-2
+              className="flex h-11 w-[176px] items-center justify-center gap-2 rounded-xl border-2
               border-[#1B7A3D] text-[#1B7A3D] transition-colors hover:bg-[#1B7A3D]/5 disabled:opacity-50"
             >
               {isSharing ? <IconLoader2 className="h-5 w-5 animate-spin" /> : <IconShare2 className="h-5 w-5" />}
@@ -601,20 +586,17 @@ export default function TicketQrPage() {
             <button
               onClick={() => void handleDownload()}
               disabled={!qrDataUrl || isDownloading || isSharing}
-              className="flex h-11 w-[171px] items-center justify-center gap-2 rounded-xl border-2 border-[#1B7A3D]
+              className="flex h-11 w-[176px] items-center justify-center gap-2 rounded-xl border-2 border-[#1B7A3D]
                text-[#1B7A3D] transition-colors hover:bg-[#1B7A3D]/5 disabled:opacity-50"
             >
               {isDownloading ? <IconLoader2 className="h-5 w-5 animate-spin" /> : <IconDownload className="h-5 w-5" />}
               <p className="text-sm font-semibold">{isDownloading ? 'A baixar...' : 'Baixar'}</p>
             </button>
           </div>
-          <button
-            onClick={() => navigate('/bookings')}
-            className="h-12 w-full rounded-xl bg-[#1B7A3D] text-[16px] font-semibold text-white transition-colors hover:bg-[#15632F]"
-          >
+          <GradientButton onClick={() => navigate('/bookings')}>
             Ver as Minhas Reservas
-          </button>
-        </footer>
+          </GradientButton>
+        </StickyFooter>
       </main>
 
       {isShareOpen && (

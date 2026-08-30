@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router'
-import { IconArrowLeft } from '@tabler/icons-react'
 import DestinationCard from '../../components/DestinationCard'
+import PageHeader from '@/components/PageHeader'
 import { provincias, type Regiao } from '../../data/provincias'
 
 const regiaoOrder: Regiao[] = ['Luanda', 'Norte', 'Centro', 'Sul', 'Leste']
@@ -22,22 +22,12 @@ export default function ResultsPage() {
   }))
 
   return (
-    <div className="min-h-screen bg-gray-50 font-outfit">
-      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white px-4 py-4">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate(-1)}
-            aria-label="Voltar"
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 transition-colors hover:bg-gray-200"
-          >
-            <IconArrowLeft className="h-5 w-5 text-gray-700" />
-          </button>
-          <div>
-            <h1 className="text-lg font-bold text-gray-900">Destinos</h1>
-            <p className="text-xs text-gray-400">21 províncias de Angola</p>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-[#F9FAFB] font-outfit">
+      <PageHeader
+        onBack={() => navigate(-1)}
+        title="Destinos"
+        subtitle="21 províncias de Angola"
+      />
 
       <main className="px-5 py-5">
         {byRegiao.map(({ regiao, items }) => (

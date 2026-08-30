@@ -2,11 +2,43 @@
 @import 'swiper/css';
 @import 'swiper/css/pagination';
 
+@layer base {
+  body {
+    background-color: #F9FAFB;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
 @theme {
   --font-outfit: 'Outfit', sans-serif;
   --font-inter: 'Inter', sans-serif;
   --color-green-gradient-start: #6B9E8C;
   --color-green-gradient-end: #3A6356;
+
+  --color-background: #F9FAFB;
+  --color-foreground: #111827;
+  --color-card: #FFFFFF;
+  --color-card-foreground: #111827;
+  --color-popover: #FFFFFF;
+  --color-popover-foreground: #111827;
+  --color-primary: #1B7A3D;
+  --color-primary-foreground: #FFFFFF;
+  --color-secondary: #F3F4F6;
+  --color-secondary-foreground: #111827;
+  --color-muted: #F3F4F6;
+  --color-muted-foreground: #6B7280;
+  --color-accent: #F3F4F6;
+  --color-accent-foreground: #111827;
+  --color-destructive: #EF4444;
+  --color-destructive-foreground: #FFFFFF;
+  --color-border: #E5E7EB;
+  --color-input: #E5E7EB;
+  --color-ring: #1B7A3D;
+
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
 }
 
 .swiper-pagination-bullet {

@@ -1,8 +1,8 @@
 import { useLocation, useNavigate } from 'react-router'
 import {
-  IconLayoutDashboard,
-  IconLayoutDashboardFilled,
-  IconQrcode,
+  IconHome,
+  IconHomeFilled,
+  IconScan,
   IconTicket,
   IconTicketFilled,
   IconCalendar,
@@ -10,8 +10,8 @@ import {
 } from '@tabler/icons-react'
 
 const tabs = [
-  { path: '/operator', label: 'Painel', icon: IconLayoutDashboard, iconActive: IconLayoutDashboardFilled },
-  { path: '/operator/scan', label: 'Scanner', icon: IconQrcode, iconActive: IconQrcode },
+  { path: '/operator', label: 'Painel', icon: IconHome, iconActive: IconHomeFilled },
+  { path: '/operator/scan', label: 'Scanner', icon: IconScan, iconActive: IconScan },
   { path: '/operator/walkin', label: 'Venda', icon: IconTicket, iconActive: IconTicketFilled },
   { path: '/operator/calendar', label: 'Calendário', icon: IconCalendar, iconActive: IconCalendarFilled },
 ]
@@ -26,8 +26,7 @@ export default function OperatorBottomTabBar() {
   }
 
   return (
-    <nav aria-label="Navegação do operador" className="fixed bottom-2 left-4 right-4 z-50 border border-gray-200 bg-white/80 font-outfit
-    backdrop-blur-xl safe-area-pb rounded-4xl">
+    <nav aria-label="Navegação do operador" className="fixed bottom-0 left-0 right-0 z-50 bg-white font-outfit border-t border-gray-200 safe-area-pb">
       <div className="mx-auto flex max-w-lg items-center justify-around py-2">
         {tabs.map((tab) => {
           const active = isActive(tab.path)
@@ -38,12 +37,10 @@ export default function OperatorBottomTabBar() {
               key={tab.path}
               onClick={() => navigate(tab.path)}
               aria-current={active ? 'page' : undefined}
-              className={`flex flex-col items-center gap-1 rounded-full transition-all ${
-                active ? 'bg-[#1B7A3D] px-8 py-2' : 'px-3 py-2'
-              }`}
+              className="flex flex-col items-center gap-1 rounded-full py-1 px-3 transition-colors"
             >
-              <Icon className={`h-6 w-6 ${active ? 'text-white' : 'text-gray-600'}`} />
-              <span className={`text-[10px] font-medium ${active ? 'text-white' : 'text-gray-600'}`}>
+              <Icon className={`h-6 w-6 ${active ? 'text-[#1B7A3D]' : 'text-[#9CA3AF]'}`} />
+              <span className={`font-inter text-[11px] font-semibold ${active ? 'text-[#1B7A3D]' : 'text-[#9CA3AF]'}`}>
                 {tab.label}
               </span>
             </button>

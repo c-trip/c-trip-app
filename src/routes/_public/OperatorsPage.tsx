@@ -1,10 +1,11 @@
 import { useState, useMemo } from 'react'
-import { useParams, useNavigate } from 'react-router'
-import { IconArrowLeft, IconBus } from '@tabler/icons-react'
+import { useParams, useNavigate, useSearchParams } from 'react-router'
+import { IconBus } from '@tabler/icons-react'
 import OperatorCard from '../../components/OperatorCard'
 import { getOperatorsByRoute } from '../../data/mockOperators'
 import { provincias } from '../../data/provincias'
 import type { Operator } from '@/types'
+import PageHeader from '@/components/PageHeader'
 
 const TABS = [
   { value: 'todos', label: 'Todos' },
@@ -33,6 +34,14 @@ function parseHour(time: string): number {
   return parseInt(time.split(':')[0], 10)
 }
 
+function formatSubtitle(date: string, passengers: number): string {
+  const d = new Date(`${date}T12:00:00`)
+  if (Number.isNaN(d.getTime())) return 'Pesquisa de viagens'
+  const months = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
+  const label = `${d.getDate()} ${months[d.getMonth()]}`
+  return `${label}, ${passengers === 1 ? '1 passageiro' : `${passengers} passageiros`}`
+}
+
 function filterOperators(operators: Operator[], tab: TabValue): Operator[] {
   const sorted = [...operators]
   switch (tab) {
@@ -54,6 +63,7 @@ function filterOperators(operators: Operator[], tab: TabValue): Operator[] {
 export default function OperatorsPage() {
   const { origin, destination } = useParams<{ origin: string; destination?: string }>()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [activeTab, setActiveTab] = useState<TabValue>('todos')
 
   const originFormatted = origin
@@ -76,23 +86,20 @@ export default function OperatorsPage() {
     [allOperators, activeTab],
   )
 
+  const subtitle = formatSubtitle(
+    searchParams.get('date') ?? '2026-08-15',
+    parseInt(searchParams.get('passengers') ?? '1', 10),
+  )
+
   return (
-    <div className="min-h-screen bg-gray-50 font-outfit">
-      <div className="sticky top-0 z-10">
-        <div className="bg-white border-b border-gray-200 px-4 py-4">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate(-1)}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 transition-colors hover:bg-gray-200"
-            >
-              <IconArrowLeft className="h-5 w-5 text-gray-700" />
-            </button>
-            <div>
-              <h1 className="text-lg font-bold text-gray-900">{title}</h1>
-              <p className="text-xs text-gray-400">{filteredOperators.length} operadores disponíveis</p>
-            </div>
-          </div>
-        </div>
+    <div className="min-h-screen bg-[#F9FAFB] font-outfit">
+      <div className="sticky top-0 z-20">
+        <PageHeader
+          className="static"
+          onBack={() => navigate(-1)}
+          title={title}
+          subtitle={subtitle}
+        />
 
         <div className="flex gap-2 overflow-x-auto px-5 py-3 bg-gray-50/80 backdrop-blur-xl scrollbar-none">
           {TABS.map((tab) => (
@@ -102,8 +109,8 @@ export default function OperatorsPage() {
               aria-pressed={activeTab === tab.value}
               className={`whitespace-nowrap rounded-full py-2 px-3.5 text-[13px] font-semibold font-outfit border transition-colors ${
                 activeTab === tab.value
-                  ? 'bg-[#1B7A3D] text-white border-[#1B7A3D]'
-                  : 'bg-white text-black border-gray-200'
+                  ? 'bg-[#1B7A3D1A] text-[#1B7A3D] border-[#1B7A3D]'
+                  : 'bg-white text-[#4B5563] border-[#E5E7EB]'
               }`}
             >
               {tab.label}
@@ -119,6 +126,8 @@ export default function OperatorsPage() {
               <OperatorCard
                 key={operator.id}
                 operator={operator}
+                origin={originProvince?.nome ?? originFormatted}
+                destination={destinationProvince?.nome ?? destinationFormatted}
                 onSelect={(op) => navigate(`/schedules/${op.id}`)}
               />
             ))}

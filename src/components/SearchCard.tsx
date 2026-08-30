@@ -10,6 +10,7 @@ import {
 interface SearchCardProps {
   origin?: string
   destination?: string
+  date?: string
   passengers?: number
   onSearch?: () => void
 }
@@ -17,6 +18,7 @@ interface SearchCardProps {
 export default function SearchCard({
   origin = 'Luanda',
   destination = 'Benguela',
+  date = '15 Ago 2026',
   passengers = 1,
   onSearch,
 }: SearchCardProps) {
@@ -55,7 +57,7 @@ export default function SearchCard({
             <div>
               <p className="text-xs font-medium text-gray-400">Partida</p>
               <p className="text-sm font-semibold capitalize text-gray-900">
-                15 Ago 2026
+                {date}
               </p>
             </div>
           </div>
