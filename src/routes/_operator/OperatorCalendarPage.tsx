@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { format } from "date-fns";
-import { pt } from "date-fns/locale";
+import { pt } from "date-fns/locale/pt";
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar, CalendarDayButton } from "@/components/ui/calendar";
 import { getOperatorTodaySchedules, getFutureSchedules } from "@/data/mockOperatorSchedules";
