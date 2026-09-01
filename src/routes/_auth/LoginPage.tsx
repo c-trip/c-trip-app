@@ -1,12 +1,15 @@
 import { useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { IconMail, IconLock, IconEye, IconEyeOff } from '@tabler/icons-react'
+import { useLogin } from '@/hooks/auth/useLogin'
 
 export default function LoginPage() {
+  const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({})
+  const { loading, error, submit } = useLogin()
 
   const validate = () => {
     const newErrors: { email?: string; password?: string } = {}
@@ -16,10 +19,10 @@ export default function LoginPage() {
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (validate()) {
-      // TODO: Call API POST /auth/login with { email, password }
-      console.log('Login:', { email, password })
+      const ok = await submit(email, password)
+      if (ok) navigate('/search')
     }
   }
 
@@ -84,18 +87,25 @@ export default function LoginPage() {
           <button
             type="button"
             onClick={handleSubmit}
+            disabled={loading}
             style={{
               height: 48,
               borderRadius: 14,
               background: 'linear-gradient(90deg, #6B9E8C 0%, #3A6356 100%)',
               fontFamily: "'Outfit', sans-serif",
               fontWeight: 700,
+              opacity: loading ? 0.6 : 1,
             }}
             className="w-full mt-8 px-6 text-base text-white
-             transition-opacity hover:opacity-90 active:opacity-80"
+             transition-opacity hover:opacity-90 active:opacity-80
+             disabled:cursor-not-allowed"
           >
-            Entrar
+            {loading ? 'A entrar...' : 'Entrar'}
           </button>
+
+          {error && (
+            <p className="text-red-500 text-xs mt-4 text-center font-outfit">{error}</p>
+          )}
 
           <div className="flex items-center gap-3 w-full mt-6">
             <div className="h-px flex-1 bg-gray-300" />

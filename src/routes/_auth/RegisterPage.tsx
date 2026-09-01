@@ -1,13 +1,16 @@
 import { useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { IconUser, IconMail, IconLock, IconEye, IconEyeOff } from '@tabler/icons-react'
+import { useRegister } from '@/hooks/auth/useRegister'
 
 export default function RegisterPage() {
+  const navigate = useNavigate()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [errors, setErrors] = useState<{ name?: string; email?: string; password?: string }>({})
+  const { loading, error, submit } = useRegister()
 
   const validate = () => {
     const newErrors: { name?: string; email?: string; password?: string } = {}
@@ -18,10 +21,10 @@ export default function RegisterPage() {
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (validate()) {
-      // TODO: Call API POST /auth/register with { name, email, password }
-      console.log('Register:', { name, email, password })
+      const ok = await submit({ name, email, password })
+      if (ok) navigate('/auth/login')
     }
   }
 
@@ -103,18 +106,25 @@ export default function RegisterPage() {
           <button
             type="button"
             onClick={handleSubmit}
+            disabled={loading}
             style={{
               height: 48,
               borderRadius: 14,
               background: 'linear-gradient(90deg, #6B9E8C 0%, #3A6356 100%)',
               fontFamily: "'Outfit', sans-serif",
               fontWeight: 700,
+              opacity: loading ? 0.6 : 1,
             }}
             className="w-full mt-8 px-6 text-base text-white
-             transition-opacity hover:opacity-90 active:opacity-80"
+             transition-opacity hover:opacity-90 active:opacity-80
+             disabled:cursor-not-allowed"
           >
-            Criar conta
+            {loading ? 'A criar conta...' : 'Criar conta'}
           </button>
+
+          {error && (
+            <p className="text-red-500 text-xs mt-4 text-center font-outfit">{error}</p>
+          )}
 
           <div className="flex items-center gap-3 w-full mt-6">
             <div className="h-px flex-1 bg-gray-300" />
