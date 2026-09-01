@@ -19,8 +19,6 @@ import ProfilePage from '../routes/_passenger/ProfilePage'
 import NotificationsPage from '../routes/_passenger/NotificationsPage'
 import TicketsPage from '../routes/_passenger/TicketsPage'
 
-
-
 import OperatorLoginPage from '../routes/_operator/OperatorLoginPage'
 import OperatorDayTrips from '../routes/_operator/OperatorDayTrips'
 import OperatorWalkIn from '../routes/_operator/OperatorWalkIn'
@@ -35,6 +33,8 @@ import OperatorsPage from '../routes/_public/OperatorsPage'
 
 import TabBarLayout from '../components/TabBarLayout'
 import OperatorTabBarLayout from '../components/OperatorTabBarLayout'
+import ProtectedRoute from '../components/ProtectedRoute'
+import GuestOnlyRoute from '../components/GuestOnlyRoute'
 
 export default function Router() {
   return (
@@ -43,31 +43,35 @@ export default function Router() {
 
       <Route path="/welcome" element={<WelcomePage />} />
 
-      <Route path="/auth/login" element={<LoginPage />} />
-      <Route path="/auth/register" element={<RegisterPage />} />
+      <Route element={<GuestOnlyRoute />}>
+        <Route path="/auth/login" element={<LoginPage />} />
+        <Route path="/auth/register" element={<RegisterPage />} />
+      </Route>
 
       <Route element={<TabBarLayout />}>
         <Route path="/search" element={<SearchPage />} />
-        <Route path="/bookings" element={<BookingsPage />} />
-        <Route path="/tickets" element={<TicketsPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/notifications" element={<NotificationsPage />} />
+
+        <Route element={<ProtectedRoute />}>
+          <Route path="/bookings" element={<BookingsPage />} />
+          <Route path="/tickets" element={<TicketsPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/notifications" element={<NotificationsPage />} />
+        </Route>
+      </Route>
+
+      <Route element={<ProtectedRoute />}>
+        <Route path="/bookings/:bookingId" element={<BookingDetailPage />} />
+        <Route path="/checkout/:scheduleId" element={<CheckoutPage />} />
+        <Route path="/ticket-qr/:scheduleId" element={<TicketQrPage />} />
+        <Route path="/payment/:bookingId" element={<PaymentPage />} />
+        <Route path="/ticket/:bookingId" element={<TicketPage />} />
       </Route>
 
       <Route path="/search/results" element={<ResultsPage />} />
-      <Route path="/bookings/:bookingId" element={<BookingDetailPage />} />
-
       <Route path="/schedules/:scheduleId" element={<SchedulePage />} />
       <Route path="/hold/:scheduleId/:routeSlug/:companySlug" element={<HoldPage />} />
-
-      <Route path="/checkout/:scheduleId" element={<CheckoutPage />} />
-      <Route path="/ticket-qr/:scheduleId" element={<TicketQrPage />} />
-      <Route path="/payment/:bookingId" element={<PaymentPage />} />
-      <Route path="/ticket/:bookingId" element={<TicketPage />} />
       <Route path="/search-results/:origin" element={<OperatorsPage />} />
-      <Route path="/search-results/:origin/:destination" element={<OperatorsPage />} />
-
-      
+      <Route path="/search-results/:origin/:destination" element={<OperatorsPage />} />      
 
       <Route path="/operator/login" element={<OperatorLoginPage />} />
       <Route element={<OperatorTabBarLayout />}>
@@ -77,6 +81,7 @@ export default function Router() {
         <Route path="/operator/tasks" element={<OperatorTasks />} />
         <Route path="/operator/calendar" element={<OperatorCalendarPage />} />
       </Route>
+      
       <Route path="/operator/manifest" element={<OperatorManifest />} />
       <Route path="/operator/scan" element={<OperatorScan />} />
       <Route path="/operator/scan-result-success" element={<ScanResultSuccess />} />

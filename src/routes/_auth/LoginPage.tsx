@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { Link, useLocation, useNavigate } from 'react-router'
 import { IconMail, IconLock, IconEye, IconEyeOff } from '@tabler/icons-react'
 import { useLogin } from '@/hooks/auth/useLogin'
 
 export default function LoginPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -22,7 +23,10 @@ export default function LoginPage() {
   const handleSubmit = async () => {
     if (validate()) {
       const ok = await submit(email, password)
-      if (ok) navigate('/search')
+      if (ok) {
+        const from = (location.state as { from?: string } | null)?.from
+        navigate(from || '/search')
+      }
     }
   }
 

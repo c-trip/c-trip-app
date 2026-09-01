@@ -1,7 +1,25 @@
 import { useAuthStore } from '@/stores/authStore'
 
 export function useAuth() {
-  const { user, isAuthenticated, isLoading, bootstrap, login, register, logout } = useAuthStore()
+  const {
+    user,
+    isAuthenticated,
+    isLoading,
+    hasBootstrapped,
+    bootstrap,
+    login,
+    register,
+    logout,
+  } = useAuthStore()
 
-  return { user, isAuthenticated, isLoading, bootstrap, login, register, logout }
+  return {
+    user,
+    isAuthenticated,
+    isLoading,
+    hasBootstrapped,
+    bootstrap,
+    login,
+    register,
+    logout,
+  }
 }
