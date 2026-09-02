@@ -3,7 +3,9 @@ import { BASE_URL } from '@/constants/base_url'
 import { getToken } from './tokenStore'
 import { ApiError } from '@/errors/ApiError'
 import { AuthError } from '@/errors/AuthError'
+import { ConflictError } from '@/errors/ConflictError'
 import { NetworkError } from '@/errors/NetworkError'
+import { NotFoundError } from '@/errors/NotFoundError'
 
 export const http: AxiosInstance = axios.create({
   baseURL: BASE_URL,
@@ -51,6 +53,14 @@ http.interceptors.response.use(
 
     if (status === 401 || status === 403) {
       return Promise.reject(new AuthError(status, message))
+    }
+
+    if (status === 404) {
+      return Promise.reject(new NotFoundError(message, undefined))
+    }
+
+    if (status === 409) {
+      return Promise.reject(new ConflictError(message, undefined))
     }
 
     return Promise.reject(new ApiError(status, message, undefined, data))
