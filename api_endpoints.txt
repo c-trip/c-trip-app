@@ -1,69 +1,23 @@
-POST
-/auth/register
-Register as passenger
+Operator
 
 
-Creates a PASSENGER account. Public — no authentication required.
-
-Parameters
-Try it out
-No parameters
-
-Request body
-
-application/json
-Example Value
-Schema
-{
-  "email": "user@example.com",
-  "name": "string",
-  "password": "string"
-}
-Responses
-Code	Description	Links
-201	
-Successful Response
-
-Media type
-
-application/json
-Controls Accept header.
-Example Value
-Schema
-{
-  "id": "string",
-  "email": "string",
-  "name": "string",
-  "role": "string"
-}
-No links
-400	
-Email already registered
-
-No links
-422	
-Invalid data
-
-POST
-/auth/login
-Login
+GET
+/boarding/schedules
+[OPERATOR] Viagens abertas da empresa
 
 
-Autentica com email+password. Devolve JWT access_token (válido 24h).
+
+Lista viagens com status=scheduled da empresa do operador, com lugares disponíveis. Filtro opcional por data (padrão: hoje).
 
 Parameters
 Try it out
-No parameters
+Name	Description
+date
+string
+(query)
+Data (YYYY-MM-DD). Omitir = hoje.
 
-Request body
-
-application/json
-Example Value
-Schema
-{
-  "email": "string",
-  "password": "string"
-}
+date
 Responses
 Code	Description	Links
 200	
@@ -75,23 +29,21 @@ application/json
 Controls Accept header.
 Example Value
 Schema
-{
-  "access_token": "string",
-  "token_type": "bearer",
-  "user": {
-    "id": "string",
-    "email": "string",
-    "name": "string",
-    "role": "string"
+[
+  {
+    "schedule_id": "string",
+    "origin": "string",
+    "destination": "string",
+    "departure_date": "string",
+    "departure_time": "string",
+    "total_seats": 0,
+    "available_seats": 0,
+    "status": "string"
   }
-}
+]
 No links
 401	
-Email ou password inválidos
-
-No links
-403	
-Conta desactivada
+Não autenticado
 
 No links
 422	
@@ -116,52 +68,15 @@ Schema
     }
   ]
 }
-
-GET
-/auth/me
-Get current user
-
-
-
-Requer token Bearer. Devolve id, email, name e role do utilizador actual.
-
-Parameters
-Try it out
-No parameters
-
-Responses
-Code	Description	Links
-200	
-Successful Response
-
-Media type
-
-application/json
-Controls Accept header.
-Example Value
-Schema
-{
-  "id": "string",
-  "email": "string",
-  "name": "string",
-  "role": "string"
-}
 No links
-401	
-Token ausente ou inválido
-
-No links
-404	
-User not found
-
 
 POST
-/auth/change-password
-Alterar password
+/boarding/operator/sell
+[VENDAS] Venda ao balcão
 
 
 
-Altera a password do utilizador autenticado.
+Cria reserva + pagamento confirmado + QR num único passo. O cliente não precisa de conta. Requer perfil sales_operator.
 
 Parameters
 Try it out
@@ -173,8 +88,100 @@ application/json
 Example Value
 Schema
 {
-  "current_password": "string",
-  "new_password": "string"
+  "schedule_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "seat_number": 1,
+  "passenger_name": "string",
+  "passenger_phone": "string",
+  "passenger_id_doc": "string",
+  "total_price": 1,
+  "payment_method": "cash"
+}
+Responses
+Code	Description	Links
+201	
+Successful Response
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "booking_id": "string",
+  "payment_id": "string",
+  "qr_hash": "string",
+  "qr_image": "string",
+  "passenger_name": "string",
+  "seat_number": 0,
+  "origin": "string",
+  "destination": "string",
+  "departure_date": "string",
+  "departure_time": "string",
+  "company_name": "string",
+  "valid_until": "string"
+}
+No links
+400	
+Lugar já vendido ou viagem inválida
+
+No links
+401	
+Não autenticado
+
+No links
+403	
+Não é sales_operator
+
+No links
+409	
+Lugar já reservado ou em hold
+
+No links
+422	
+Validation Error
+
+Media type
+
+application/json
+Example Value
+Schema
+{
+  "detail": [
+    {
+      "loc": [
+        "string",
+        0
+      ],
+      "msg": "string",
+      "type": "string",
+      "input": "string",
+      "ctx": {}
+    }
+  ]
+}
+No links
+
+POST
+/boarding/qr/reprint
+[OPERADOR] Reimprimir QR code
+
+
+
+Gera ou reimprime o QR de um lugar confirmado. Funciona para passageiros registados e clientes ao balcão (sem conta).
+
+Parameters
+Try it out
+No parameters
+
+Request body
+
+application/json
+Example Value
+Schema
+{
+  "schedule_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "seat_number": 1
 }
 Responses
 Code	Description	Links
@@ -187,14 +194,222 @@ application/json
 Controls Accept header.
 Example Value
 Schema
-"string"
+{
+  "qr_hash": "string",
+  "qr_image": "string",
+  "passenger_name": "string",
+  "seat_number": 0,
+  "booking_id": "string"
+}
+No links
+401	
+Não autenticado
+
+No links
+404	
+Reserva confirmada não encontrada para este lugar
+
+No links
+422	
+Validation Error
+
+Media type
+
+application/json
+Example Value
+Schema
+{
+  "detail": [
+    {
+      "loc": [
+        "string",
+        0
+      ],
+      "msg": "string",
+      "type": "string",
+      "input": "string",
+      "ctx": {}
+    }
+  ]
+}
+No links
+
+POST
+/boarding/validate
+Validar QR code de embarque
+
+
+
+Verifica se QR é válido, se já foi embarcado, ou se é inválido.
+
+Parameters
+Try it out
+No parameters
+
+Request body
+
+application/json
+Example Value
+Schema
+{
+  "qr_hash": "string"
+}
+Responses
+Code	Description	Links
+200	
+Successful Response
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "status": "string",
+  "passenger": "string",
+  "seat_number": 0,
+  "destination": "string",
+  "first_boarded_at": "string",
+  "reason": "string"
+}
+No links
+401	
+Não autenticado
+
+No links
+422	
+Validation Error
+
+Media type
+
+application/json
+Example Value
+Schema
+{
+  "detail": [
+    {
+      "loc": [
+        "string",
+        0
+      ],
+      "msg": "string",
+      "type": "string",
+      "input": "string",
+      "ctx": {}
+    }
+  ]
+}
+No links
+
+POST
+/boarding/record
+Registar embarque
+
+
+
+Regista que o passageiro embarcou. Requer QR válido.
+
+Parameters
+Try it out
+No parameters
+
+Request body
+
+application/json
+Example Value
+Schema
+{
+  "qr_hash": "string"
+}
+Responses
+Code	Description	Links
+201	
+Successful Response
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "boarding_id": "string",
+  "boarded_at": "string"
+}
 No links
 400	
-Password actual incorrecta
+QR code não encontrado
 
 No links
 401	
 Não autenticado
+
+No links
+422	
+Validation Error
+
+Media type
+
+application/json
+Example Value
+Schema
+{
+  "detail": [
+    {
+      "loc": [
+        "string",
+        0
+      ],
+      "msg": "string",
+      "type": "string",
+      "input": "string",
+      "ctx": {}
+    }
+  ]
+}
+No links
+
+GET
+/boarding/manifest
+Manifesto de passageiros
+
+
+
+Lista todas as reservas de uma viagem (lugares e status).
+
+Parameters
+Try it out
+Name	Description
+schedule_id *
+string($uuid)
+(query)
+schedule_id
+Responses
+Code	Description	Links
+200	
+Successful Response
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+[
+  {
+    "booking_id": "string",
+    "seat": 0,
+    "status": "string"
+  }
+]
+No links
+401	
+Não autenticado
+
+No links
+404	
+Viagem não encontrada
 
 No links
 422	
