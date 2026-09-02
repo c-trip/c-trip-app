@@ -14,11 +14,6 @@ const slides = [
     image: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&h=400&fit=crop',
   },
   {
-    title: 'Escolha o seu Lugar',
-    description: 'Veja o mapa de lugares em tempo real e selecione o melhor assento',
-    image: 'https://images.unsplash.com/photo-1464219789975-3f60e69aab20?w=800&h=400&fit=crop',
-  },
-  {
     title: 'Viaje com Confiança',
     description: 'Apresente o seu QR code no embarque e parta tranquilo',
     image: 'https://images.unsplash.com/photo-1516738901171-8eb4fc13bd20?w=800&h=400&fit=crop',
