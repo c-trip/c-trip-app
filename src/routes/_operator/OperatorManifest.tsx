@@ -1,31 +1,12 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useSearchParams, useNavigate } from 'react-router'
-import { IconArrowLeft, IconSearch, IconX, IconCheck, IconClock } from '@tabler/icons-react'
+import { IconArrowLeft, IconSearch, IconX, IconCheck, IconClock, IconRefresh } from '@tabler/icons-react'
 import type { ComponentType } from 'react'
-import { findScheduleById } from '@/data/mockOperatorSchedules'
+import { useManifest } from '@/hooks/operator/useManifest'
+import { useOperatorSchedules } from '@/hooks/operator/useOperatorSchedules'
+import type { ManifestItem } from '@/types/operator'
 import { Card, CardContent } from '@/components/ui/card'
 import RouteDisplay from '@/components/RouteDisplay'
-
-interface ManifestPassenger {
-  bookingId: string
-  seat: number
-  name: string
-  phone?: string
-  idDoc?: string
-  status: 'confirmed' | 'cancelled' | 'boarded'
-}
-
-function getMockPassengers(): ManifestPassenger[] {
-  return [
-    { bookingId: 'bk-001', seat: 1, name: 'Ana Silva', phone: '+244 923 456 789', idDoc: '123456789LA045', status: 'boarded' },
-    { bookingId: 'bk-002', seat: 2, name: 'Carlos Mendes', phone: '+244 912 345 678', idDoc: '987654321LA012', status: 'confirmed' },
-    { bookingId: 'bk-003', seat: 5, name: 'Maria Fernandes', phone: '+244 934 567 890', status: 'confirmed' },
-    { bookingId: 'bk-004', seat: 8, name: 'João Santos', phone: '+244 945 678 901', idDoc: '456789123LA078', status: 'cancelled' },
-    { bookingId: 'bk-005', seat: 10, name: 'Pedro Almeida', phone: '+244 956 789 012', status: 'confirmed' },
-    { bookingId: 'bk-006', seat: 12, name: 'Lucia Torres', phone: '+244 967 890 123', idDoc: '321654987LA034', status: 'boarded' },
-    { bookingId: 'bk-007', seat: 15, name: 'Ricardo Neto', phone: '+244 978 901 234', status: 'confirmed' },
-  ]
-}
 
 function seatLabel(seat: number): string {
   const row = Math.ceil(seat / 4)
@@ -33,25 +14,30 @@ function seatLabel(seat: number): string {
   return `${row}${String.fromCharCode(64 + col)}`
 }
 
-const STATUS_BADGE: Record<ManifestPassenger['status'], { bg: string; text: string; icon: ComponentType<{ className?: string }> }> = {
+const STATUS_BADGE: Record<string, { bg: string; text: string; icon: ComponentType<{ className?: string }> }> = {
   boarded: { bg: 'bg-[#D1FAE5]', text: 'text-[#10B981]', icon: IconCheck },
   confirmed: { bg: 'bg-gray-100', text: 'text-[#4B5563]', icon: IconClock },
-  cancelled: { bg: 'bg-gray-100', text: 'text-[#4B5563]', icon: IconClock },
 }
 
-function PassengerCard({ passenger }: { passenger: ManifestPassenger }) {
-  const badge = STATUS_BADGE[passenger.status]
+function isBoarded(item: ManifestItem) {
+  return item.status === 'boarded'
+}
+function isPending(item: ManifestItem) {
+  return item.status === 'confirmed' || item.status === 'pending'
+}
+
+function PassengerCard({ item }: { item: ManifestItem }) {
+  const badge = STATUS_BADGE[isBoarded(item) ? 'boarded' : 'confirmed']
   const Icon = badge.icon
   return (
     <Card className="p-0 bg-white border h-[66px] border-[#E5E7EB] rounded-[10px]">
       <CardContent className="p-3 flex items-center gap-3">
         <div className="size-9 rounded-xl bg-[#F9FAFB] flex items-center justify-center shrink-0">
-          <span className="text-[13px] font-bold text-[#111827]">
-            {seatLabel(passenger.seat)}
-          </span>
+          <span className="text-[13px] font-bold text-[#111827]">{seatLabel(item.seat)}</span>
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-[16px] font-semibold text-[#111827] truncate">{passenger.name}</p>
+          <p className="text-[15px] font-semibold text-[#111827] truncate">Lugar {item.seat}</p>
+          <p className="text-[11px] text-gray-500">Reserva {item.booking_id.slice(0, 8)}</p>
         </div>
         <span className={`shrink-0 size-8 rounded-full flex items-center justify-center ${badge.bg} ${badge.text}`}>
           <Icon className="size-5" />
@@ -61,26 +47,43 @@ function PassengerCard({ passenger }: { passenger: ManifestPassenger }) {
   )
 }
 
-
 export default function OperatorManifest() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
-  const scheduleId = searchParams.get('schedule')
+  const scheduleId = searchParams.get('schedule') ?? undefined
+  const date = searchParams.get('date') ?? undefined
   const [search, setSearch] = useState('')
   const [activeTab, setActiveTab] = useState<'all' | 'boarded' | 'missing'>('all')
 
-  const schedule = scheduleId ? findScheduleById(scheduleId) : undefined
+  const { manifest, isLoading, error, refetch } = useManifest(scheduleId)
+  const { schedules } = useOperatorSchedules(date)
+  const schedule = useMemo(
+    () => schedules.find((s) => s.schedule_id === scheduleId),
+    [schedules, scheduleId],
+  )
 
-  if (!schedule) {
+  const active = useMemo(() => manifest.filter((m) => m.status !== 'cancelled'), [manifest])
+  const boarded = active.filter(isBoarded)
+  const pending = active.filter(isPending)
+  const totalSeats = schedule?.total_seats ?? active.length
+  const boardingPercent = totalSeats > 0 ? Math.round((boarded.length / totalSeats) * 100) : 0
+
+  const query = search.trim()
+  const visible = active.filter((m) => {
+    if (query && !String(m.seat).includes(query)) return false
+    if (activeTab === 'boarded') return isBoarded(m)
+    if (activeTab === 'missing') return isPending(m)
+    return true
+  })
+  const visibleBoarded = visible.filter(isBoarded)
+  const visiblePending = visible.filter(isPending)
+
+  if (!scheduleId) {
     return (
       <div className="min-h-screen bg-[#F9FAFB] font-outfit flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-500 text-sm mb-4">Nenhuma viagem selecionada</p>
-          <button
-            type="button"
-            onClick={() => navigate('/operator')}
-            className="text-[#1B7A3D] font-semibold text-sm"
-          >
+          <button type="button" onClick={() => navigate('/operator')} className="text-[#1B7A3D] font-semibold text-sm">
             Voltar ao painel
           </button>
         </div>
@@ -88,58 +91,32 @@ export default function OperatorManifest() {
     )
   }
 
-  const passengers = getMockPassengers()
-  const boarded = passengers.filter((p) => p.status === 'boarded')
-  const confirmed = passengers.filter((p) => p.status === 'confirmed')
-  const boardingPercent = Math.round((boarded.length / schedule.totalSeats) * 100)
-  const missing = confirmed.length
-
-  const query = search.toLowerCase()
-  const allPassengers = passengers.filter(
-    (p) =>
-      p.status !== 'cancelled' &&
-      (!query ||
-        p.name.toLowerCase().includes(query) ||
-        String(p.seat).includes(query)),
-  )
-
-  const tabFiltered = allPassengers.filter((p) => {
-    if (activeTab === 'boarded') return p.status === 'boarded'
-    if (activeTab === 'missing') return p.status === 'confirmed'
-    return true
-  })
-
-  const tabFilteredBoarded = tabFiltered.filter((p) => p.status === 'boarded')
-  const tabFilteredConfirmed = tabFiltered.filter((p) => p.status === 'confirmed')
-
   return (
     <div className="min-h-screen bg-[#F9FAFB] font-outfit">
       <header className="sticky top-0 z-40 bg-white pt-3 border-b border-gray-200">
         <div className="flex items-center justify-baseline gap-4 px-6">
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => navigate('/operator')}
-              aria-label="Voltar ao painel"
-              className="p-1 rounded-full hover:bg-gray-100"
-            >
-              <IconArrowLeft className="size-7 text-[#111827] font-bold" />
-            </button>
-          </div>
-          <div className="flex flex-col items-baseline justify-baseline  text-[13px] pb-3">
-              <h1 className="text-[22px] font-bold text-[#111827]">Manifesto de Embarque</h1>
-            <div className='flex gap-1'>
-             <RouteDisplay
-                origin={schedule.origin}
-                destination={schedule.destination}
-                className="text-[#4B5563]"
-                iconClassName="size-3.5"
-              />
-            <span className=" text-[#4B5563]">·</span>
-            <span className=' text-[#4B5563]'>{schedule.departureTime}</span>
-            <span className="  text-[#4B5563]">·</span>
-            <span className=' text-[#4B5563]'>{schedule.operatorName}</span>
-         </div>
+          <button
+            type="button"
+            onClick={() => navigate('/operator')}
+            aria-label="Voltar ao painel"
+            className="p-1 rounded-full hover:bg-gray-100"
+          >
+            <IconArrowLeft className="size-7 text-[#111827] font-bold" />
+          </button>
+          <div className="flex flex-col items-baseline justify-baseline text-[13px] pb-3">
+            <h1 className="text-[22px] font-bold text-[#111827]">Manifesto de Embarque</h1>
+            {schedule && (
+              <div className='flex gap-1'>
+                <RouteDisplay
+                  origin={schedule.origin}
+                  destination={schedule.destination}
+                  className="text-[#4B5563]"
+                  iconClassName="size-3.5"
+                />
+                <span className="text-[#4B5563]">·</span>
+                <span className='text-[#4B5563]'>{schedule.departure_time}</span>
+              </div>
+            )}
           </div>
         </div>
         <section className="px-6 border-t flex items-center gap-3 h-[88px] border-gray-200">
@@ -148,10 +125,10 @@ export default function OperatorManifest() {
           </div>
           <div>
             <p className="text-base font-bold text-[#111827]">
-              {boarded.length} de {schedule.totalSeats} Embarcados
+              {boarded.length} de {totalSeats} embarcados
             </p>
             <span className="text-[#4B5563] text-xs">
-              {missing > 0 ? `${missing} passageiros em falta` : 'Todos embarcados'}
+              {pending.length > 0 ? `${pending.length} passageiros em falta` : 'Todos embarcados'}
             </span>
           </div>
         </section>
@@ -162,7 +139,7 @@ export default function OperatorManifest() {
           {([
             { key: 'all', label: 'Todos', count: null },
             { key: 'boarded', label: 'Embarcados', count: boarded.length },
-            { key: 'missing', label: 'Em falta', count: missing },
+            { key: 'missing', label: 'Em falta', count: pending.length },
           ] as const).map((tab) => (
             <button
               key={tab.key}
@@ -171,15 +148,13 @@ export default function OperatorManifest() {
               className={`h-[32px] py-2 px-4 rounded-[20px] text-xs font-semibold transition-all border ${
                 activeTab === tab.key
                   ? 'bg-[#1B7A3D] text-white border-[#1B7A3D]'
-                  : 'bg-white text-[#4B5563] border-gray-200 '
+                  : 'bg-white text-[#4B5563] border-gray-200'
               }`}
               aria-pressed={activeTab === tab.key}
             >
               {tab.label}{' '}
               {tab.count !== null && (
-                <span className={`ml-0.5 ${activeTab === tab.key ? 'text-white' : 'text-[#4B5563]'}`}>
-                  ({tab.count})
-                </span>
+                <span className={activeTab === tab.key ? 'text-white' : 'text-[#4B5563]'}>({tab.count})</span>
               )}
             </button>
           ))}
@@ -189,9 +164,10 @@ export default function OperatorManifest() {
           <IconSearch className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#4B5563]" />
           <input
             type="text"
+            inputMode="numeric"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar o passageiro por nome"
+            placeholder="Buscar por número de lugar"
             className="w-full pl-9 pr-9 py-2.5 rounded-xl border border-gray-200 bg-white
              text-sm font-outfit placeholder:text-gray-400 focus:outline-none focus:ring-2
               focus:ring-[#1B7A3D]/30 focus:border-[#1B7A3D]"
@@ -208,41 +184,64 @@ export default function OperatorManifest() {
           )}
         </div>
 
-
-        {tabFilteredBoarded.length > 0 && (
-          <section>
-            {activeTab !== 'all' && (
-              <h2 className="text-xs font-bold text-[#6B7280] uppercase tracking-wide mb-2">
-                Embarcados ({tabFilteredBoarded.length})
-              </h2>
-            )}
-            <div className="flex flex-col gap-2 mb-5">
-              {tabFilteredBoarded.map((passenger) => (
-                <PassengerCard key={passenger.bookingId} passenger={passenger} />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {tabFilteredConfirmed.length > 0 && (
-          <section>
-            {activeTab !== 'all' && (
-              <h2 className="text-xs font-bold text-[#6B7280] uppercase tracking-wide mb-2">
-                Confirmados ({tabFilteredConfirmed.length})
-              </h2>
-            )}
-            <div className="flex flex-col gap-2 mb-5">
-              {tabFilteredConfirmed.map((passenger) => (
-                <PassengerCard key={passenger.bookingId} passenger={passenger} />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {tabFiltered.length === 0 && (
-          <div className="text-center py-10 text-gray-400 text-sm">
-            Nenhum passageiro encontrado
+        {isLoading && (
+          <div className="flex flex-col gap-2">
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="h-[66px] animate-pulse rounded-[10px] bg-gray-100" />
+            ))}
           </div>
+        )}
+
+        {!isLoading && error && (
+          <div className="flex flex-col items-center gap-3 py-12 text-center">
+            <p className="text-sm text-[#4B5563]">{error}</p>
+            <button
+              type="button"
+              onClick={() => void refetch()}
+              className="flex items-center gap-1.5 text-sm font-semibold text-[#1B7A3D]"
+            >
+              <IconRefresh className="size-4" />
+              Tentar novamente
+            </button>
+          </div>
+        )}
+
+        {!isLoading && !error && (
+          <>
+            {visibleBoarded.length > 0 && (
+              <section>
+                {activeTab !== 'all' && (
+                  <h2 className="text-xs font-bold text-[#6B7280] uppercase tracking-wide mb-2">
+                    Embarcados ({visibleBoarded.length})
+                  </h2>
+                )}
+                <div className="flex flex-col gap-2 mb-5">
+                  {visibleBoarded.map((item) => (
+                    <PassengerCard key={item.booking_id} item={item} />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {visiblePending.length > 0 && (
+              <section>
+                {activeTab !== 'all' && (
+                  <h2 className="text-xs font-bold text-[#6B7280] uppercase tracking-wide mb-2">
+                    Confirmados ({visiblePending.length})
+                  </h2>
+                )}
+                <div className="flex flex-col gap-2 mb-5">
+                  {visiblePending.map((item) => (
+                    <PassengerCard key={item.booking_id} item={item} />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {visible.length === 0 && (
+              <div className="text-center py-10 text-gray-400 text-sm">Nenhum passageiro encontrado</div>
+            )}
+          </>
         )}
       </main>
     </div>

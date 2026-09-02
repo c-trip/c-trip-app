@@ -1,25 +1,34 @@
 import { useNavigate } from 'react-router'
-import { IconMapPin, IconClock, IconChevronRight } from '@tabler/icons-react'
-import { getOperatorTodaySchedules } from '@/data/mockOperatorSchedules'
-import type { OperatorSchedule } from '@/data/mockOperatorSchedules'
+import { IconMapPin, IconClock, IconChevronRight, IconRefresh } from '@tabler/icons-react'
+import { useOperatorSchedules } from '@/hooks/operator/useOperatorSchedules'
+import type { OperatorSchedule } from '@/types/operator'
 import { Card, CardContent } from '@/components/ui/card'
 import RouteDisplay from '@/components/RouteDisplay'
 
-function formatDate(): string {
+function formatToday(): string {
   const now = new Date()
   const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
   return `hoje, ${now.getDate()} ${months[now.getMonth()]}`
 }
 
-const STATUS_STYLE: Record<OperatorSchedule['status'], { bg: string; text: string; label: string }> = {
+const STATUS_STYLE: Record<string, { bg: string; text: string; label: string }> = {
   scheduled: { bg: 'bg-[#EFF6FF]', text: 'text-[#1D4ED8]', label: 'A iniciar' },
-  boarding: { bg: 'bg-[#F3F4F6]', text: 'text-[#6B7280]', label: 'Chegou' },
-  departed: { bg: 'bg-[#D1FAE5]', text: 'text-[#047857]', label: 'Em rota' },
+  boarding: { bg: 'bg-[#D1FAE5]', text: 'text-[#047857]', label: 'Embarque' },
+  departed: { bg: 'bg-[#F3F4F6]', text: 'text-[#6B7280]', label: 'Em rota' },
+  cancelled: { bg: 'bg-red-100', text: 'text-red-600', label: 'Cancelada' },
+}
+
+function statusStyle(status: string) {
+  return STATUS_STYLE[status] ?? { bg: 'bg-[#F3F4F6]', text: 'text-[#6B7280]', label: status }
 }
 
 export default function OperatorDayTrips() {
   const navigate = useNavigate()
-  const schedules = getOperatorTodaySchedules()
+  const { schedules, isLoading, error, refetch } = useOperatorSchedules()
+
+  const openManifest = (schedule: OperatorSchedule) => {
+    navigate(`/operator/manifest?schedule=${schedule.schedule_id}`)
+  }
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] font-outfit">
@@ -35,7 +44,7 @@ export default function OperatorDayTrips() {
           <div className='bg-[#FFFFFF33] py-1.5 px-2.5 rounded-4xl flex items-center justify-center
           gap-1 border border-[#FFFFFF1F]'>
             <IconClock className='size-3' />
-            <span className="text-xs font-semibold opacity-90">{formatDate()}</span>
+            <span className="text-xs font-semibold opacity-90">{formatToday()}</span>
           </div>
         </div>
 
@@ -51,73 +60,95 @@ export default function OperatorDayTrips() {
 
       <main className="px-5 py-6 pb-28">
         <div className='flex items-center justify-between'>
-        <h2 className="text-[15px] font-bold text-[#111827] mb-4">Partidas de Hoje</h2>
-        <p className='text-[13px] text-[#1B7A3D] font-semibold'>{schedules.length} Autocarros</p>
-
+          <h2 className="text-[15px] font-bold text-[#111827] mb-4">Partidas de Hoje</h2>
+          {!isLoading && !error && (
+            <p className='text-[13px] text-[#1B7A3D] font-semibold'>{schedules.length} Autocarros</p>
+          )}
         </div>
-        <div className="flex flex-col gap-3">
-          {schedules.map((schedule) => {
-            const style = STATUS_STYLE[schedule.status]
-            return (
-              <Card
-                key={schedule.id}
-                role="button"
-                tabIndex={0}
-                className="p-0 cursor-pointer bg-white hover:scale-[1.01] border-[#E5E7EB] 
-                active:scale-[0.99] transition-transform focus-visible:outline-none
-                focus-visible:ring-2 focus-visible:ring-[#1B7A3D] focus-visible:ring-offset-2"
-                onClick={() => navigate(`/operator/manifest?schedule=${schedule.id}`)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault()
-                    navigate(`/operator/manifest?schedule=${schedule.id}`)
-                  }
-                }}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-3">
+
+        {isLoading && (
+          <div className="flex flex-col gap-3">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="h-32 animate-pulse rounded-xl bg-gray-100" />
+            ))}
+          </div>
+        )}
+
+        {!isLoading && error && (
+          <div className="flex flex-col items-center gap-3 py-16 text-center">
+            <p className="text-sm text-[#4B5563]">{error}</p>
+            <button
+              type="button"
+              onClick={() => void refetch()}
+              className="flex items-center gap-1.5 text-sm font-semibold text-[#1B7A3D]"
+            >
+              <IconRefresh className="size-4" />
+              Tentar novamente
+            </button>
+          </div>
+        )}
+
+        {!isLoading && !error && schedules.length === 0 && (
+          <div className="text-center py-16 text-gray-400 text-sm">
+            Não há viagens abertas para hoje.
+          </div>
+        )}
+
+        {!isLoading && !error && schedules.length > 0 && (
+          <div className="flex flex-col gap-3">
+            {schedules.map((schedule) => {
+              const style = statusStyle(schedule.status)
+              return (
+                <Card
+                  key={schedule.schedule_id}
+                  role="button"
+                  tabIndex={0}
+                  className="p-0 cursor-pointer bg-white hover:scale-[1.01] border-[#E5E7EB]
+                  active:scale-[0.99] transition-transform focus-visible:outline-none
+                  focus-visible:ring-2 focus-visible:ring-[#1B7A3D] focus-visible:ring-offset-2"
+                  onClick={() => openManifest(schedule)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      openManifest(schedule)
+                    }
+                  }}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between mb-2">
                       <RouteDisplay
                         origin={schedule.origin}
                         destination={schedule.destination}
                         className="text-base font-bold text-[#111827]"
                         iconClassName="size-5"
                       />
+                      <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${style.bg} ${style.text}`}>
+                        {style.label}
+                      </span>
                     </div>
-                    <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full
-                       ${style.bg} ${style.text}`}>
-                      {style.label}
-                    </span>
-                  </div>
-                  <div className='flex items-center gap-4 justify-baseline mb-2'>
-                    <div className='flex flex-col '>
-                      <span className='text-[11px] text-[#4B5563] font-medium'>Hora</span>
-                      <p className='text-[14px] text-[#111827] font-bold'>{schedule.departureTime}</p>
+                    <div className='flex items-center gap-6 justify-baseline mb-2'>
+                      <div className='flex flex-col'>
+                        <span className='text-[11px] text-[#4B5563] font-medium'>Hora</span>
+                        <p className='text-[14px] text-[#111827] font-bold'>{schedule.departure_time}</p>
+                      </div>
+                      <div className='flex flex-col'>
+                        <span className='text-[11px] text-[#4B5563] font-medium'>Lugares</span>
+                        <p className='text-[14px] font-bold text-[#111827]'>
+                          {schedule.available_seats}/{schedule.total_seats} disponíveis
+                        </p>
+                      </div>
                     </div>
-                    <div className='flex flex-col'>
-                      <span className='text-[11px] text-[#4B5563] font-medium'>Matrícula</span>
-                      <p className='text-[14px] text-[#111827] font-bold'>{schedule.busPlate}</p>
-                    </div>
-                     <div className='flex flex-col'>
-                      <span className='text-[11px] text-[#4B5563] font-medium'>Embarque</span>
-                      <p
-                        className={`text-[14px] font-bold ${schedule.status === 'departed' ? 'text-[#1B7A3D]' : 'text-[#111827]'}`}
-                      >
-                        {schedule.availableSeats}/{schedule.totalSeats} disponíveis
-                      </p>
-                    </div>
-                    
-                  </div>
 
-                  <div className="flex items-center justify-between border-t border-[#E5E7EB] pt-1">
-                    <p className='font-semibold text-xs text-[#1B7A3D]'>Ver Manifesto do Passageiro</p>
-                    <IconChevronRight className="size-5   text-[#1B7A3D]" />
-                  </div>
-                </CardContent>
-              </Card>
-            )
-          })}
-        </div>
+                    <div className="flex items-center justify-between border-t border-[#E5E7EB] pt-1">
+                      <p className='font-semibold text-xs text-[#1B7A3D]'>Ver Manifesto do Passageiro</p>
+                      <IconChevronRight className="size-5 text-[#1B7A3D]" />
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+        )}
       </main>
     </div>
   )

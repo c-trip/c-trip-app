@@ -1,49 +1,83 @@
+import { useMemo } from 'react'
 import { useNavigate } from 'react-router'
-import DestinationCard from '../../components/DestinationCard'
+import { IconMapPin, IconRefresh } from '@tabler/icons-react'
 import PageHeader from '@/components/PageHeader'
-import { provincias, type Regiao } from '../../data/provincias'
-
-const regiaoOrder: Regiao[] = ['Luanda', 'Norte', 'Centro', 'Sul', 'Leste']
-
-const regiaoGradients: Record<Regiao, string> = {
-  Luanda: 'from-[#1B7A3D] to-[#3A6356]',
-  Norte: 'from-[#6B9E8C] to-[#3A6356]',
-  Centro: 'from-[#4A7A6A] to-[#2A4A3D]',
-  Sul: 'from-[#5C8E7C] to-[#2E5446]',
-  Leste: 'from-[#7BAF9C] to-[#4A6B5E]',
-}
+import { Card, CardContent } from '@/components/ui/card'
+import { useCities } from '@/hooks/catalog/useCatalog'
 
 export default function ResultsPage() {
   const navigate = useNavigate()
+  const { data: cities, isLoading, error, refetch } = useCities()
 
-  const byRegiao = regiaoOrder.map((regiao) => ({
-    regiao,
-    items: provincias.filter((p) => p.regiao === regiao),
-  }))
+  const byProvince = useMemo(() => {
+    const groups = new Map<string, { name: string }[]>()
+    for (const city of cities ?? []) {
+      const list = groups.get(city.province) ?? []
+      list.push({ name: city.name })
+      groups.set(city.province, list)
+    }
+    return [...groups.entries()]
+      .map(([province, list]) => ({
+        province,
+        items: list.sort((a, b) => a.name.localeCompare(b.name, 'pt')),
+      }))
+      .sort((a, b) => a.province.localeCompare(b.province, 'pt'))
+  }, [cities])
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] font-outfit">
       <PageHeader
         onBack={() => navigate(-1)}
-        title="Destinos"
-        subtitle="21 províncias de Angola"
+        title="Cidades"
+        subtitle={cities ? `${cities.length} cidades` : 'Escolha o destino'}
       />
 
       <main className="px-5 py-5">
-        {byRegiao.map(({ regiao, items }) => (
-          <section key={regiao} className="mb-6">
-            <h2 className="mb-3 text-sm font-semibold text-gray-500 uppercase tracking-wide">
-              {regiao}
-            </h2>
+        {isLoading && (
+          <div className="grid grid-cols-2 gap-3">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="h-20 animate-pulse rounded-xl bg-gray-100" />
+            ))}
+          </div>
+        )}
+
+        {!isLoading && error && (
+          <div className="flex flex-col items-center gap-3 py-16 text-center">
+            <p className="text-sm text-[#4B5563]">{error}</p>
+            <button
+              type="button"
+              onClick={() => void refetch()}
+              className="flex items-center gap-1.5 text-sm font-semibold text-[#1B7A3D]"
+            >
+              <IconRefresh className="size-4" />
+              Tentar novamente
+            </button>
+          </div>
+        )}
+
+        {!isLoading && !error && byProvince.map(({ province, items }) => (
+          <section key={province} className="mb-6">
+            <h2 className="mb-3 text-sm font-semibold text-gray-500 uppercase tracking-wide">{province}</h2>
             <div className="grid grid-cols-2 gap-3">
-              {items.map((prov) => (
-                <DestinationCard
-                  key={prov.id}
-                  origin={prov.nome}
-                  destination={prov.capital}
-                  gradient={regiaoGradients[regiao]}
-                  onClick={() => navigate(`/search-results/${prov.id}`)}
-                />
+              {items.map((city) => (
+                <Card
+                  key={city.name}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => navigate(`/search-results/${encodeURIComponent(city.name)}`)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      navigate(`/search-results/${encodeURIComponent(city.name)}`)
+                    }
+                  }}
+                  className="p-0 cursor-pointer border-[#E5E7EB] hover:scale-[1.01] active:scale-[0.99] transition-transform"
+                >
+                  <CardContent className="p-4 flex items-center gap-2">
+                    <IconMapPin className="size-4 text-[#1B7A3D] shrink-0" />
+                    <span className="text-sm font-semibold text-[#111827] truncate">{city.name}</span>
+                  </CardContent>
+                </Card>
               ))}
             </div>
           </section>

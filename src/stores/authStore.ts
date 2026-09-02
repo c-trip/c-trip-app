@@ -10,6 +10,7 @@ interface AuthState {
   hasBootstrapped: boolean
   bootstrap: () => Promise<void>
   login: (email: string, password: string) => Promise<void>
+  loginWithGoogle: (idToken: string) => Promise<void>
   register: (payload: { email: string; name: string; password: string }) => Promise<void>
   logout: () => void
 }
@@ -30,6 +31,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       const user = await authApi.me()
       set({ user, isAuthenticated: true })
     } catch {
+      setToken(null)
       set({ user: null, isAuthenticated: false })
     } finally {
       set({ isLoading: false, hasBootstrapped: true })
@@ -38,6 +40,12 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   login: async (email, password) => {
     const { access_token, user } = await authApi.login({ email, password })
+    setToken(access_token)
+    set({ user, isAuthenticated: true, hasBootstrapped: true })
+  },
+
+  loginWithGoogle: async (idToken) => {
+    const { access_token, user } = await authApi.google({ id_token: idToken })
     setToken(access_token)
     set({ user, isAuthenticated: true, hasBootstrapped: true })
   },

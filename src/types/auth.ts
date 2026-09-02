@@ -33,3 +33,12 @@ export interface ChangePasswordPayload {
   current_password: string
   new_password: string
 }
+
+export interface GoogleAuthPayload {
+  id_token: string
+}
+
+export interface MyPermissionsResponse {
+  user_id: string
+  permissions: string[]
+}

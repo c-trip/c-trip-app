@@ -1,16 +1,19 @@
-import { useState, useEffect, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router'
-import { IconBus } from '@tabler/icons-react'
+import { IconBus, IconRefresh } from '@tabler/icons-react'
 import { gooeyToast } from 'goey-toast'
-import { getScheduleById, getSeatMapBySchedule } from '@/data/mockSeats'
 import { Card, CardContent } from '@/components/ui/card'
 import { readActiveHeldSeats } from '@/lib/seatHolds'
+import { useSchedule, useScheduleSeats } from '@/hooks/catalog/useCatalog'
+import { useBookingFlowStore } from '@/stores/bookingFlowStore'
 import RouteDisplay from '@/components/RouteDisplay'
 import StickyFooter from '@/components/StickyFooter'
 import GradientButton from '@/components/GradientButton'
 import PageHeader from '@/components/PageHeader'
 
-function getSeatLabel(seatNum: number): string {
+type SeatStatus = 'available' | 'occupied' | 'held'
+
+function seatLabel(seatNum: number): string {
   const row = Math.ceil(seatNum / 4)
   const col = String.fromCharCode(65 + ((seatNum - 1) % 4))
   return `${row}${col}`
@@ -22,164 +25,105 @@ function SeatButton({
   selected,
   dimmed,
   onClick,
-  onDoubleClick,
 }: {
   label: string
-  status: 'available' | 'occupied' | 'reserved' | 'held'
+  status: SeatStatus
   selected: boolean
   dimmed: boolean
   onClick: () => void
-  onDoubleClick: () => void
 }) {
-  const base = 'h-9 w-9 rounded-lg text-[11px] font-semibold transition-all flex items-center justify-center'
+  const base =
+    'h-9 w-9 rounded-lg text-[11px] font-semibold transition-all flex items-center justify-center'
 
   if (status === 'occupied') {
     return (
-      <button
-        type="button"
-        onClick={onClick}
-        aria-label={`Lugar ${label} ocupado`}
-        className={`${base} bg-gray-300 text-gray-500 cursor-not-allowed`}
-      >
+      <button type="button" onClick={onClick} aria-label={`Lugar ${label} ocupado`}
+        className={`${base} bg-gray-300 text-gray-500 cursor-not-allowed`}>
         {label}
       </button>
     )
   }
-
-  if (status === 'reserved') {
-    return (
-      <button
-        type="button"
-        onClick={onClick}
-        aria-label={`Lugar ${label} reservado`}
-        className={`${base} bg-[#F59E0B] text-white cursor-not-allowed`}
-      >
-        {label}
-      </button>
-    )
-  }
-
   if (status === 'held') {
     return (
-      <button
-        type="button"
-        onClick={onClick}
-        aria-label={`Lugar ${label} em retenção`}
-        className={`${base} bg-[#C2410C] text-white cursor-not-allowed`}
-      >
+      <button type="button" onClick={onClick} aria-label={`Lugar ${label} em retenção`}
+        className={`${base} bg-[#C2410C] text-white cursor-not-allowed`}>
         {label}
       </button>
     )
   }
-
   if (selected) {
     return (
-      <button
-        onClick={onClick}
-        onDoubleClick={onDoubleClick}
-        aria-pressed
-        className={`${base} bg-[#15632F] text-white shadow-lg scale-110 ring-2 ring-white`}
-      >
+      <button onClick={onClick} aria-pressed
+        className={`${base} bg-[#15632F] text-white shadow-lg scale-110 ring-2 ring-white`}>
         {label}
       </button>
     )
   }
-
-  if (dimmed) {
-    return (
-      <button
-        onClick={onClick}
-        className={`${base} bg-[#1B7A3D] text-white opacity-40 hover:opacity-100`}
-      >
-        {label}
-      </button>
-    )
-  }
-
   return (
-    <button
-      onClick={onClick}
-      className={`${base} bg-[#1B7A3D] text-white hover:scale-105`}
-    >
+    <button onClick={onClick}
+      className={`${base} bg-[#1B7A3D] text-white ${dimmed ? 'opacity-40 hover:opacity-100' : 'hover:scale-105'}`}>
       {label}
     </button>
   )
 }
 
+function formatKz(value: number): string {
+  return `${Math.round(value).toLocaleString('pt-PT')} Kz`
+}
+
 export default function SchedulePage() {
   const { scheduleId } = useParams<{ scheduleId: string }>()
   const navigate = useNavigate()
+  const trip = useBookingFlowStore((s) => s.trip)
+  const setSeat = useBookingFlowStore((s) => s.setSeat)
   const [selectedSeat, setSelectedSeat] = useState<number | null>(null)
   const [, setTick] = useState(0)
 
-  const schedule = getScheduleById(scheduleId)
-  const seatMap = getSeatMapBySchedule(scheduleId)
+  const { data: schedule } = useSchedule(scheduleId)
+  const { data: seats, isLoading, error, refetch } = useScheduleSeats(scheduleId)
 
-  const heldSeats = scheduleId ? readActiveHeldSeats(scheduleId) : []
-  const heldSet = new Set(heldSeats)
-  const prevScheduleRef = useRef(scheduleId)
+  const tripForSchedule = trip?.scheduleId === scheduleId ? trip : null
 
   useEffect(() => {
-    if (prevScheduleRef.current !== scheduleId) {
-      prevScheduleRef.current = scheduleId
-      setSelectedSeat(null)
-    }
-  }, [scheduleId])
-
-  useEffect(() => {
-    const id = setInterval(() => setTick(t => t + 1), 2000)
+    const id = setInterval(() => setTick((t) => t + 1), 2000)
     return () => clearInterval(id)
   }, [])
 
-  if (!schedule || !seatMap) {
-    return (
-      <div className="min-h-screen bg-[#F9FAFB] font-outfit">
-        <PageHeader onBack={() => navigate(-1)} title="Viagem não encontrada" />
-      </div>
-    )
-  }
+  const totalSeats = seats?.total_seats ?? schedule?.total_seats ?? 0
+  const occupiedSet = new Set(seats?.occupied ?? [])
+  const availableSet = new Set(seats?.available ?? [])
+  const heldSet = new Set(scheduleId ? readActiveHeldSeats(scheduleId) : [])
 
-  const occupiedSet = new Set(seatMap.occupied)
-  const reservedSet = new Set(seatMap.reserved)
-
-  const rows = Math.ceil(seatMap.totalSeats / 4)
-  const seatGrid: (number | null)[][] = []
-  let seatNum = 1
-  for (let r = 0; r < rows; r++) {
-    const row: (number | null)[] = []
-    for (let c = 0; c < 4; c++) {
-      row.push(seatNum <= seatMap.totalSeats ? seatNum : null)
-      seatNum++
-    }
-    seatGrid.push(row)
-  }
-
-  function getSeatStatus(seat: number): 'available' | 'occupied' | 'reserved' | 'held' {
+  function seatStatus(seat: number): SeatStatus {
     if (occupiedSet.has(seat)) return 'occupied'
-    if (reservedSet.has(seat)) return 'reserved'
     if (heldSet.has(seat)) return 'held'
+    if (availableSet.size > 0 && !availableSet.has(seat)) return 'occupied'
     return 'available'
   }
 
   function handleSeatClick(seat: number) {
-    const label = getSeatLabel(seat)
-    if (occupiedSet.has(seat)) {
-      gooeyToast.error('Lugar ocupado', { description: `O lugar ${label} já está ocupado.` })
+    const status = seatStatus(seat)
+    if (status === 'occupied') {
+      gooeyToast.error('Lugar ocupado', { description: `O lugar ${seatLabel(seat)} já está ocupado.` })
       return
     }
-    if (reservedSet.has(seat)) {
-      gooeyToast.warning('Lugar reservado', { description: `O lugar ${label} já está reservado.` })
-      return
-    }
-    if (heldSet.has(seat)) {
-      gooeyToast.warning('Lugar em retenção', { description: `O lugar ${label} está temporariamente retido.` })
+    if (status === 'held') {
+      gooeyToast.warning('Lugar em retenção', { description: `O lugar ${seatLabel(seat)} está temporariamente retido.` })
       return
     }
     setSelectedSeat(seat === selectedSeat ? null : seat)
   }
 
-  function handleSeatDoubleClick() {
-    setSelectedSeat(null)
+  const rows = Math.ceil(totalSeats / 4)
+  const seatGrid: (number | null)[][] = []
+  let n = 1
+  for (let r = 0; r < rows; r++) {
+    const row: (number | null)[] = []
+    for (let c = 0; c < 4; c++) {
+      row.push(n <= totalSeats ? n : null)
+      n++
+    }
+    seatGrid.push(row)
   }
 
   return (
@@ -188,110 +132,116 @@ export default function SchedulePage() {
         onBack={() => navigate(-1)}
         title="Escolha o Lugar"
         subtitle={
-          <div className="flex gap-1">
-            <RouteDisplay origin={schedule.origin} destination={schedule.destination} iconClassName="size-3" />
-            <p>• {schedule.operatorName}</p>
-            <p>• {schedule.departureTime}</p>
+          <div className="flex flex-wrap gap-1">
+            {tripForSchedule && (
+              <RouteDisplay origin={tripForSchedule.origin} destination={tripForSchedule.destination} iconClassName="size-3" />
+            )}
+            {tripForSchedule?.company && <p>• {tripForSchedule.company}</p>}
+            {(tripForSchedule?.departureTime ?? schedule?.departure_time) && (
+              <p>• {tripForSchedule?.departureTime ?? schedule?.departure_time}</p>
+            )}
           </div>
         }
       />
 
       <main className="px-6 py-6 flex flex-col items-center gap-6 mt-4">
-        <Card className="rounded-2xl border border-gray-200 bg-white w-[280px]">
-          <CardContent className="flex flex-col gap-4">
-            <div className="flex items-center gap-2 justify-between">
-              <IconBus className="size-5 text-[#4B5563]" />
-              <h2 className="text-sm font-semibold text-[#9CA3AF]">Frente do Autocarro</h2>
-              <div className="h-6 w-6 rounded-xs bg-[#E5E7EB]" />
+        {isLoading && <div className="h-72 w-[280px] animate-pulse rounded-2xl bg-gray-100" />}
+
+        {!isLoading && error && (
+          <div className="flex flex-col items-center gap-3 py-16 text-center">
+            <p className="text-sm text-[#4B5563]">{error}</p>
+            <button type="button" onClick={() => void refetch()}
+              className="flex items-center gap-1.5 text-sm font-semibold text-[#1B7A3D]">
+              <IconRefresh className="size-4" />
+              Tentar novamente
+            </button>
+          </div>
+        )}
+
+        {!isLoading && !error && totalSeats > 0 && (
+          <>
+            <Card className="rounded-2xl border border-gray-200 bg-white w-[280px]">
+              <CardContent className="flex flex-col gap-4">
+                <div className="flex items-center gap-2 justify-between">
+                  <IconBus className="size-5 text-[#4B5563]" />
+                  <h2 className="text-sm font-semibold text-[#9CA3AF]">Frente do Autocarro</h2>
+                  <div className="h-6 w-6 rounded-xs bg-[#E5E7EB]" />
+                </div>
+                <div className="border-t border-[#E5E7EB]" />
+
+                <div className="flex flex-col items-center gap-4">
+                  {seatGrid.map((row, rowIdx) => {
+                    const rowNum = rowIdx + 1
+                    return (
+                      <div key={rowIdx} className="flex items-center gap-4">
+                        {row.slice(0, 2).map((seat, i) =>
+                          seat === null ? (
+                            <div key={`el-${rowNum}-${i}`} className="h-9 w-9" aria-hidden="true" />
+                          ) : (
+                            <SeatButton
+                              key={seat}
+                              label={`${rowNum}${String.fromCharCode(65 + i)}`}
+                              status={seatStatus(seat)}
+                              selected={seat === selectedSeat}
+                              dimmed={selectedSeat !== null && seat !== selectedSeat && seatStatus(seat) === 'available'}
+                              onClick={() => handleSeatClick(seat)}
+                            />
+                          ),
+                        )}
+                        <span className="w-10 text-center text-[11px] font-medium text-gray-400">Corredor</span>
+                        {row.slice(2, 4).map((seat, i) =>
+                          seat === null ? (
+                            <div key={`er-${rowNum}-${i}`} className="h-9 w-9" aria-hidden="true" />
+                          ) : (
+                            <SeatButton
+                              key={seat}
+                              label={`${rowNum}${String.fromCharCode(67 + i)}`}
+                              status={seatStatus(seat)}
+                              selected={seat === selectedSeat}
+                              dimmed={selectedSeat !== null && seat !== selectedSeat && seatStatus(seat) === 'available'}
+                              onClick={() => handleSeatClick(seat)}
+                            />
+                          ),
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="flex justify-center gap-8 text-[10px] text-gray-500 flex-wrap">
+              <div className="flex items-center gap-1"><div className="h-3 w-3 rounded bg-[#1B7A3D]" /><span>Livre</span></div>
+              <div className="flex items-center gap-1"><div className="h-3 w-3 rounded bg-[#C2410C]" /><span>Retido</span></div>
+              <div className="flex items-center gap-1"><div className="h-3 w-3 rounded bg-gray-300" /><span>Ocupado</span></div>
             </div>
-            <div className="border-t border-[#E5E7EB]" />
-
-            <div className="flex flex-col items-center gap-4">
-              {seatGrid.map((row, rowIdx) => {
-                const rowNum = rowIdx + 1
-                const leftSeats = row.slice(0, 2)
-                const rightSeats = row.slice(2, 4)
-                return (
-                  <div key={rowIdx} className="flex items-center gap-4">
-                    {leftSeats.map((seat, i) =>
-                      seat === null ? (
-                        <div key={`empty-l-${rowNum}-${i}`} className="h-9 w-9" aria-hidden="true" />
-                      ) : (
-                        <SeatButton
-                          key={seat}
-                          label={`${rowNum}${String.fromCharCode(65 + i)}`}
-                          status={getSeatStatus(seat)}
-                          selected={seat === selectedSeat}
-                          dimmed={selectedSeat !== null && seat !== selectedSeat && getSeatStatus(seat) === 'available'}
-                          onClick={() => handleSeatClick(seat)}
-                          onDoubleClick={handleSeatDoubleClick}
-                        />
-                      ),
-                    )}
-
-                    <span className="w-10 text-center text-[11px] font-medium text-gray-400">
-                      Corredor
-                    </span>
-
-                    {rightSeats.map((seat, i) =>
-                      seat === null ? (
-                        <div key={`empty-r-${rowNum}-${i}`} className="h-9 w-9" aria-hidden="true" />
-                      ) : (
-                        <SeatButton
-                          key={seat}
-                          label={`${rowNum}${String.fromCharCode(67 + i)}`}
-                          status={getSeatStatus(seat)}
-                          selected={seat === selectedSeat}
-                          dimmed={selectedSeat !== null && seat !== selectedSeat && getSeatStatus(seat) === 'available'}
-                          onClick={() => handleSeatClick(seat)}
-                          onDoubleClick={handleSeatDoubleClick}
-                        />
-                      ),
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className="flex justify-center gap-8 text-[10px] text-gray-500 flex-wrap">
-          <div className="flex items-center gap-1">
-            <div className="h-3 w-3 rounded bg-[#1B7A3D]" />
-            <span>Livre</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="h-3 w-3 rounded bg-[#C2410C]" />
-            <span>Retido</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="h-3 w-3 rounded bg-gray-300" />
-            <span>Ocupado</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="h-3 w-3 rounded bg-[#F59E0B]" />
-            <span>Reservado</span>
-          </div>
-        </div>
+          </>
+        )}
       </main>
 
       <StickyFooter>
+        {tripForSchedule && (
+          <div className="flex justify-between w-full">
+            <span className="text-sm text-[#4B5563]">Preço por lugar</span>
+            <span className="text-base font-extrabold text-[#1B7A3D]">{formatKz(tripForSchedule.price)}</span>
+          </div>
+        )}
         <GradientButton
           disabled={selectedSeat === null}
           onClick={() => {
-            if (selectedSeat === null) return
-            const currentHeld = scheduleId ? readActiveHeldSeats(scheduleId) : []
-            if (occupiedSet.has(selectedSeat) || reservedSet.has(selectedSeat) || currentHeld.includes(selectedSeat)) {
-              gooeyToast.error('Lugar já não disponível', { description: `O lugar ${getSeatLabel(selectedSeat)} foi ocupado ou retido por outro utilizador.` })
+            if (selectedSeat === null || !scheduleId) return
+            if (readActiveHeldSeats(scheduleId).includes(selectedSeat) || occupiedSet.has(selectedSeat)) {
+              gooeyToast.error('Lugar já não disponível', {
+                description: `O lugar ${seatLabel(selectedSeat)} foi ocupado ou retido.`,
+              })
               setSelectedSeat(null)
               return
             }
-            const routeSlug = encodeURIComponent(schedule.route.replace(/\s*→\s*/g, '-').toLowerCase())
-            const companySlug = encodeURIComponent(schedule.operatorName.toLowerCase())
-            navigate(`/hold/${schedule.id}/${routeSlug}/${companySlug}?seat=${selectedSeat}`)
+            setSeat(selectedSeat)
+            navigate(`/hold/${scheduleId}?seat=${selectedSeat}`)
           }}
         >
-          Continuar (Selecionar Lugar)
+          Continuar
         </GradientButton>
       </StickyFooter>
     </div>

@@ -1,339 +1,224 @@
-import { useState, useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router'
-import { IconUser, IconId, IconPhone, IconClock, IconCircleDot } from '@tabler/icons-react'
+import { IconId, IconPhone, IconClock, IconCircleDot, IconUser } from '@tabler/icons-react'
 import { gooeyToast } from 'goey-toast'
-import { getScheduleById, getSeatMapBySchedule } from '@/data/mockSeats'
 import { readTimestamp, removeHeldSeat, HOLD_TOTAL_SECONDS } from '@/lib/seatHolds'
-import { saveBooking } from '@/lib/bookings'
 import { getSeatLabel } from '@/lib/seats'
-import type { Booking, PaymentMethod } from '@/types'
+import { useAuth } from '@/hooks/auth/useAuth'
+import { useInitiatePayment, useUpdateProfile } from '@/hooks/passenger/usePassenger'
+import { useBookingFlowStore } from '@/stores/bookingFlowStore'
+import type { PaymentMethodApi } from '@/types/passenger'
 import StickyFooter from '@/components/StickyFooter'
 import GradientButton from '@/components/GradientButton'
 import PageHeader from '@/components/PageHeader'
+import RouteDisplay from '@/components/RouteDisplay'
+
+function formatKz(value: number): string {
+  return `${Math.round(value).toLocaleString('pt-PT')} Kz`
+}
 
 export default function CheckoutPage() {
   const { scheduleId } = useParams<{ scheduleId: string }>()
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
+  const { user } = useAuth()
+  const trip = useBookingFlowStore((s) => s.trip)
+  const setPayment = useBookingFlowStore((s) => s.setPayment)
 
   const seatParam = searchParams.get('seat')
   const seatNum = /^\d+$/.test(seatParam ?? '') ? parseInt(seatParam!, 10) : NaN
+  const seatIsValid = Number.isFinite(seatNum) && seatNum > 0
   const holdKey = `hold_${scheduleId}_${seatNum}`
-  const totalSeconds = HOLD_TOTAL_SECONDS
 
-  const schedule = getScheduleById(scheduleId)
-  const seatMap = getSeatMapBySchedule(scheduleId)
+  const tripForSchedule = trip?.scheduleId === scheduleId ? trip : null
+  const amount = tripForSchedule?.price ?? 0
 
-  const seatIsValid =
-    Number.isFinite(seatNum) &&
-    seatNum > 0 &&
-    schedule !== undefined &&
-    seatMap !== undefined &&
-    seatNum <= seatMap.totalSeats &&
-    !seatMap.occupied.includes(seatNum) &&
-    !seatMap.reserved.includes(seatNum)
-
-  const seatLabel = seatIsValid ? getSeatLabel(seatNum) : '\u2014'
-
-  const [nome, setNome] = useState('')
   const [bi, setBi] = useState('')
   const [telefone, setTelefone] = useState('')
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [selectedPayment, setSelectedPayment] = useState<PaymentMethod | null>(null)
-  const redirectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const [method, setMethod] = useState<PaymentMethodApi>('multicaixa_express')
 
+  const { initiate, isLoading: initiating } = useInitiatePayment()
+  const { updateProfile } = useUpdateProfile()
+
+  const redirectRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [secondsLeft, setSecondsLeft] = useState(() => {
     if (!seatIsValid) return 0
     const ts = readTimestamp(holdKey)
-    if (ts && ts <= Date.now()) {
-      const elapsed = Math.floor((Date.now() - ts) / 1000)
-      return Math.max(totalSeconds - elapsed, 0)
-    }
-    return 0
+    if (!ts) return 0
+    return Math.max(HOLD_TOTAL_SECONDS - Math.floor((Date.now() - ts) / 1000), 0)
   })
 
   useEffect(() => {
-    return () => {
-      if (redirectTimeoutRef.current) clearTimeout(redirectTimeoutRef.current)
-    }
-  }, [])
-
-  useEffect(() => {
     if (!seatIsValid || !scheduleId) return
-
     const sid = scheduleId
 
-    function expireHold() {
-      setSecondsLeft(0)
-      removeHeldSeat(sid, seatNum)
-      localStorage.removeItem(holdKey)
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-        intervalRef.current = null
-      }
-      gooeyToast.error('Reserva expirada', { description: 'Tempo esgotado. Selecione o lugar novamente.' })
-      if (redirectTimeoutRef.current) clearTimeout(redirectTimeoutRef.current)
-      redirectTimeoutRef.current = setTimeout(() => navigate(`/schedules/${sid}`), 2000)
-    }
-
-    intervalRef.current = setInterval(() => {
-      const current = readTimestamp(holdKey)
-      if (!current || current > Date.now() || Date.now() - current >= totalSeconds * 1000) {
-        expireHold()
-        return
-      }
-      const elapsed = Math.floor((Date.now() - current) / 1000)
-      const remaining = Math.max(totalSeconds - elapsed, 0)
+    const id = setInterval(() => {
+      const ts = readTimestamp(holdKey)
+      const remaining = ts ? Math.max(HOLD_TOTAL_SECONDS - Math.floor((Date.now() - ts) / 1000), 0) : 0
+      setSecondsLeft(remaining)
       if (remaining === 0) {
-        expireHold()
-      } else {
-        setSecondsLeft(remaining)
+        clearInterval(id)
+        removeHeldSeat(sid, seatNum)
+        localStorage.removeItem(holdKey)
+        gooeyToast.error('Reserva expirada', { description: 'Tempo esgotado. Selecione o lugar novamente.' })
+        redirectRef.current = setTimeout(() => navigate(`/schedules/${sid}`), 2000)
       }
     }, 1000)
 
     return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current)
-      if (redirectTimeoutRef.current) {
-        clearTimeout(redirectTimeoutRef.current)
-        redirectTimeoutRef.current = null
-      }
+      clearInterval(id)
+      if (redirectRef.current) clearTimeout(redirectRef.current)
     }
-  }, [holdKey, totalSeconds, seatIsValid, scheduleId, seatNum, navigate])
+  }, [holdKey, seatIsValid, scheduleId, seatNum, navigate])
 
   const minutes = Math.floor(secondsLeft / 60)
   const seconds = secondsLeft % 60
   const timeDisplay = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
   const isUrgent = secondsLeft <= 60 && secondsLeft > 0
   const isExpired = secondsLeft === 0
+  const seatLabel = seatIsValid ? getSeatLabel(seatNum) : '—'
 
-  const isFormEmpty = !nome.trim() || !bi.trim() || !telefone.trim() || !selectedPayment
-  const isDisabled = isExpired || isFormEmpty || isSubmitting
-
-  const validate = () => {
-    if (!nome.trim()) {
-      gooeyToast.error('Campo obrigatório', { description: 'Introduza o seu nome completo.' })
-      return false
-    }
-    if (!bi.trim()) {
-      gooeyToast.error('Campo obrigatório', { description: 'Introduza o número do BI ou passaporte.' })
-      return false
-    }
-    if (!telefone.trim()) {
-      gooeyToast.error('Campo obrigatório', { description: 'Introduza um número de telefone válido.' })
-      return false
-    }
-    if (!selectedPayment) {
-      gooeyToast.error('Campo obrigatório', { description: 'Selecione um método de pagamento.' })
-      return false
-    }
-    return true
-  }
+  const canSubmit = seatIsValid && !!scheduleId && amount > 0 && !isExpired && !initiating
 
   const handleSubmit = async () => {
-    if (isDisabled) return
-    if (!validate()) return
-    if (!schedule) return
-    const current = readTimestamp(holdKey)
-    if (!current || current > Date.now() || Date.now() - current >= totalSeconds * 1000) {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-        intervalRef.current = null
-      }
-      setSecondsLeft(0)
-      gooeyToast.error('Reserva expirada', { description: 'A retenção já expirou. Selecione o lugar novamente.' })
-      removeHeldSeat(scheduleId!, seatNum)
-      localStorage.removeItem(holdKey)
-      if (redirectTimeoutRef.current) clearTimeout(redirectTimeoutRef.current)
-      redirectTimeoutRef.current = setTimeout(() => navigate(`/schedules/${scheduleId}`), 2000)
-      return
-    }
-    setIsSubmitting(true)
+    if (!canSubmit || !scheduleId) return
 
-    const booking: Booking = {
-      id: `BK-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      scheduleId: scheduleId!,
-      seat: seatNum,
-      seatLabel,
-      passengerName: nome,
-      passengerBI: bi,
-      passengerPhone: telefone,
-      status: 'confirmada',
-      price: schedule.price,
-      createdAt: Date.now(),
-      paymentMethod: selectedPayment,
-    }
-    const saved = saveBooking(booking)
-    if (!saved) {
-      gooeyToast.error('Erro ao guardar reserva', {
-        description: 'Não foi possível guardar a reserva. Tente novamente.',
+    if (telefone.trim() || bi.trim()) {
+      await updateProfile({
+        phone: telefone.trim() || undefined,
+        id_document: bi.trim() || undefined,
       })
-      setIsSubmitting(false)
+    }
+
+    const res = await initiate({
+      schedule_id: scheduleId,
+      seat_number: seatNum,
+      amount,
+      method,
+    })
+
+    if (!res) {
+      gooeyToast.error('Não foi possível iniciar o pagamento', { description: 'Tente novamente.' })
       return
     }
 
-    if (intervalRef.current) clearInterval(intervalRef.current)
-    removeHeldSeat(scheduleId!, seatNum)
-    localStorage.removeItem(holdKey)
-    gooeyToast.success('Pagamento processado', {
-      description: `Bilhete para o lugar ${seatLabel} confirmado com sucesso.`,
+    setPayment({
+      bookingId: res.booking_id,
+      paymentId: res.payment_id,
+      amount: res.amount,
+      reference: res.reference,
+      entity: res.entity,
+      gateway: res.gateway,
+      expiresAt: res.expires_at,
     })
-    try {
-      sessionStorage.setItem(`ticket_passenger_${scheduleId}_${seatNum}`, nome)
-    } catch {
-      /* sessionStorage may be unavailable */
-    }
-    if (redirectTimeoutRef.current) clearTimeout(redirectTimeoutRef.current)
-    redirectTimeoutRef.current = setTimeout(() => navigate(`/ticket-qr/${scheduleId}?seat=${seatNum}`), 2000)
+    removeHeldSeat(scheduleId, seatNum)
+    localStorage.removeItem(holdKey)
+    gooeyToast.success('Reserva criada', { description: 'Conclua o pagamento para confirmar o bilhete.' })
+    navigate(`/payment/${res.booking_id}`)
   }
 
-  if (!schedule || !seatIsValid) {
+  if (!seatIsValid || !scheduleId) {
     return (
       <div className="min-h-screen bg-[#F9FAFB] font-outfit">
-        <PageHeader
-          onBack={() => navigate(-1)}
-          title="Checkout não disponível"
-        />
+        <PageHeader onBack={() => navigate(-1)} title="Checkout não disponível" />
       </div>
     )
   }
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] font-outfit flex flex-col">
-      <PageHeader
-        onBack={() => navigate(-1)}
-        title="Checkout e Pagamento"
-        subtitle="Passo final da compra"
-      />
+      <PageHeader onBack={() => navigate(-1)} title="Checkout e Pagamento" subtitle="Passo final da compra" />
 
-      <div className={`sticky top-[72px] z-10 px-6 py-3 flex items-center
-       gap-3 border-b ${isUrgent ? 'bg-red-50 border-red-300' : 'bg-[#FEF3C7] border-gray-200'}`}>
+      <div className={`sticky top-[72px] z-10 px-6 py-3 flex items-center gap-3 border-b ${
+        isUrgent ? 'bg-red-50 border-red-300' : 'bg-[#FEF3C7] border-gray-200'
+      }`}>
         <IconClock className={`h-5 w-5 flex-shrink-0 ${isUrgent ? 'text-red-500' : 'text-[#F59E0B]'}`} />
-        <div className="flex flex-col">
-          <div className="flex gap-2 items-center">
-            <p className={`text-[14px] font-bold ${isUrgent ? 'text-red-500' : 'text-[#111827]'}`}>
-              {isExpired ? '00:00' : timeDisplay}
-            </p>
-            <span className="text-[12px] text-gray-500">
-              {isExpired ? 'Reserva expirada' : 'restantes para finalizar o pagamento'}
-            </span>
-          </div>
+        <div className="flex gap-2 items-center">
+          <p className={`text-[14px] font-bold ${isUrgent ? 'text-red-500' : 'text-[#111827]'}`}>
+            {isExpired ? '00:00' : timeDisplay}
+          </p>
+          <span className="text-[12px] text-gray-500">
+            {isExpired ? 'Reserva expirada' : 'restantes para finalizar'}
+          </span>
         </div>
       </div>
 
-      <div aria-live="polite" className="sr-only">
-        {isExpired && 'Reserva expirada. Tempo esgotado.'}
-      </div>
+      <main className="px-6 py-6 flex flex-col items-center gap-6 flex-1">
+        <div className="w-full max-w-[350px] rounded-2xl border border-[#E5E7EB] bg-white p-4 flex flex-col gap-2">
+          {tripForSchedule && (
+            <div className="text-[15px] font-bold text-[#111827]">
+              <RouteDisplay origin={tripForSchedule.origin} destination={tripForSchedule.destination} />
+            </div>
+          )}
+          <div className="flex justify-between text-[13px]">
+            <span className="text-[#4B5563]">Passageiro</span>
+            <span className="font-semibold text-[#111827]">{user?.name ?? '—'}</span>
+          </div>
+          <div className="flex justify-between text-[13px]">
+            <span className="text-[#4B5563]">Lugar</span>
+            <span className="font-semibold text-[#1B7A3D]">Lugar {seatLabel}</span>
+          </div>
+        </div>
 
-      <form key={holdKey} id="checkout-form" onSubmit={(e) => { e.preventDefault(); handleSubmit() }} className="px-6 py-6 flex flex-col items-center gap-6 flex-1">
         <div className="w-full max-w-[350px]">
-          <h2 className="block text-[15px] font-bold text-[#111827] mb-3 font-outfit">
-            Dados do Passageiro (Lugar {seatLabel})
-          </h2>
-
+          <h2 className="block text-[15px] font-bold text-[#111827] mb-3">Dados de viagem (opcional)</h2>
           <div className="flex flex-col gap-4">
-            <div>
-              <label htmlFor="checkout-nome" className="block text-[13px] font-inter font-semibold text-gray-500 mb-1.5
-              text-[#4B5563]">
-                Nome completo
-              </label>
-              <div className="relative bg-white">
-                <IconUser className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  id="checkout-nome"
-                  type="text"
-                  value={nome}
-                  onChange={(e) => setNome(e.target.value)}
-                  placeholder="Introduza o seu nome completo"
-                  className="w-full rounded-lg border border-[#D1D5DB] bg-white pl-10 pr-4 h-12
-                   text-sm font-outfit text-gray-800 outline-none transition-colors
-                   focus:border-green-500"
-                />
-              </div>
+            <div className="relative">
+              <IconId className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="text" value={bi} onChange={(e) => setBi(e.target.value)}
+                placeholder="Nº do BI ou Passaporte"
+                className="w-full rounded-lg border border-[#D1D5DB] bg-white pl-10 pr-4 h-12 text-sm text-gray-800 outline-none focus:border-green-500"
+              />
             </div>
-
-            <div>
-              <label htmlFor="checkout-bi" className="block text-[13px] font-inter font-semibold mb-1.5 text-[#4B5563]">
-                Nº do BI ou Passaporte
-              </label>
-              <div className="relative">
-                <IconId className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  id="checkout-bi"
-                  type="text"
-                  value={bi}
-                  onChange={(e) => setBi(e.target.value)}
-                  placeholder="Ex: 001234567LA045"
-                  className="w-full rounded-lg border border-[#D1D5DB] bg-white pl-10 pr-4 h-12
-                   text-sm font-outfit text-gray-800 outline-none transition-colors
-                   focus:border-green-500"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="checkout-telefone" className="block text-[13px] font-inter font-semibold mb-1.5 text-[#4B5563]">
-                Telefone (Contacto de Viagem)
-              </label>
-              <div className="relative">
-                <IconPhone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  id="checkout-telefone"
-                  type="tel"
-                  value={telefone}
-                  onChange={(e) => setTelefone(e.target.value)}
-                  placeholder="Ex: 923 456 789"
-                  className="w-full rounded-lg border border-[#D1D5DB] bg-white pl-10 pr-4 h-12
-                   text-sm font-outfit text-gray-800 outline-none transition-colors
-                   focus:border-green-500"
-                />
-              </div>
+            <div className="relative">
+              <IconPhone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="tel" value={telefone} onChange={(e) => setTelefone(e.target.value)}
+                placeholder="Telefone de contacto"
+                className="w-full rounded-lg border border-[#D1D5DB] bg-white pl-10 pr-4 h-12 text-sm text-gray-800 outline-none focus:border-green-500"
+              />
             </div>
           </div>
         </div>
 
         <fieldset className="w-full max-w-[350px]">
-          <legend className="block text-[15px] font-bold text-[#111827] mb-3 font-outfit">
-            Método de Pagamento
-          </legend>
+          <legend className="block text-[15px] font-bold text-[#111827] mb-3">Método de Pagamento</legend>
           <button
             type="button"
-            aria-pressed={selectedPayment === 'mcx'}
-            onClick={() => setSelectedPayment('mcx')}
-            className={`w-full rounded-2xl border-2 bg-white transition-colors text-left ${
-              selectedPayment === 'mcx' ? 'border-[#1B7A3D]' : 'border-gray-200 hover:border-gray-300'
+            aria-pressed={method === 'multicaixa_express'}
+            onClick={() => setMethod('multicaixa_express')}
+            className={`w-full rounded-2xl border-2 bg-white text-left ${
+              method === 'multicaixa_express' ? 'border-[#1B7A3D]' : 'border-gray-200'
             }`}
           >
             <div className="flex items-center gap-3 px-4 py-4">
               <div className={`flex h-10 w-10 items-center justify-center rounded-full ${
-                selectedPayment === 'mcx' ? 'bg-[#1B7A3D]' : 'bg-gray-200'
+                method === 'multicaixa_express' ? 'bg-[#1B7A3D]' : 'bg-gray-200'
               }`}>
-                {selectedPayment === 'mcx'
-                  ? <IconCircleDot stroke={4} className="h-5 w-5 text-white" />
-                  : <IconCircleDot className="h-5 w-5 text-gray-400" />
-                }
+                <IconCircleDot className={`h-5 w-5 ${method === 'multicaixa_express' ? 'text-white' : 'text-gray-400'}`} />
               </div>
               <div className="flex flex-col">
-                <span className="text-sm font-bold text-[#111827] font-inter">Multicaixa Express (MCX)</span>
-                <span className="text-xs text-[#4B5563] font-normal font-inter">Pagamento rápido e seguro em Angola</span>
+                <span className="text-sm font-bold text-[#111827]">Multicaixa Express</span>
+                <span className="text-xs text-[#4B5563]">Recebe uma referência para pagar</span>
               </div>
             </div>
           </button>
         </fieldset>
-      </form>
+
+        <div className="w-full max-w-[350px] flex items-center gap-2 text-xs text-gray-400">
+          <IconUser className="size-4" />
+          A reserva fica associada à sua conta.
+        </div>
+      </main>
 
       <StickyFooter>
         <div className="flex justify-between w-full max-w-[350px]">
-          <span className="text-sm font-normal text-[#4B5563] font-inter">Total a pagar</span>
-          <span className="text-[22px] font-extrabold text-[#1B7A3D] font-inter">{schedule.price}</span>
+          <span className="text-sm text-[#4B5563]">Total a pagar</span>
+          <span className="text-[22px] font-extrabold text-[#1B7A3D]">{formatKz(amount)}</span>
         </div>
-        <GradientButton
-          type="submit"
-          form="checkout-form"
-          disabled={isDisabled}
-          className="max-w-[350px]"
-        >
-          Confirmar e Pagar
+        <GradientButton onClick={handleSubmit} disabled={!canSubmit} className="max-w-[350px]">
+          {initiating ? 'A processar...' : 'Confirmar e Pagar'}
         </GradientButton>
       </StickyFooter>
     </div>

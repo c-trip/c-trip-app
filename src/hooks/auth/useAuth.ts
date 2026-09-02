@@ -8,6 +8,7 @@ export function useAuth() {
     hasBootstrapped,
     bootstrap,
     login,
+    loginWithGoogle,
     register,
     logout,
   } = useAuthStore()
@@ -19,6 +20,7 @@ export function useAuth() {
     hasBootstrapped,
     bootstrap,
     login,
+    loginWithGoogle,
     register,
     logout,
   }

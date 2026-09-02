@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
-import { Navigate, Outlet, useLocation } from 'react-router'
+import { Outlet, useLocation } from 'react-router'
 import { useAuth } from '@/hooks/auth/useAuth'
+import AuthRequired from './AuthRequired'
 
 export default function ProtectedRoute() {
   const location = useLocation()
@@ -19,7 +20,7 @@ export default function ProtectedRoute() {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/auth/login" replace state={{ from: location.pathname + location.search }} />
+    return <AuthRequired from={location.pathname + location.search} />
   }
 
   return <Outlet />

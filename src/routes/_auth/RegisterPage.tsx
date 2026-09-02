@@ -1,10 +1,14 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { Link, useLocation, useNavigate } from 'react-router'
 import { IconUser, IconMail, IconLock, IconEye, IconEyeOff } from '@tabler/icons-react'
 import { useRegister } from '@/hooks/auth/useRegister'
+import { useGoogleSignIn } from '@/hooks/auth/useGoogleSignIn'
 
 export default function RegisterPage() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const from = (location.state as { from?: string } | null)?.from
+  const google = useGoogleSignIn(() => navigate(from || '/search'))
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -24,7 +28,7 @@ export default function RegisterPage() {
   const handleSubmit = async () => {
     if (validate()) {
       const ok = await submit({ name, email, password })
-      if (ok) navigate('/auth/login')
+      if (ok) navigate('/auth/login', { state: from ? { from } : undefined })
     }
   }
 
@@ -126,31 +130,44 @@ export default function RegisterPage() {
             <p className="text-red-500 text-xs mt-4 text-center font-outfit">{error}</p>
           )}
 
-          <div className="flex items-center gap-3 w-full mt-6">
-            <div className="h-px flex-1 bg-gray-300" />
-            <span className="text-sm text-gray-400 whitespace-nowrap">ou continuar com</span>
-            <div className="h-px flex-1 bg-gray-300" />
-          </div>
+          {google.isAvailable && (
+            <>
+              <div className="flex items-center gap-3 w-full mt-6">
+                <div className="h-px flex-1 bg-gray-300" />
+                <span className="text-sm text-gray-400 whitespace-nowrap">ou continuar com</span>
+                <div className="h-px flex-1 bg-gray-300" />
+              </div>
 
-          <button
-            type="button"
-            style={{
-              height: 48,
-              borderRadius: 14,
-              border: '1.5px solid #3A6356',
-              background: 'transparent',
-              fontFamily: "'Outfit', sans-serif",
-              fontWeight: 700,
-            }}
-            className="w-full mt-6 px-6 text-base text-[#3A6356]
-             transition-colors hover:bg-[#3A6356]/5 active:bg-[#3A6356]/10"
-          >
-            Entrar com Google
-          </button>
+              <button
+                type="button"
+                onClick={() => void google.signIn()}
+                disabled={google.loading}
+                style={{
+                  height: 48,
+                  borderRadius: 14,
+                  border: '1.5px solid #3A6356',
+                  background: 'transparent',
+                  fontFamily: "'Outfit', sans-serif",
+                  fontWeight: 700,
+                }}
+                className="w-full mt-6 px-6 text-base text-[#3A6356]
+                 transition-colors hover:bg-[#3A6356]/5 active:bg-[#3A6356]/10 disabled:opacity-50"
+              >
+                {google.loading ? 'A entrar...' : 'Continuar com Google'}
+              </button>
+              {google.error && (
+                <p className="text-red-500 text-xs mt-2 text-center font-outfit">{google.error}</p>
+              )}
+            </>
+          )}
         </section>
         <p className="text-sm text-gray-500 font-outfit mt-6">
           Já tem conta?{' '}
-          <Link to="/auth/login" className="text-[#3A6356] font-semibold underline">
+          <Link
+            to="/auth/login"
+            state={from ? { from } : undefined}
+            className="text-[#3A6356] font-semibold underline"
+          >
             Entrar
           </Link>
         </p>

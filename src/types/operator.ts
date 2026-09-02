@@ -1,4 +1,4 @@
-export type OperatorPaymentMethod = 'cash' | 'mcx'
+export type OperatorPaymentMethod = 'cash' | 'pos' | 'multicaixa_express'
 
 export type ScheduleStatus = 'scheduled' | 'boarding' | 'departed' | string
 

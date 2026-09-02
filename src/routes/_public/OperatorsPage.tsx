@@ -1,15 +1,13 @@
-import { useState, useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router'
-import { IconBus } from '@tabler/icons-react'
-import OperatorCard from '../../components/OperatorCard'
-import { getOperatorsByRoute } from '../../data/mockOperators'
-import { provincias } from '../../data/provincias'
-import type { Operator } from '@/types'
 import PageHeader from '@/components/PageHeader'
+import TripList from '@/components/TripList'
+import { useSearchTrips } from '@/hooks/catalog/useCatalog'
+import { useBookingFlowStore } from '@/stores/bookingFlowStore'
+import type { SearchResultItem } from '@/types/catalog'
 
 const TABS = [
   { value: 'todos', label: 'Todos' },
-  { value: 'rapido', label: 'Mais rápido' },
   { value: 'barato', label: 'Mais barato' },
   { value: 'manha', label: 'Manhã' },
   { value: 'tarde', label: 'Tarde' },
@@ -17,79 +15,69 @@ const TABS = [
 
 type TabValue = (typeof TABS)[number]['value']
 
-function parseDurationToMinutes(duration: string): number {
-  let total = 0
-  const hMatch = duration.match(/(\d+)\s*h/)
-  const mMatch = duration.match(/(\d+)\s*min/)
-  if (hMatch) total += parseInt(hMatch[1], 10) * 60
-  if (mMatch) total += parseInt(mMatch[1], 10)
-  return total
-}
-
-function parsePrice(price: string): number {
-  return parseInt(price.replace(/\D/g, ''), 10)
-}
-
 function parseHour(time: string): number {
-  return parseInt(time.split(':')[0], 10)
+  return parseInt(time.split(':')[0], 10) || 0
 }
 
-function formatSubtitle(date: string, passengers: number): string {
-  const d = new Date(`${date}T12:00:00`)
-  if (Number.isNaN(d.getTime())) return 'Pesquisa de viagens'
-  const months = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
-  const label = `${d.getDate()} ${months[d.getMonth()]}`
-  return `${label}, ${passengers === 1 ? '1 passageiro' : `${passengers} passageiros`}`
-}
-
-function filterOperators(operators: Operator[], tab: TabValue): Operator[] {
-  const sorted = [...operators]
+function applyTab(items: SearchResultItem[], tab: TabValue): SearchResultItem[] {
+  const list = [...items]
   switch (tab) {
-    case 'rapido':
-      return sorted.sort(
-        (a, b) => parseDurationToMinutes(a.duration) - parseDurationToMinutes(b.duration),
-      )
     case 'barato':
-      return sorted.sort((a, b) => parsePrice(a.price) - parsePrice(b.price))
+      return list.sort((a, b) => a.price - b.price)
     case 'manha':
-      return sorted.filter((op) => parseHour(op.departureTime) < 12)
+      return list.filter((i) => parseHour(i.departure_time) < 12)
     case 'tarde':
-      return sorted.filter((op) => parseHour(op.departureTime) >= 12)
+      return list.filter((i) => parseHour(i.departure_time) >= 12)
     default:
-      return sorted
+      return list.sort((a, b) => a.departure_time.localeCompare(b.departure_time))
   }
+}
+
+function formatSubtitle(date: string | null, count: number): string {
+  const base = count === 1 ? '1 viagem' : `${count} viagens`
+  if (!date) return base
+  const d = new Date(`${date}T12:00:00`)
+  if (Number.isNaN(d.getTime())) return base
+  const months = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
+  return `${d.getDate()} ${months[d.getMonth()]} · ${base}`
 }
 
 export default function OperatorsPage() {
   const { origin, destination } = useParams<{ origin: string; destination?: string }>()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
+  const setTrip = useBookingFlowStore((s) => s.setTrip)
   const [activeTab, setActiveTab] = useState<TabValue>('todos')
 
-  const originFormatted = origin
-    ? origin.charAt(0).toUpperCase() + origin.slice(1)
-    : ''
-  const destinationFormatted = destination
-    ? destination.charAt(0).toUpperCase() + destination.slice(1)
-    : ''
+  const date = searchParams.get('date') ?? undefined
+  const originName = origin ? decodeURIComponent(origin) : undefined
+  const destinationName = destination ? decodeURIComponent(destination) : undefined
 
-  const originProvince = provincias.find((p) => p.id === origin)
-  const destinationProvince = provincias.find((p) => p.id === destination)
+  const { data, isLoading, error, refetch } = useSearchTrips({
+    origin: originName,
+    destination: destinationName,
+    date,
+  })
 
-  const title = destinationProvince
-    ? `${originProvince?.nome ?? originFormatted} → ${destinationProvince.nome}`
-    : originProvince?.nome ?? originFormatted
+  const results = useMemo(() => data ?? [], [data])
+  const filtered = useMemo(() => applyTab(results, activeTab), [results, activeTab])
 
-  const allOperators = getOperatorsByRoute(originFormatted, destinationFormatted)
-  const filteredOperators = useMemo(
-    () => filterOperators(allOperators, activeTab),
-    [allOperators, activeTab],
-  )
+  const title = destinationName ? `${originName} → ${destinationName}` : originName ?? 'Viagens'
 
-  const subtitle = formatSubtitle(
-    searchParams.get('date') ?? '2026-08-15',
-    parseInt(searchParams.get('passengers') ?? '1', 10),
-  )
+  const handleSelect = (item: SearchResultItem) => {
+    setTrip({
+      scheduleId: item.schedule_id,
+      routeId: item.route_id,
+      company: item.company,
+      origin: item.origin,
+      destination: item.destination,
+      departureTime: item.departure_time,
+      departureDate: date,
+      price: item.price,
+      availableSeats: item.available_seats,
+    })
+    navigate(`/schedules/${item.schedule_id}`)
+  }
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] font-outfit">
@@ -98,9 +86,8 @@ export default function OperatorsPage() {
           className="static"
           onBack={() => navigate(-1)}
           title={title}
-          subtitle={subtitle}
+          subtitle={formatSubtitle(date ?? null, results.length)}
         />
-
         <div className="flex gap-2 overflow-x-auto px-5 py-3 bg-gray-50/80 backdrop-blur-xl scrollbar-none">
           {TABS.map((tab) => (
             <button
@@ -120,29 +107,14 @@ export default function OperatorsPage() {
       </div>
 
       <main className="px-5 py-5">
-        {filteredOperators.length > 0 ? (
-          <div className="flex flex-col gap-4">
-            {filteredOperators.map((operator) => (
-              <OperatorCard
-                key={operator.id}
-                operator={operator}
-                origin={originProvince?.nome ?? originFormatted}
-                destination={destinationProvince?.nome ?? destinationFormatted}
-                onSelect={(op) => navigate(`/schedules/${op.id}`)}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
-              <IconBus className="h-8 w-8 text-gray-400" />
-            </div>
-            <h2 className="text-lg font-semibold text-gray-900">Nenhuma operadora encontrada</h2>
-            <p className="mt-1 text-sm text-gray-500">
-              Nao ha operadores disponiveis para esta rota neste momento.
-            </p>
-          </div>
-        )}
+        <TripList
+          trips={filtered}
+          isLoading={isLoading}
+          error={error}
+          onRetry={() => void refetch()}
+          onSelect={handleSelect}
+          emptyLabel="Nenhuma viagem encontrada"
+        />
       </main>
     </div>
   )
