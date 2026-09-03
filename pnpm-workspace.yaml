@@ -1,0 +1,6 @@
+# Pacotes cujos scripts de build o pnpm pode executar (pnpm v10+ bloqueia por
+# omissão). Necessário para o deploy da Cloudflare (workerd) e para o build.
+onlyBuiltDependencies:
+  - esbuild
+  - workerd
+  - '@tailwindcss/oxide'
