@@ -1,0 +1,14 @@
+{
+  // Deploy estático (SPA) via `wrangler deploy` — serve o build do Vite em ./dist.
+  // A presença deste ficheiro impede o wrangler de arrancar o wizard de setup
+  // interativo no CI (que era o que fazia o deploy falhar).
+  "name": "c-trip-app",
+  "compatibility_date": "2026-09-03",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application"
+  },
+  "observability": {
+    "enabled": true
+  }
+}
