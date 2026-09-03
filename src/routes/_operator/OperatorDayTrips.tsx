@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router'
 import { IconMapPin, IconClock, IconChevronRight, IconRefresh, IconCash } from '@tabler/icons-react'
 import { useOperatorSchedules } from '@/hooks/operator/useOperatorSchedules'
 import { useMySales } from '@/hooks/operator/useBoarding'
+import { useAuth } from '@/hooks/auth/useAuth'
 import type { OperatorSchedule } from '@/types/operator'
 import { formatKz } from '@/lib/format'
 import { Card, CardContent } from '@/components/ui/card'
@@ -11,6 +12,13 @@ function formatToday(): string {
   const now = new Date()
   const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
   return `hoje, ${now.getDate()} ${months[now.getMonth()]}`
+}
+
+function greeting(): string {
+  const h = new Date().getHours()
+  if (h < 12) return 'Bom dia'
+  if (h < 19) return 'Boa tarde'
+  return 'Boa noite'
 }
 
 const STATUS_STYLE: Record<string, { bg: string; text: string; label: string }> = {
@@ -26,8 +34,11 @@ function statusStyle(status: string) {
 
 export default function OperatorDayTrips() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const { schedules, isLoading, error, refetch } = useOperatorSchedules()
   const mySales = useMySales()
+
+  const firstName = user?.name?.trim().split(/\s+/)[0]
 
   const openManifest = (schedule: OperatorSchedule) => {
     navigate(`/operator/manifest?schedule=${schedule.schedule_id}`)
@@ -35,28 +46,40 @@ export default function OperatorDayTrips() {
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] font-outfit">
-      <header
-        className="px-5 pt-10 flex flex-col gap-2 rounded-b-3xl h-[186px]"
-        style={{ background: 'linear-gradient(280deg, #2E8B57 0%, #1B7A3D 40%, #0B2F1A 100%)' }}
-      >
-        <div className="flex items-center justify-between text-white">
-          <div className="flex items-center gap-1">
-            <IconMapPin className="size-4" />
-            <span className="text-[13px] font-semibold">Terminal de Viana</span>
-          </div>
-          <div className='bg-[#FFFFFF33] py-1.5 px-2.5 rounded-4xl flex items-center justify-center
-          gap-1 border border-[#FFFFFF1F]'>
-            <IconClock className='size-3' />
-            <span className="text-xs font-semibold opacity-90">{formatToday()}</span>
-          </div>
-        </div>
+      <header className="relative overflow-hidden rounded-b-3xl px-5 pt-10 pb-6 min-h-[200px]">
+        {/* fundo sofisticado: base verde profunda + brilho suave + halos desfocados */}
+        <div
+          className="absolute inset-0"
+          style={{ background: 'linear-gradient(165deg, #1B7A3D 0%, #0E3D20 100%)' }}
+        />
+        <div
+          className="absolute inset-0"
+          style={{ background: 'radial-gradient(120% 80% at 88% -10%, rgba(74,222,128,0.35), transparent 60%)' }}
+        />
+        <div className="pointer-events-none absolute -right-16 -top-24 h-56 w-56 rounded-full bg-white/10 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-emerald-300/15 blur-3xl" />
 
-        <div className="mt-2">
-          <h1 className="text-[34px] font-extrabold text-white">Painel do Dia</h1>
+        <div className="relative flex flex-col gap-2 text-white">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1">
+              <IconMapPin className="size-4" />
+              <span className="text-[13px] font-semibold">Terminal de Viana</span>
+            </div>
+            <div className="flex items-center justify-center gap-1 rounded-full border border-white/15 bg-white/15 px-2.5 py-1.5 backdrop-blur-sm">
+              <IconClock className="size-3" />
+              <span className="text-xs font-semibold opacity-90">{formatToday()}</span>
+            </div>
+          </div>
 
-          <div className="flex items-end justify-between gap-3 mb-6">
-            <span className="text-sm text-[#FFFFFFB3] whitespace-nowrap">Visão geral das viagens de hoje</span>
-            <div className="h-px w-[100px] bg-[#FFFFFFB3]" />
+          <div className="mt-3">
+            <p className="text-sm font-medium text-white/75">
+              {greeting()}{firstName ? `, ${firstName}` : ''}
+            </p>
+            <h1 className="text-[32px] font-extrabold leading-tight">Painel do Dia</h1>
+            <div className="mt-1 flex items-end justify-between gap-3">
+              <span className="text-sm text-white/70 whitespace-nowrap">Visão geral das viagens de hoje</span>
+              <div className="h-px w-[100px] bg-white/40" />
+            </div>
           </div>
         </div>
       </header>
@@ -146,7 +169,7 @@ export default function OperatorDayTrips() {
                         {style.label}
                       </span>
                     </div>
-                    <div className='flex items-center gap-6 justify-baseline mb-2'>
+                    <div className='flex items-center gap-6 mb-2'>
                       <div className='flex flex-col'>
                         <span className='text-[11px] text-[#4B5563] font-medium'>Hora</span>
                         <p className='text-[14px] text-[#111827] font-bold'>{schedule.departure_time}</p>
