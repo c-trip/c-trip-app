@@ -7,6 +7,8 @@ import {
   IconTicketFilled,
   IconCalendar,
   IconCalendarFilled,
+  IconUser,
+  IconUserFilled,
 } from '@tabler/icons-react'
 
 const tabs = [
@@ -14,6 +16,7 @@ const tabs = [
   { path: '/operator/scan', label: 'Scanner', icon: IconScan, iconActive: IconScan },
   { path: '/operator/walkin', label: 'Venda', icon: IconTicket, iconActive: IconTicketFilled },
   { path: '/operator/calendar', label: 'Calendário', icon: IconCalendar, iconActive: IconCalendarFilled },
+  { path: '/operator/profile', label: 'Perfil', icon: IconUser, iconActive: IconUserFilled },
 ]
 
 export default function OperatorBottomTabBar() {
@@ -37,10 +40,10 @@ export default function OperatorBottomTabBar() {
               key={tab.path}
               onClick={() => navigate(tab.path)}
               aria-current={active ? 'page' : undefined}
-              className="flex flex-col items-center gap-1 rounded-full py-1 px-3 transition-colors"
+              className="flex flex-col items-center gap-1 rounded-full py-1 px-2 transition-colors"
             >
               <Icon className={`h-6 w-6 ${active ? 'text-[#1B7A3D]' : 'text-[#9CA3AF]'}`} />
-              <span className={`font-inter text-[11px] font-semibold ${active ? 'text-[#1B7A3D]' : 'text-[#9CA3AF]'}`}>
+              <span className={`font-inter text-[10px] font-semibold whitespace-nowrap ${active ? 'text-[#1B7A3D]' : 'text-[#9CA3AF]'}`}>
                 {tab.label}
               </span>
             </button>
