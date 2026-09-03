@@ -22,21 +22,19 @@ interface ValidateResponse {
 }
 
 /**
- * Valida o QR no servidor e, se permitido, regista o embarque.
+ * POST /boarding/scan — valida o QR e regista o embarque num só passo.
+ * Devolve `boarded`/`allowed` (acabou de embarcar), `already_boarded`, ou `invalid`.
  * Lança em caso de erro de rede/servidor (tratado pelo caller como estado "error").
  */
-async function validateAndRecord(qrHash: string): Promise<ValidateResponse> {
-  const res = await boardingApi.validateQr({ qr_hash: qrHash });
-  const mapped: ValidateResponse = {
-    status: res.status === "allowed" || res.status === "already_boarded" ? res.status : "invalid",
+async function scanBoarding(qrHash: string): Promise<ValidateResponse> {
+  const res = await boardingApi.scan({ qr_hash: qrHash });
+  const ok = res.status === "boarded" || res.status === "allowed";
+  return {
+    status: ok ? "allowed" : res.status === "already_boarded" ? "already_boarded" : "invalid",
     passengerName: res.passenger,
     seat: res.seat_number,
     route: res.destination,
   };
-  if (mapped.status === "allowed") {
-    await boardingApi.recordBoarding({ qr_hash: qrHash });
-  }
-  return mapped;
 }
 
 export default function OperatorScan() {
@@ -125,7 +123,7 @@ export default function OperatorScan() {
           await cleanupScanner();
           setScanState("validating");
           try {
-            const result = await validateAndRecord(decodedText);
+            const result = await scanBoarding(decodedText);
             if (cancelledRef.current) return;
             setScannedData(result);
             if (result.status === "allowed") {

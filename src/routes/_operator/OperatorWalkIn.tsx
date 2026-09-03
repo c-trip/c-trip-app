@@ -13,12 +13,18 @@ import { gooeyToast } from "goey-toast";
 import { useOperatorSchedules } from "@/hooks/operator/useOperatorSchedules";
 import { useManifest } from "@/hooks/operator/useManifest";
 import { useSellTicket } from "@/hooks/operator/useSellTicket";
-import type { OperatorSchedule, SellTicketResponse } from "@/types/operator";
+import { useWalkInBoarding } from "@/hooks/operator/useBoarding";
+import type { OperatorSchedule, SellTicketResponse, WalkInBoardingResponse } from "@/types/operator";
+import { formatKz } from "@/lib/format";
 import RouteDisplay from "@/components/RouteDisplay";
 import StickyFooter from "@/components/StickyFooter";
 import GradientButton from "@/components/GradientButton";
 
+type Mode = "ticket" | "walkin";
 type SeatStatus = "available" | "occupied";
+type Result =
+  | { kind: "ticket"; data: SellTicketResponse }
+  | { kind: "walkin"; data: WalkInBoardingResponse };
 
 function SeatButton({
   label,
@@ -64,24 +70,26 @@ interface WalkInForm {
   name: string;
   phone: string;
   idDoc: string;
-  price: string;
   seatNumber: string;
 }
 
-const EMPTY_FORM: WalkInForm = { name: "", phone: "", idDoc: "", price: "", seatNumber: "" };
+const EMPTY_FORM: WalkInForm = { name: "", phone: "", idDoc: "", seatNumber: "" };
 
 export default function OperatorWalkIn() {
   const navigate = useNavigate();
   const { schedules } = useOperatorSchedules();
   const sellable = schedules.filter((s) => s.status !== "departed" && s.status !== "cancelled");
 
+  const [mode, setMode] = useState<Mode>("ticket");
   const [selectedSchedule, setSelectedSchedule] = useState<OperatorSchedule | null>(null);
   const [showSchedulePicker, setShowSchedulePicker] = useState(false);
   const [form, setForm] = useState<WalkInForm>(EMPTY_FORM);
-  const [result, setResult] = useState<SellTicketResponse | null>(null);
+  const [result, setResult] = useState<Result | null>(null);
 
   const { manifest } = useManifest(selectedSchedule?.schedule_id);
-  const { sell, isLoading: submitting } = useSellTicket();
+  const { sell, isLoading: selling } = useSellTicket();
+  const { walkIn, isLoading: boarding } = useWalkInBoarding();
+  const submitting = selling || boarding;
 
   const occupiedSet = useMemo(
     () => new Set(manifest.filter((m) => m.status !== "cancelled").map((m) => m.seat)),
@@ -97,7 +105,7 @@ export default function OperatorWalkIn() {
   const selectedSeat =
     Number.isInteger(seatNumber) && seatNumber >= 1 ? seatLabel(seatNumber) : null;
   const totalSeats = selectedSchedule?.total_seats ?? 0;
-  const price = Number(form.price);
+  const price = selectedSchedule?.price ?? 0;
 
   const handleSeatClick = (seat: number) => {
     if (occupiedSet.has(seat)) {
@@ -114,22 +122,41 @@ export default function OperatorWalkIn() {
     seatNumber >= 1 &&
     seatNumber <= totalSeats &&
     !occupiedSet.has(seatNumber) &&
-    Number.isFinite(price) &&
     price > 0;
 
   const handleSubmit = async () => {
     if (!isValid || submitting || !selectedSchedule) return;
-    const res = await sell({
+
+    const common = {
       schedule_id: selectedSchedule.schedule_id,
       seat_number: seatNumber,
       passenger_name: form.name.trim(),
+      passenger_phone: form.phone.trim() || undefined,
+      passenger_id_doc: form.idDoc.trim() || undefined,
+      total_price: price,
+    };
+
+    if (mode === "walkin") {
+      const res = await walkIn({ ...common, payment_method: "cash" });
+      if (res) {
+        setResult({ kind: "walkin", data: res });
+        gooeyToast.success("Embarque registado", {
+          description: `${res.passenger_name} — Lugar ${res.seat_number}`,
+        });
+      } else {
+        gooeyToast.error("Erro no embarque", { description: "Verifique os dados e tente novamente." });
+      }
+      return;
+    }
+
+    const res = await sell({
+      ...common,
       passenger_phone: form.phone.trim(),
       passenger_id_doc: form.idDoc.trim(),
-      total_price: price,
       payment_method: "cash",
     });
     if (res) {
-      setResult(res);
+      setResult({ kind: "ticket", data: res });
       gooeyToast.success("Bilhete vendido", {
         description: `${res.passenger_name} — Lugar ${res.seat_number}`,
       });
@@ -144,6 +171,7 @@ export default function OperatorWalkIn() {
   };
 
   if (result) {
+    const p = result.data;
     return (
       <div className="min-h-screen bg-[#F9FAFB] font-outfit">
         <header className="sticky top-0 z-50 bg-[#FFFFFF] px-5 pt-3 pb-4 border-b border-gray-200">
@@ -152,7 +180,9 @@ export default function OperatorWalkIn() {
               className="p-1 rounded-full hover:bg-gray-100">
               <IconArrowLeft className="size-5 text-gray-600" />
             </button>
-            <h1 className="text-[22px] font-bold text-[#111827] text-center flex-1">Venda ao Balcão</h1>
+            <h1 className="text-[22px] font-bold text-[#111827] text-center flex-1">
+              {result.kind === "walkin" ? "Embarque à Porta" : "Venda ao Balcão"}
+            </h1>
           </div>
         </header>
 
@@ -161,26 +191,32 @@ export default function OperatorWalkIn() {
             <IconCheck className="size-10 text-white" strokeWidth={3} />
           </div>
           <div className="text-center">
-            <p className="text-[#111827] font-bold text-lg">Bilhete vendido com sucesso</p>
+            <p className="text-[#111827] font-bold text-lg">
+              {result.kind === "walkin" ? "Passageiro embarcado" : "Bilhete vendido com sucesso"}
+            </p>
             <p className="text-gray-500 text-sm mt-1">
-              {result.passenger_name} — Lugar {result.seat_number}
+              {p.passenger_name} — Lugar {p.seat_number}
             </p>
-            <p className="text-gray-400 text-xs mt-1">
-              <RouteDisplay origin={result.origin} destination={result.destination} /> ·{" "}
-              {result.departure_time}
-            </p>
+            {result.kind === "ticket" && (
+              <p className="text-gray-400 text-xs mt-1">
+                <RouteDisplay origin={result.data.origin} destination={result.data.destination} /> ·{" "}
+                {result.data.departure_time}
+              </p>
+            )}
           </div>
 
-          {result.qr_image && (
-            <img src={result.qr_image} alt="QR code do bilhete"
-              className="size-48 rounded-xl border border-gray-200 bg-white p-2" />
+          {result.kind === "ticket" && result.data.qr_image && (
+            <>
+              <img src={result.data.qr_image} alt="QR code do bilhete"
+                className="size-48 rounded-xl border border-gray-200 bg-white p-2" />
+              <p className="text-[11px] text-gray-400 break-all max-w-xs text-center">{result.data.qr_hash}</p>
+            </>
           )}
-          <p className="text-[11px] text-gray-400 break-all max-w-xs text-center">{result.qr_hash}</p>
 
           <div className="flex flex-col gap-3 w-full max-w-xs">
             <button type="button" onClick={handleReset}
               className="w-full py-3 bg-[#1B7A3D] text-white font-semibold rounded-xl hover:bg-[#15632F] transition-colors">
-              Nova venda
+              Nova operação
             </button>
             <button type="button" onClick={() => navigate("/operator")}
               className="w-full py-3 bg-white text-[#111827] border border-gray-200 font-semibold rounded-xl hover:bg-gray-50 transition-colors">
@@ -202,12 +238,30 @@ export default function OperatorWalkIn() {
           </button>
           <div className="flex flex-col">
             <h1 className="text-[22px] font-bold text-[#111827]">Venda ao Balcão</h1>
-            <span className="text-[13px] text-[#4B5563] font-normal">Emissão de bilhete local</span>
+            <span className="text-[13px] text-[#4B5563] font-normal">Bilhete local ou embarque à porta</span>
           </div>
         </div>
       </header>
 
       <main className="px-5 py-5 pb-44">
+        <div className="mb-6 flex gap-2 rounded-xl bg-gray-100 p-1">
+          {([
+            { key: "ticket", label: "Emitir bilhete (QR)" },
+            { key: "walkin", label: "Embarque à porta" },
+          ] as const).map((opt) => (
+            <button
+              key={opt.key}
+              type="button"
+              onClick={() => setMode(opt.key)}
+              className={`flex-1 h-9 rounded-lg text-xs font-semibold transition-colors ${
+                mode === opt.key ? "bg-white text-[#1B7A3D] shadow-sm" : "text-[#6B7280]"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+
         <section className="mb-6">
           <label className="block text-xs font-bold text-[#6B7280] uppercase tracking-wide mb-2">Viagem</label>
           <button
@@ -225,7 +279,7 @@ export default function OperatorWalkIn() {
                     <RouteDisplay origin={selectedSchedule.origin} destination={selectedSchedule.destination} />
                   </p>
                   <p className="text-[11px] text-gray-500">
-                    {selectedSchedule.departure_time} · {selectedSchedule.available_seats} lugares livres
+                    {selectedSchedule.departure_time} · {formatKz(selectedSchedule.price)} · {selectedSchedule.available_seats} livres
                   </p>
                 </div>
               </div>
@@ -267,7 +321,7 @@ export default function OperatorWalkIn() {
                       <p className="text-sm font-semibold text-[#111827]">
                         <RouteDisplay origin={s.origin} destination={s.destination} />
                       </p>
-                      <p className="text-[11px] text-gray-500">{s.departure_time}</p>
+                      <p className="text-[11px] text-gray-500">{s.departure_time} · {formatKz(s.price)}</p>
                     </div>
                     <span className="text-xs font-semibold text-[#1B7A3D]">{s.available_seats} disp.</span>
                   </button>
@@ -345,18 +399,6 @@ export default function OperatorWalkIn() {
               />
             </div>
           </div>
-
-          <div>
-            <label htmlFor="walkin-price" className="block text-xs font-bold text-[#6B7280] uppercase tracking-wide mb-2">
-              Preço (Kz)
-            </label>
-            <input
-              id="walkin-price" type="number" inputMode="numeric" min={0} value={form.price}
-              onChange={(e) => setField("price", e.target.value)}
-              placeholder="Ex: 3500"
-              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-outfit placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1B7A3D]/30 focus:border-[#1B7A3D]"
-            />
-          </div>
         </section>
       </main>
 
@@ -364,7 +406,7 @@ export default function OperatorWalkIn() {
         <div className="flex justify-between gap-1 items-center w-full">
           <p className="text-sm text-[#4B5563] font-normal font-inter">Valor a pagar (dinheiro)</p>
           <p className="text-[#1B7A3D] text-[22px] font-extrabold font-outfit">
-            {price > 0 ? `${price.toLocaleString("pt-PT")} Kz` : "—"}
+            {price > 0 ? formatKz(price) : "—"}
           </p>
         </div>
         <GradientButton onClick={handleSubmit} disabled={!isValid || submitting}>
@@ -373,6 +415,8 @@ export default function OperatorWalkIn() {
               <span className="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               A processar...
             </span>
+          ) : mode === "walkin" ? (
+            "Registar embarque à porta"
           ) : (
             "Emitir e imprimir bilhete"
           )}
