@@ -7,7 +7,9 @@ import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: process.env.NODE_ENV === 'production' ? '/c-trip-app/' : '/',
+  // Servido na raiz do domínio (Cloudflare / Vercel). Para GitHub Pages
+  // project site, definir VITE_BASE="/c-trip-app/" no build.
+  base: process.env.VITE_BASE ?? '/',
   plugins: [
     react(),
     babel({ presets: [reactCompilerPreset()] }),
