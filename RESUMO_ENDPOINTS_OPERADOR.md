@@ -10,8 +10,8 @@
 
 | Estado | Nº |
 | --- | :-: |
-| ✅ Implementado | 16 |
-| 🟡 Implementado mas por completar | 1 |
+| ✅ Implementado | 17 |
+| 🟡 Implementado mas por completar | 0 |
 | 🔴 Não consumido | 0 |
 | **Total no âmbito** | **17** |
 
@@ -36,7 +36,9 @@
 | `POST` | `/boarding/walk-in` | `OperatorWalkIn` (modo **"Embarque à porta"**) → `useWalkInBoarding` | venda + embarque imediato, sem QR |
 | `POST` | `/boarding/qr/reprint` | `OperatorReprint` → `useReprintQr` | lista mostra **nomes reais**; pesquisa por nome ou lugar |
 | `GET` | `/boarding/manifest` | `OperatorManifest` (+ lugares ocupados no `WalkIn`/`Reprint`) | `ManifestItem` atualizado (`passenger`, `phone`, `boarded`, `boarded_at`); serviço aceita `status`; pesquisa por nome |
-| `POST` | `/boarding/scan` | `OperatorScan` → `boardingApi.scan` | valida **+ regista** num passo (substituiu `validate` + `record`) |
+| `POST` | `/boarding/scan` | `OperatorScan` — modo **"Embarcar"** → `boardingApi.scan` | valida **+ regista** num passo |
+| `POST` | `/boarding/validate` | `OperatorScan` — modo **"Só verificar"** → `boardingApi.validateQr` | só verifica (não regista) |
+| `POST` | `/boarding/record` | `OperatorScan` — botão **"Registar embarque"** no modo "Só verificar" → `boardingApi.recordBoarding` | regista um QR já verificado (fluxo em 2 passos) |
 | `POST` | `/boarding/board/{booking_id}` | `OperatorManifest` — botão **"Embarcar"** por linha (`useBoardFromManifest`) | embarcar sem QR |
 | `GET` | `/boarding/summary` | `OperatorManifest` — painel de resumo (vendidos / embarcados / no-shows / walk-ins / receita) (`useBoardingSummary`) | — |
 
@@ -50,9 +52,9 @@
 
 ## 🟡 Implementado mas por completar
 
-| Método | Endpoint | Estado |
-| --- | --- | --- |
-| `POST` | `/boarding/validate` + `POST /boarding/record` | Já não são usados — `OperatorScan` passou a usar `/boarding/scan` (1 passo). Os hooks `useValidateQr` / `useRecordBoarding` ficaram **código morto**; manter só se for preciso um fluxo de "validar sem registar" (ex.: pré-verificação antes do embarque). |
+Nada pendente. O `OperatorScan` passou a ter dois modos: **"Embarcar"** (`/boarding/scan`,
+1 passo) e **"Só verificar"** (`/boarding/validate` → botão "Registar embarque" =
+`/boarding/record`). Os hooks `useValidateQr` / `useRecordBoarding` (código morto) foram removidos.
 
 ---
 
