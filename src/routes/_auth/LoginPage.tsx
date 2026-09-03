@@ -2,15 +2,18 @@ import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
 import { IconMail, IconLock, IconEye, IconEyeOff } from '@tabler/icons-react'
 import { useLogin } from '@/hooks/auth/useLogin'
+import { useGoogleSignIn } from '@/hooks/auth/useGoogleSignIn'
 
 export default function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
+  const from = (location.state as { from?: string } | null)?.from
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({})
   const { loading, error, submit } = useLogin()
+  const google = useGoogleSignIn(() => navigate(from || '/search'))
 
   const validate = () => {
     const newErrors: { email?: string; password?: string } = {}
@@ -23,10 +26,7 @@ export default function LoginPage() {
   const handleSubmit = async () => {
     if (validate()) {
       const ok = await submit(email, password)
-      if (ok) {
-        const from = (location.state as { from?: string } | null)?.from
-        navigate(from || '/search')
-      }
+      if (ok) navigate(from || '/search')
     }
   }
 
@@ -111,31 +111,44 @@ export default function LoginPage() {
             <p className="text-red-500 text-xs mt-4 text-center font-outfit">{error}</p>
           )}
 
-          <div className="flex items-center gap-3 w-full mt-6">
-            <div className="h-px flex-1 bg-gray-300" />
-            <span className="text-sm text-gray-400 whitespace-nowrap">ou continuar com</span>
-            <div className="h-px flex-1 bg-gray-300" />
-          </div>
+          {google.isAvailable && (
+            <>
+              <div className="flex items-center gap-3 w-full mt-6">
+                <div className="h-px flex-1 bg-gray-300" />
+                <span className="text-sm text-gray-400 whitespace-nowrap">ou continuar com</span>
+                <div className="h-px flex-1 bg-gray-300" />
+              </div>
 
-          <button
-            type="button"
-            style={{
-              height: 48,
-              borderRadius: 14,
-              border: '1.5px solid #3A6356',
-              background: 'transparent',
-              fontFamily: "'Outfit', sans-serif",
-              fontWeight: 700,
-            }}
-            className="w-full mt-6 px-6 text-base text-[#3A6356]
-             transition-colors hover:bg-[#3A6356]/5 active:bg-[#3A6356]/10"
-          >
-            Entrar com Google
-          </button>
+              <button
+                type="button"
+                onClick={() => void google.signIn()}
+                disabled={google.loading}
+                style={{
+                  height: 48,
+                  borderRadius: 14,
+                  border: '1.5px solid #3A6356',
+                  background: 'transparent',
+                  fontFamily: "'Outfit', sans-serif",
+                  fontWeight: 700,
+                }}
+                className="w-full mt-6 px-6 text-base text-[#3A6356]
+                 transition-colors hover:bg-[#3A6356]/5 active:bg-[#3A6356]/10 disabled:opacity-50"
+              >
+                {google.loading ? 'A entrar...' : 'Entrar com Google'}
+              </button>
+              {google.error && (
+                <p className="text-red-500 text-xs mt-2 text-center font-outfit">{google.error}</p>
+              )}
+            </>
+          )}
         </section>
         <p className="text-sm text-gray-500 font-outfit mt-6">
           Não tem conta?{' '}
-          <Link to="/auth/register" className="text-[#3A6356] font-semibold underline">
+          <Link
+            to="/auth/register"
+            state={from ? { from } : undefined}
+            className="text-[#3A6356] font-semibold underline"
+          >
             Criar conta
           </Link>
         </p>

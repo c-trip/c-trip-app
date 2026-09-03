@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { IconArrowLeft, IconCamera } from "@tabler/icons-react";
 import RouteDisplay from "@/components/RouteDisplay";
+import { boardingApi } from "@/services/operator";
 
 type ScanResult =
   | "permission"
@@ -20,14 +21,22 @@ interface ValidateResponse {
   route?: string;
 }
 
-async function validateQr(decodedText: string): Promise<ValidateResponse> {
-  // PROTÓTIPO — substituir por POST /boarding/validate quando a API estiver pronta.
-  // O QR lido (decodedText) será enviado ao servidor e a resposta determinará o estado.
-  void decodedText;
-  await new Promise((r) => setTimeout(r, 1200));
-
-  // TODO: validar QR num serviço autenticado no servidor
-  return { status: "invalid" };
+/**
+ * Valida o QR no servidor e, se permitido, regista o embarque.
+ * Lança em caso de erro de rede/servidor (tratado pelo caller como estado "error").
+ */
+async function validateAndRecord(qrHash: string): Promise<ValidateResponse> {
+  const res = await boardingApi.validateQr({ qr_hash: qrHash });
+  const mapped: ValidateResponse = {
+    status: res.status === "allowed" || res.status === "already_boarded" ? res.status : "invalid",
+    passengerName: res.passenger,
+    seat: res.seat_number,
+    route: res.destination,
+  };
+  if (mapped.status === "allowed") {
+    await boardingApi.recordBoarding({ qr_hash: qrHash });
+  }
+  return mapped;
 }
 
 export default function OperatorScan() {
@@ -116,7 +125,7 @@ export default function OperatorScan() {
           await cleanupScanner();
           setScanState("validating");
           try {
-            const result = await validateQr(decodedText);
+            const result = await validateAndRecord(decodedText);
             if (cancelledRef.current) return;
             setScannedData(result);
             if (result.status === "allowed") {

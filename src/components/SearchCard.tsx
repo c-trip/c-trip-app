@@ -1,89 +1,57 @@
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import {
-  IconArrowsLeftRight,
-  IconCalendar,
-  IconUser,
-  IconSearch,
-} from '@tabler/icons-react'
+import { IconSearch, IconAdjustmentsHorizontal, IconX } from '@tabler/icons-react'
 
 interface SearchCardProps {
-  origin?: string
-  destination?: string
-  date?: string
-  passengers?: number
-  onSearch?: () => void
+  query: string
+  onQueryChange: (value: string) => void
+  onOpenFilters: () => void
+  activeFilterCount?: number
+  placeholder?: string
 }
 
 export default function SearchCard({
-  origin = 'Luanda',
-  destination = 'Benguela',
-  date = '15 Ago 2026',
-  passengers = 1,
-  onSearch,
+  query,
+  onQueryChange,
+  onOpenFilters,
+  activeFilterCount = 0,
+  placeholder = 'Pesquisar por destino ou transportadora',
 }: SearchCardProps) {
   return (
-    <Card className="w-full gap-4 rounded-[20px] border border-gray-200 font-outfit
-    bg-white p-6 shadow-md mt-12 ">
-      <CardContent className="px-0 py-0">
-        <div className="flex items-center justify-between  bg-[#eaecf0] border-2 
-        border-[#E5E7EB] p-4 rounded-xl">
-          <div className="flex-1 border p-4 border-gray-200 rounded-lg bg-white">
-            <p className="text-xs font-medium text-gray-400">Origem</p>
-            <p className="text-base font-semibold text-gray-900">{origin}</p>
-            <p className="text-base font-semibold text-gray-900">(terminal)</p>
-          </div>
+    <div className="flex items-center gap-2 font-outfit">
+      <div className="relative flex-1">
+        <IconSearch className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 size-5 text-gray-400" />
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => onQueryChange(e.target.value)}
+          placeholder={placeholder}
+          aria-label="Pesquisar viagens"
+          className="h-12 w-full rounded-2xl border border-gray-200 bg-white pl-11 pr-10 text-sm text-gray-800 shadow-sm outline-none transition-colors placeholder:text-gray-400 focus:border-[#1B7A3D]"
+        />
+        {query && (
+          <button
+            type="button"
+            onClick={() => onQueryChange('')}
+            aria-label="Limpar pesquisa"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+          >
+            <IconX className="size-4" />
+          </button>
+        )}
+      </div>
 
-          <div className="mx-4 flex h-10 w-10 p-2 items-center justify-center rounded-full bg-white border 
-          border-[#E5E7EB]">
-            <IconArrowsLeftRight className=" text-green-gradient-end border rounded-full 
-            p-1 border-[#E5E7EB]" />
-          </div>
-
-          <div className="flex-1 text-left border p-4 border-gray-200 rounded-lg bg-white">
-            <p className="text-xs font-medium text-gray-400">Destino</p>
-            <p className="text-base font-semibold text-gray-900">{destination}</p>
-             <p className="text-base font-semibold text-gray-900">(Terminal)</p>
-          </div>
-        </div>
-
-        <div className="my-4 border-t border-gray-200" />
-
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-start gap-2.5 border border-[#E5E7EB] p-3.5 rounded-2xl">
-            <div className="mt-0.5 flex h-8 w-12 items-center justify-center rounded-full">
-              <IconCalendar className="size-6 text-green-gradient-end" />
-            </div>
-            <div>
-              <p className="text-xs font-medium text-gray-400">Partida</p>
-              <p className="text-sm font-semibold capitalize text-gray-900">
-                {date}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-2.5 border border-[#E5E7EB] p-3.5 rounded-2xl">
-            <div className="mt-0.5 flex h-8 w-12 items-center justify-center rounded-full">
-              <IconUser className="size-6 text-green-gradient-end" />
-            </div>
-            <div>
-              <p className="text-xs font-medium text-gray-400">Passageiros</p>
-              <p className="text-sm font-semibold text-gray-900">
-                {passengers === 1 ? '1 pessoa' : `${passengers} pessoas`}
-              </p>
-            </div>
-          </div>
-        </div>
-
-
-        <Button
-          onClick={onSearch}
-          className="h-12 w-full cursor-pointer rounded-2xl bg-gradient-to-r from-green-gradient-start to-green-gradient-end font-semibold text-sm text-white hover:opacity-90 transition-opacity"
-        >
-          <IconSearch className="h-5 w-5" />
-          Pesquisar bilhetes
-        </Button>
-      </CardContent>
-    </Card>
+      <button
+        type="button"
+        onClick={onOpenFilters}
+        aria-label="Filtros"
+        className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-gray-200 bg-white shadow-sm transition-colors hover:border-[#1B7A3D]"
+      >
+        <IconAdjustmentsHorizontal className="size-5 text-[#1B7A3D]" />
+        {activeFilterCount > 0 && (
+          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#1B7A3D] px-1 text-[10px] font-bold text-white">
+            {activeFilterCount}
+          </span>
+        )}
+      </button>
+    </div>
   )
 }

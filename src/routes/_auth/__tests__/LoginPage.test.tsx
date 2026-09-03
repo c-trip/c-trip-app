@@ -47,14 +47,10 @@ describe('LoginPage', () => {
     expect(screen.getByText('Entrar')).toBeInTheDocument()
   })
 
-  it('mostra botão Entrar com Google', () => {
+  it('só mostra "Entrar com Google" quando VITE_GOOGLE_CLIENT_ID está configurado', () => {
     renderLoginPage()
-    expect(screen.getByText('Entrar com Google')).toBeInTheDocument()
-  })
-
-  it('mostra separador ou continuar com', () => {
-    renderLoginPage()
-    expect(screen.getByText('ou continuar com')).toBeInTheDocument()
+    // Sem client id no ambiente de teste, o botão do Google não aparece.
+    expect(screen.queryByText('Entrar com Google')).not.toBeInTheDocument()
   })
 
   it('mostra link Criar conta com rota /auth/register', () => {

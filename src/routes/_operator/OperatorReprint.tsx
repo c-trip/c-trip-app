@@ -1,73 +1,44 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { IconArrowLeft, IconSearch, IconX, IconPrinter, IconUser, IconCheck } from '@tabler/icons-react'
+import { IconArrowLeft, IconSearch, IconX, IconPrinter, IconUser, IconRefresh } from '@tabler/icons-react'
 import { gooeyToast } from 'goey-toast'
-import { getOperatorTodaySchedules } from '@/data/mockOperatorSchedules'
-import type { OperatorSchedule } from '@/data/mockOperatorSchedules'
+import { useOperatorSchedules } from '@/hooks/operator/useOperatorSchedules'
+import { useManifest } from '@/hooks/operator/useManifest'
+import { useReprintQr } from '@/hooks/operator/useReprintQr'
+import type { OperatorSchedule, ReprintQrResponse } from '@/types/operator'
 import { Card, CardContent } from '@/components/ui/card'
 import RouteDisplay from '@/components/RouteDisplay'
 
-interface ReprintPassenger {
-  bookingId: string
-  seat: number
-  name: string
-  printed: boolean
-}
-
-function getMockReprintPassengers(scheduleId: string): ReprintPassenger[] {
-  const seeds: Record<string, ReprintPassenger[]> = {
-    'macon-1': [
-      { bookingId: 'bk-r01', seat: 1, name: 'Ana Silva', printed: false },
-      { bookingId: 'bk-r02', seat: 3, name: 'Carlos Mendes', printed: false },
-      { bookingId: 'bk-r03', seat: 5, name: 'Maria Fernandes', printed: true },
-      { bookingId: 'bk-r04', seat: 8, name: 'Pedro Almeida', printed: false },
-    ],
-    'macon-2': [
-      { bookingId: 'bk-r05', seat: 2, name: 'Lucia Torres', printed: false },
-      { bookingId: 'bk-r06', seat: 7, name: 'Ricardo Neto', printed: true },
-    ],
-  }
-  return seeds[scheduleId] ?? []
-}
-
 export default function OperatorReprint() {
   const navigate = useNavigate()
-  const schedules = getOperatorTodaySchedules().filter((s) => s.status !== 'departed')
-  const [selectedSchedule, setSelectedSchedule] = useState<OperatorSchedule | null>(null)
+  const { schedules } = useOperatorSchedules()
+  const [selected, setSelected] = useState<OperatorSchedule | null>(null)
   const [search, setSearch] = useState('')
-  const [reprintedIds, setReprintedIds] = useState<Set<string>>(new Set())
-  const [reprintingIds, setReprintingIds] = useState<Set<string>>(() => new Set())
+  const [lastResult, setLastResult] = useState<ReprintQrResponse | null>(null)
 
-  const passengers = selectedSchedule ? getMockReprintPassengers(selectedSchedule.id) : []
-  const query = search.toLowerCase()
-  const filtered = passengers.filter(
-    (p) =>
-      !query ||
-      p.name.toLowerCase().includes(query) ||
-      String(p.seat).includes(query),
+  const { manifest, isLoading, error, refetch } = useManifest(selected?.schedule_id)
+  const { reprint, isLoading: reprinting } = useReprintQr()
+  const [reprintingSeat, setReprintingSeat] = useState<number | null>(null)
+
+  const seats = useMemo(
+    () => manifest.filter((m) => m.status === 'confirmed' || m.status === 'boarded' || m.status === 'pending'),
+    [manifest],
   )
+  const query = search.trim()
+  const filtered = query ? seats.filter((s) => String(s.seat).includes(query)) : seats
 
-  const handleReprint = async (passenger: ReprintPassenger) => {
-    if (reprintingIds.has(passenger.bookingId)) return
-    setReprintingIds((prev) => new Set(prev).add(passenger.bookingId))
-    try {
-      // Mock — substituir por POST /boarding/qr/reprint
-      await new Promise((r) => setTimeout(r, 800))
-
-      setReprintedIds((prev) => new Set(prev).add(passenger.bookingId))
+  const handleReprint = async (seatNumber: number) => {
+    if (!selected || reprinting) return
+    setReprintingSeat(seatNumber)
+    const result = await reprint({ schedule_id: selected.schedule_id, seat_number: seatNumber })
+    setReprintingSeat(null)
+    if (result) {
+      setLastResult(result)
       gooeyToast.success('Bilhete reimpresso', {
-        description: `${passenger.name} — Lugar ${passenger.seat}`,
+        description: `${result.passenger_name} — Lugar ${result.seat_number}`,
       })
-    } catch {
-      gooeyToast.error('Erro ao reimprimir', {
-        description: 'Tente novamente.',
-      })
-    } finally {
-      setReprintingIds((prev) => {
-        const next = new Set(prev)
-        next.delete(passenger.bookingId)
-        return next
-      })
+    } else {
+      gooeyToast.error('Erro ao reimprimir', { description: 'Tente novamente.' })
     }
   }
 
@@ -89,35 +60,65 @@ export default function OperatorReprint() {
 
       <main className="px-5 py-5 pb-28">
         <section className="mb-5">
-          <label className="block text-xs font-bold text-[#6B7280] uppercase tracking-wide mb-2">Selecionar viagem</label>
-          <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1">
-            {schedules.map((s) => (
-              <button
-                key={s.id}
-                type="button"
-                onClick={() => { setSelectedSchedule(s); setSearch('') }}
-                className={`shrink-0 px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all ${
-                  selectedSchedule?.id === s.id
-                    ? 'bg-[#1B7A3D] text-white border-[#1B7A3D]'
-                    : 'bg-white text-[#111827] border-gray-200 hover:border-[#1B7A3D]'
-                }`}
-              >
-                <RouteDisplay origin={s.origin} destination={s.destination} /> · {s.departureTime}
-              </button>
-            ))}
-          </div>
+          <label className="block text-xs font-bold text-[#6B7280] uppercase tracking-wide mb-2">
+            Selecionar viagem
+          </label>
+          {schedules.length === 0 ? (
+            <p className="text-sm text-gray-400">Não há viagens disponíveis.</p>
+          ) : (
+            <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1">
+              {schedules.map((s) => (
+                <button
+                  key={s.schedule_id}
+                  type="button"
+                  onClick={() => {
+                    setSelected(s)
+                    setSearch('')
+                    setLastResult(null)
+                  }}
+                  className={`shrink-0 px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all ${
+                    selected?.schedule_id === s.schedule_id
+                      ? 'bg-[#1B7A3D] text-white border-[#1B7A3D]'
+                      : 'bg-white text-[#111827] border-gray-200 hover:border-[#1B7A3D]'
+                  }`}
+                >
+                  <RouteDisplay origin={s.origin} destination={s.destination} /> · {s.departure_time}
+                </button>
+              ))}
+            </div>
+          )}
         </section>
 
-        {selectedSchedule && (
+        {lastResult && (
+          <Card className="mb-5 border-[#1B7A3D]/30 bg-[#1B7A3D]/5">
+            <CardContent className="p-4 flex items-center gap-4">
+              {lastResult.qr_image && (
+                <img
+                  src={lastResult.qr_image}
+                  alt="QR code do bilhete"
+                  className="size-24 rounded-lg bg-white p-1"
+                />
+              )}
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-[#111827] truncate">{lastResult.passenger_name}</p>
+                <p className="text-xs text-[#4B5563]">Lugar {lastResult.seat_number}</p>
+                <p className="mt-1 text-[11px] text-gray-400 break-all">{lastResult.qr_hash}</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {selected && (
           <>
             <div className="relative mb-4">
               <IconSearch className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
-                aria-label="Buscar por nome ou lugar"
+                aria-label="Buscar por lugar"
                 type="text"
+                inputMode="numeric"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Buscar por nome ou lugar"
+                placeholder="Buscar por número de lugar"
                 className="w-full pl-9 pr-9 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-outfit placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1B7A3D]/30 focus:border-[#1B7A3D]"
               />
               {search && (
@@ -132,56 +133,64 @@ export default function OperatorReprint() {
               )}
             </div>
 
-            {filtered.length > 0 ? (
+            {isLoading && (
               <div className="flex flex-col gap-2">
-                {filtered.map((passenger) => {
-                  const isReprinted = passenger.printed || reprintedIds.has(passenger.bookingId)
-                  return (
-                    <Card key={passenger.bookingId} className="p-0 border-[#E5E7EB]">
-                      <CardContent className="p-3 flex items-center gap-3">
-                        <div className={`size-9 rounded-full flex items-center justify-center shrink-0 ${
-                          isReprinted ? 'bg-[#D1FAE5]' : 'bg-gray-100'
-                        }`}>
-                          <IconUser className={`size-4 ${isReprinted ? 'text-[#047857]' : 'text-gray-400'}`} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-[#111827] truncate">{passenger.name}</p>
-                          <p className="text-[11px] text-gray-500">Lugar {passenger.seat}</p>
-                        </div>
-                        {isReprinted ? (
-                          <span className="shrink-0 flex items-center gap-1 text-[11px] font-semibold text-[#047857]">
-                            <IconCheck className="size-4" />
-                            Reimpresso
-                          </span>
-                        ) : (
-                          <button
-                            type="button"
-                            disabled={reprintingIds.has(passenger.bookingId)}
-                            onClick={() => handleReprint(passenger)}
-                            className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-[#1B7A3D] text-white text-xs font-semibold rounded-lg hover:bg-[#15632F] transition-colors active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            <IconPrinter className="size-3.5" />
-                            {reprintingIds.has(passenger.bookingId) ? 'A imprimir…' : 'Imprimir'}
-                          </button>
-                        )}
-                      </CardContent>
-                    </Card>
-                  )
-                })}
+                {[0, 1, 2].map((i) => (
+                  <div key={i} className="h-16 animate-pulse rounded-xl bg-gray-100" />
+                ))}
               </div>
-            ) : (
-              <div className="text-center py-10 text-gray-400 text-sm">
-                Nenhum passageiro encontrado
+            )}
+
+            {!isLoading && error && (
+              <div className="flex flex-col items-center gap-3 py-10 text-center">
+                <p className="text-sm text-[#4B5563]">{error}</p>
+                <button
+                  type="button"
+                  onClick={() => void refetch()}
+                  className="flex items-center gap-1.5 text-sm font-semibold text-[#1B7A3D]"
+                >
+                  <IconRefresh className="size-4" />
+                  Tentar novamente
+                </button>
               </div>
+            )}
+
+            {!isLoading && !error && filtered.length > 0 && (
+              <div className="flex flex-col gap-2">
+                {filtered.map((item) => (
+                  <Card key={item.booking_id} className="p-0 border-[#E5E7EB]">
+                    <CardContent className="p-3 flex items-center gap-3">
+                      <div className="size-9 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
+                        <IconUser className="size-4 text-gray-400" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-[#111827]">Lugar {item.seat}</p>
+                        <p className="text-[11px] text-gray-500 capitalize">{item.status}</p>
+                      </div>
+                      <button
+                        type="button"
+                        disabled={reprinting}
+                        onClick={() => handleReprint(item.seat)}
+                        className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-[#1B7A3D] text-white text-xs font-semibold rounded-lg hover:bg-[#15632F] transition-colors active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <IconPrinter className="size-3.5" />
+                        {reprintingSeat === item.seat ? 'A imprimir…' : 'Imprimir'}
+                      </button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+
+            {!isLoading && !error && filtered.length === 0 && (
+              <div className="text-center py-10 text-gray-400 text-sm">Nenhum lugar confirmado encontrado</div>
             )}
           </>
         )}
 
-        {!selectedSchedule && (
+        {!selected && schedules.length > 0 && (
           <div className="text-center py-16 text-gray-400 text-sm">
-            {schedules.length === 0
-              ? 'Não há viagens disponíveis para reimpressão'
-              : 'Selecione uma viagem para ver os passageiros'}
+            Selecione uma viagem para ver os lugares
           </div>
         )}
       </main>

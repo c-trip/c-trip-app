@@ -1,8 +1,10 @@
 import { http } from './http'
 import type {
   ChangePasswordPayload,
+  GoogleAuthPayload,
   LoginPayload,
   LoginResponse,
+  MyPermissionsResponse,
   RegisterPayload,
   RegisterResponse,
   User,
@@ -11,6 +13,11 @@ import type {
 export const authApi = {
   async login(payload: LoginPayload): Promise<LoginResponse> {
     const { data } = await http.post<LoginResponse>('/auth/login', payload)
+    return data
+  },
+
+  async google(payload: GoogleAuthPayload): Promise<LoginResponse> {
+    const { data } = await http.post<LoginResponse>('/auth/google', payload)
     return data
   },
 
@@ -26,6 +33,11 @@ export const authApi = {
 
   async changePassword(payload: ChangePasswordPayload): Promise<string> {
     const { data } = await http.post<string>('/auth/change-password', payload)
+    return data
+  },
+
+  async myPermissions(): Promise<MyPermissionsResponse> {
+    const { data } = await http.get<MyPermissionsResponse>('/auth/my-permissions')
     return data
   },
 }

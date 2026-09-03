@@ -11,6 +11,7 @@ import RegisterPage from '../routes/_auth/RegisterPage'
 
 import CheckoutPage from '../routes/_passenger/CheckoutPage'
 import PaymentPage from '../routes/_passenger/PaymentPage'
+import PaymentsPage from '../routes/_passenger/PaymentsPage'
 import TicketPage from '../routes/_passenger/TicketPage'
 import TicketQrPage from '../routes/_passenger/TicketQrPage'
 import BookingsPage from '../routes/_passenger/BookingsPage'
@@ -54,6 +55,7 @@ export default function Router() {
         <Route element={<ProtectedRoute />}>
           <Route path="/bookings" element={<BookingsPage />} />
           <Route path="/tickets" element={<TicketsPage />} />
+          <Route path="/payments" element={<PaymentsPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
         </Route>
@@ -69,7 +71,7 @@ export default function Router() {
 
       <Route path="/search/results" element={<ResultsPage />} />
       <Route path="/schedules/:scheduleId" element={<SchedulePage />} />
-      <Route path="/hold/:scheduleId/:routeSlug/:companySlug" element={<HoldPage />} />
+      <Route path="/hold/:scheduleId" element={<HoldPage />} />
       <Route path="/search-results/:origin" element={<OperatorsPage />} />
       <Route path="/search-results/:origin/:destination" element={<OperatorsPage />} />      
 

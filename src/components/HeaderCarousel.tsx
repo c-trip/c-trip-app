@@ -1,5 +1,7 @@
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Autoplay, Pagination } from 'swiper/modules'
+import { useNavigate } from 'react-router'
+import { IconBell } from '@tabler/icons-react'
 
 const slides = [
   {
@@ -20,31 +22,44 @@ const slides = [
 ]
 
 export default function HeaderCarousel() {
+  const navigate = useNavigate()
+
   return (
-    <Swiper
-      modules={[Autoplay, Pagination]}
-      autoplay={{ delay: 4000, disableOnInteraction: false }}
-      pagination={{ clickable: true }}
-      loop
-      className="w-full h-64 overflow-hidden"
-      style={{ borderBottomLeftRadius: 20, borderBottomRightRadius: 20 }}
-    >
-      {slides.map((slide, index) => (
-        <SwiperSlide key={index}>
-          <div className="relative w-full h-64">
-            <img
-              src={slide.image}
-              alt={slide.title}
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#2A4A3D]/80 via-[#3A6356]/40 to-transparent" />
-                <div className="absolute bottom-5 left-0 right-0 p-6 text-white">
-                  <h2 className="text-xl font-bold mb-2">{slide.title}</h2>
-                  <p className="text-sm text-white/90">{slide.description}</p>
-                </div>
-          </div>
-        </SwiperSlide>
-      ))}
-    </Swiper>
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => navigate('/notifications')}
+        aria-label="Notificações"
+        className="absolute right-4 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-black/25 text-white backdrop-blur-sm transition-colors hover:bg-black/40 active:scale-95"
+      >
+        <IconBell className="size-5" />
+      </button>
+
+      <Swiper
+        modules={[Autoplay, Pagination]}
+        autoplay={{ delay: 4000, disableOnInteraction: false }}
+        pagination={{ clickable: true }}
+        loop
+        className="w-full h-64 overflow-hidden"
+        style={{ borderBottomLeftRadius: 20, borderBottomRightRadius: 20 }}
+      >
+        {slides.map((slide, index) => (
+          <SwiperSlide key={index}>
+            <div className="relative w-full h-64">
+              <img
+                src={slide.image}
+                alt={slide.title}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#2A4A3D]/80 via-[#3A6356]/40 to-transparent" />
+              <div className="absolute bottom-5 left-0 right-0 p-6 text-white">
+                <h2 className="text-xl font-bold mb-2">{slide.title}</h2>
+                <p className="text-sm text-white/90">{slide.description}</p>
+              </div>
+            </div>
+          </SwiperSlide>
+        ))}
+      </Swiper>
+    </div>
   )
 }

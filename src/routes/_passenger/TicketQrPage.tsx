@@ -1,346 +1,96 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
-import { IconX, IconShare2, IconDownload, IconLoader2, IconShieldCheckFilled } from '@tabler/icons-react'
+import QRCode from 'qrcode'
+import { IconShare2, IconLoader2, IconShieldCheckFilled, IconRefresh } from '@tabler/icons-react'
 import { gooeyToast } from 'goey-toast'
-import { getScheduleById, getSeatMapBySchedule } from '@/data/mockSeats'
 import { getSeatLabel } from '@/lib/seats'
-import { generateTicketQR } from '@/lib/qr'
+import { useGenerateQr } from '@/hooks/passenger/usePassenger'
+import { useBookingFlowStore } from '@/stores/bookingFlowStore'
 import RouteDisplay from '@/components/RouteDisplay'
 import StickyFooter from '@/components/StickyFooter'
 import GradientButton from '@/components/GradientButton'
 import PageHeader from '@/components/PageHeader'
 
-function getQrCacheKey(scheduleId: string, seat: string): string {
-  return `qr_ticket_${scheduleId}_${seat}`
-}
-
-function cleanupOldQRCaches() {
-  const keys: string[] = []
-  for (let i = 0; i < localStorage.length; i++) {
-    const k = localStorage.key(i)
-    if (k?.startsWith('qr_ticket_')) keys.push(k)
-  }
-  keys.sort()
-  for (let i = 0; i < keys.length - 5; i++) {
-    localStorage.removeItem(keys[i])
-  }
-}
-
-function readPassengerName(scheduleId?: string, seatNum?: number): string {
-  if (!scheduleId || seatNum === undefined || !Number.isFinite(seatNum)) return ''
-  try {
-    return sessionStorage.getItem(`ticket_passenger_${scheduleId}_${seatNum}`) ?? ''
-  } catch {
-    return ''
-  }
-}
-
-function WhatsAppIcon({ className }: { className?: string }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
-      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
-    </svg>
-  )
-}
-
-function TelegramIcon({ className }: { className?: string }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
-      <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
-    </svg>
-  )
-}
-
-function FacebookIcon({ className }: { className?: string }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
-      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-    </svg>
-  )
-}
-
-function InstagramIcon({ className }: { className?: string }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
-      <path d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.045-1.26-.061-1.649-.061-4.844 0-3.196.016-3.586.061-4.861.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.045 1.65-.06 4.859-.06zm0 3.678a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm7.846-10.405a1.441 1.441 0 01-2.88 0 1.44 1.44 0 012.88 0z" />
-    </svg>
-  )
-}
-
-function CopyIcon({ className }: { className?: string }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
-      <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
-      <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
-    </svg>
-  )
-}
-
-const shareApps = [
-  { name: 'WhatsApp', bg: '#25D366', Icon: WhatsAppIcon, action: 'link' as const },
-  { name: 'Telegram', bg: '#0088cc', Icon: TelegramIcon, action: 'link' as const },
-  { name: 'Facebook', bg: '#1877F2', Icon: FacebookIcon, action: 'link' as const },
-  { name: 'Instagram', bg: '#E4405F', Icon: InstagramIcon, action: 'clipboard' as const },
-  { name: 'Copiar Texto', bg: '#6B7280', Icon: CopyIcon, action: 'clipboard' as const },
-]
-
-type ShareApp = (typeof shareApps)[number]
-
-async function generateTicketCardImage(qrDataUrl: string, info: {
-  operatorName: string
-  origin: string
-  destination: string
-  departureDate: string
-  departureTime: string
-  arrivalTime: string
-  seatLabel: string
-  passengerName: string
-  ticketRef: string
-  busPlate: string
-}): Promise<File | null> {
-  try {
-    const W = 400
-    const H = 580
-    const canvas = document.createElement('canvas')
-    canvas.width = W * 2
-    canvas.height = H * 2
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return null
-    ctx.scale(2, 2)
-
-    ctx.fillStyle = '#ffffff'
-    ctx.fillRect(0, 0, W, H)
-
-    ctx.fillStyle = '#1B7A3D'
-    ctx.fillRect(0, 0, W, 64)
-
-    ctx.fillStyle = '#ffffff'
-    ctx.font = 'bold 18px sans-serif'
-    ctx.fillText('C-Trip', 20, 30)
-    ctx.font = '13px sans-serif'
-    ctx.globalAlpha = 0.85
-    ctx.fillText(info.operatorName, 20, 50)
-    ctx.globalAlpha = 1
-
-    ctx.fillStyle = '#111827'
-    ctx.font = 'bold 20px sans-serif'
-    ctx.fillText(`${info.origin} → ${info.destination}`, 20, 96)
-
-    ctx.fillStyle = '#6B7280'
-    ctx.font = '12px sans-serif'
-    ctx.fillText(`${info.departureDate} · ${info.departureTime} – ${info.arrivalTime}`, 20, 118)
-
-    ctx.fillStyle = '#F3F4F6'
-    ctx.fillRect(16, 136, W - 32, 190)
-
-    if (qrDataUrl) {
-      const img = new Image()
-      await new Promise<void>((resolve) => {
-        img.onload = () => resolve()
-        img.onerror = () => resolve()
-        img.src = qrDataUrl
-      })
-      if (img.naturalWidth > 0) {
-        const qrSize = 140
-        const qrX = (W - qrSize) / 2
-        ctx.drawImage(img, qrX, 148, qrSize, qrSize)
-      }
-    }
-
-    ctx.fillStyle = '#6B7280'
-    ctx.font = '11px sans-serif'
-    ctx.textAlign = 'center'
-    ctx.fillText(`Lugar ${info.seatLabel} · Valide no embarque`, W / 2, 305)
-    ctx.textAlign = 'left'
-
-    const lines = [
-      { label: 'PASSAGEIRO', value: info.passengerName || '—' },
-      { label: 'LUGAR', value: info.seatLabel },
-      { label: 'REFERÊNCIA', value: info.ticketRef },
-      { label: 'VIATURA', value: info.busPlate },
-    ]
-
-    let y = 340
-    for (let i = 0; i < lines.length; i++) {
-      const col = i % 2
-      const x = col === 0 ? 20 : W / 2 + 10
-      if (col === 0 && i > 0) y += 38
-      ctx.fillStyle = '#9CA3AF'
-      ctx.font = '10px sans-serif'
-      ctx.fillText(lines[i].label, x, y)
-      ctx.fillStyle = '#111827'
-      ctx.font = 'bold 13px sans-serif'
-      ctx.fillText(lines[i].value, x, y + 16)
-    }
-
-    ctx.strokeStyle = '#E5E7EB'
-    ctx.setLineDash([6, 4])
-    ctx.beginPath()
-    ctx.moveTo(20, H - 50)
-    ctx.lineTo(W - 20, H - 50)
-    ctx.stroke()
-    ctx.setLineDash([])
-
-    ctx.fillStyle = '#9CA3AF'
-    ctx.font = '11px sans-serif'
-    ctx.textAlign = 'center'
-    ctx.fillText('Apresente este bilhete no embarque', W / 2, H - 24)
-
-    const blob = await new Promise<Blob | null>((resolve) =>
-      canvas.toBlob(resolve, 'image/png'),
-    )
-    if (!blob) return null
-    return new File([blob], `bilhete-${info.ticketRef}.png`, { type: 'image/png' })
-  } catch {
-    return null
-  }
-}
-
 export default function TicketQrPage() {
   const { scheduleId } = useParams<{ scheduleId: string }>()
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
+  const trip = useBookingFlowStore((s) => s.trip)
 
   const seatParam = searchParams.get('seat')
   const seatNum = /^\d+$/.test(seatParam ?? '') ? parseInt(seatParam!, 10) : NaN
-
-  const schedule = getScheduleById(scheduleId)
-  const seatMap = getSeatMapBySchedule(scheduleId)
-
-  const seatIsValid =
-    Number.isFinite(seatNum) &&
-    seatNum > 0 &&
-    schedule !== undefined &&
-    seatMap !== undefined &&
-    seatNum <= seatMap.totalSeats &&
-    !seatMap.occupied.includes(seatNum) &&
-    !seatMap.reserved.includes(seatNum)
-
+  const seatIsValid = Number.isFinite(seatNum) && seatNum > 0
   const seatLabel = seatIsValid ? getSeatLabel(seatNum) : '—'
-  const passengerName = readPassengerName(scheduleId, seatNum)
 
+  const tripForSchedule = trip?.scheduleId === scheduleId ? trip : null
+
+  const { generate, isLoading: generating } = useGenerateQr()
+  const [qrHash, setQrHash] = useState<string | null>(null)
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null)
-  const [isShareOpen, setIsShareOpen] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [isSharing, setIsSharing] = useState(false)
-  const [isDownloading, setIsDownloading] = useState(false)
-  const closeButtonRef = useRef<HTMLButtonElement>(null)
-  const dialogRef = useRef<HTMLDivElement>(null)
-  const triggerRef = useRef<HTMLButtonElement>(null)
-
-  const ticketRef = `CTP-${(scheduleId ?? '').toUpperCase()}-${seatLabel}`
+  const [attempt, setAttempt] = useState(0)
 
   useEffect(() => {
-    if (!seatIsValid || !scheduleId || !schedule) return
-
+    if (!seatIsValid || !scheduleId) return
     let cancelled = false
-    const cacheKey = getQrCacheKey(scheduleId, String(seatNum))
 
-    let cached: string | null = null
-    try {
-      cached = localStorage.getItem(cacheKey)
-    } catch {
-      /* SecurityError or similar — treat as cache miss */
-    }
-
-    void Promise.resolve(cached)
-      .then((cached) => {
-        if (cancelled) return null
-        if (cached) {
-          setQrDataUrl(cached)
-          return null
-        }
-        return generateTicketQR({
-          scheduleId,
-          operator: schedule.operatorName,
-          origin: schedule.origin,
-          destination: schedule.destination,
-          date: schedule.departureDate,
-          time: schedule.departureTime,
-          seat: seatLabel,
-          plate: schedule.busPlate,
-        })
-      })
-      .then((url) => {
-        if (cancelled || !url) return
-        setQrDataUrl(url)
-        try {
-          localStorage.setItem(cacheKey, url)
-          cleanupOldQRCaches()
-        } catch (error) {
-          const isQuotaError =
-            error instanceof DOMException &&
-            (error.name === 'QuotaExceededError' || error.name === 'NS_ERROR_DOM_QUOTA_REACHED')
-          if (!isQuotaError) return
-          cleanupOldQRCaches()
-          try {
-            localStorage.setItem(cacheKey, url)
-          } catch {
-            return
-          }
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          gooeyToast.error('Erro ao gerar QR Code', {
-            description: 'Não foi possível gerar o código do bilhete. Tente novamente.',
-          })
-        }
-      })
+    void generate({ schedule_id: scheduleId, seat_number: seatNum }).then(async (res) => {
+      if (cancelled) return
+      if (!res) {
+        setError('Não foi possível gerar o bilhete. A reserva pode ainda não estar confirmada.')
+        return
+      }
+      setQrHash(res.qr_hash)
+      try {
+        const url = await QRCode.toDataURL(res.qr_hash, { width: 220, margin: 2, errorCorrectionLevel: 'M' })
+        if (!cancelled) setQrDataUrl(url)
+      } catch {
+        if (!cancelled) setError('Não foi possível desenhar o QR code.')
+      }
+    })
 
     return () => {
       cancelled = true
-      setQrDataUrl(null)
     }
-  }, [seatIsValid, scheduleId, schedule, seatNum, seatLabel])
+  }, [seatIsValid, scheduleId, seatNum, generate, attempt])
 
-  useEffect(() => {
-    if (!isShareOpen) return
-    const dialog = dialogRef.current
-    const focusables = dialog
-      ? Array.from(dialog.querySelectorAll<HTMLElement>('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'))
-      : []
-    const first = focusables[0]
-    const last = focusables[focusables.length - 1]
+  const shareText = [
+    'Bilhete C-Trip',
+    tripForSchedule ? `${tripForSchedule.origin} → ${tripForSchedule.destination}` : '',
+    tripForSchedule?.company ?? '',
+    `Lugar: ${seatLabel}`,
+    qrHash ? `Código: ${qrHash}` : '',
+  ]
+    .filter(Boolean)
+    .join('\n')
 
-    first?.focus()
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
-        setIsShareOpen(false)
-        return
-      }
-      if (event.key !== 'Tab' || !focusables.length) return
-      if (event.shiftKey) {
-        if (document.activeElement === first) {
-          event.preventDefault()
-          last?.focus()
-        }
+  const handleShare = async () => {
+    setIsSharing(true)
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: 'Bilhete C-Trip', text: shareText })
       } else {
-        if (document.activeElement === last) {
-          event.preventDefault()
-          first?.focus()
-        }
+        await navigator.clipboard.writeText(shareText)
+        gooeyToast.success('Copiado', { description: 'Detalhes do bilhete copiados.' })
       }
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return
+      gooeyToast.error('Erro ao partilhar')
+    } finally {
+      setIsSharing(false)
     }
+  }
 
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [isShareOpen])
-
-  if (!schedule || !seatIsValid) {
+  if (!seatIsValid || !scheduleId) {
     return (
       <div className="min-h-screen bg-[#F9FAFB] font-outfit flex flex-col">
-        <PageHeader
-          onBack={() => navigate(-1)}
-          title="Bilhete não disponível"
-        />
+        <PageHeader onBack={() => navigate(-1)} title="Bilhete não disponível" />
         <main className="flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center">
-          <p className="max-w-xs text-sm text-gray-500">
-            Não foi possível carregar os dados deste bilhete. A viagem pode não existir ou o lugar já não é válido.
-          </p>
+          <p className="max-w-xs text-sm text-gray-500">Dados do bilhete inválidos.</p>
           <button
             onClick={() => navigate('/tickets')}
-            className="h-12 rounded-xl bg-[#1B7A3D] px-6 text-[16px] font-semibold text-white transition-colors hover:bg-[#15632F]"
+            className="h-12 rounded-xl bg-[#1B7A3D] px-6 text-base font-semibold text-white hover:bg-[#15632F]"
           >
             Ver os meus bilhetes
           </button>
@@ -349,171 +99,14 @@ export default function TicketQrPage() {
     )
   }
 
-  const handleDownload = async () => {
-    if (!qrDataUrl) return
-    setIsDownloading(true)
-    try {
-      const file = await generateTicketCardImage(qrDataUrl, {
-        operatorName: schedule.operatorName,
-        origin: schedule.origin,
-        destination: schedule.destination,
-        departureDate: schedule.departureDate,
-        departureTime: schedule.departureTime,
-        arrivalTime: schedule.arrivalTime,
-        seatLabel,
-        passengerName,
-        ticketRef,
-        busPlate: schedule.busPlate,
-      })
-      if (!file) throw new Error('Não foi possível gerar a imagem do bilhete')
-      const blobUrl = URL.createObjectURL(file)
-      const link = document.createElement('a')
-      link.href = blobUrl
-      link.download = file.name
-      link.click()
-      URL.revokeObjectURL(blobUrl)
-      gooeyToast.success('Download concluido', { description: 'O bilhete foi guardado no seu dispositivo.' })
-    } catch {
-      gooeyToast.error('Erro ao baixar', { description: 'Tente novamente.' })
-    } finally {
-      setIsDownloading(false)
-    }
-  }
-
-  const handleShare = async () => {
-    if (!qrDataUrl) return
-    setIsSharing(true)
-    try {
-      const file = await generateTicketCardImage(qrDataUrl, {
-        operatorName: schedule.operatorName,
-        origin: schedule.origin,
-        destination: schedule.destination,
-        departureDate: schedule.departureDate,
-        departureTime: schedule.departureTime,
-        arrivalTime: schedule.arrivalTime,
-        seatLabel,
-        passengerName,
-        ticketRef,
-        busPlate: schedule.busPlate,
-      })
-
-      if (navigator.share && file) {
-        if (navigator.canShare?.({ files: [file] })) {
-          await navigator.share({ title: `Bilhete ${schedule.operatorName}`, text: shareText, files: [file] })
-        } else {
-          await navigator.share({ title: `Bilhete ${schedule.operatorName}`, text: shareText })
-        }
-        gooeyToast.success('Partilhado', { description: 'O bilhete foi partilhado com sucesso.' })
-      } else {
-        setIsShareOpen(true)
-      }
-    } catch (err) {
-      if (err instanceof DOMException && err.name === 'AbortError') return
-      gooeyToast.error('Erro ao partilhar', { description: 'Tente novamente.' })
-    } finally {
-      setIsSharing(false)
-    }
-  }
-
-  const shareText = [
-    `Bilhete C-Trip · ${ticketRef}`,
-    `${schedule.route}`,
-    `${schedule.departureDate} · ${schedule.departureTime} – ${schedule.arrivalTime}`,
-    `Lugar: ${seatLabel}`,
-    `Passageiro: ${passengerName || '—'}`,
-    `Viatura: ${schedule.busPlate}`,
-  ].join('\n')
-
-  const handleShareApp = async (app: ShareApp) => {
-    if (app.action === 'link') {
-      const encodedText = encodeURIComponent(shareText)
-      const encodedPageUrl = encodeURIComponent(window.location.href)
-      const shareUrls: Record<string, string> = {
-        WhatsApp: `https://wa.me/?text=${encodedText}`,
-        Telegram: `https://t.me/share/url?url=${encodedPageUrl}&text=${encodedText}`,
-        Facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedPageUrl}&quote=${encodedText}`,
-      }
-
-      const file = await generateTicketCardImage(qrDataUrl!, {
-        operatorName: schedule.operatorName,
-        origin: schedule.origin,
-        destination: schedule.destination,
-        departureDate: schedule.departureDate,
-        departureTime: schedule.departureTime,
-        arrivalTime: schedule.arrivalTime,
-        seatLabel,
-        passengerName,
-        ticketRef,
-        busPlate: schedule.busPlate,
-      })
-
-      if (file) {
-        const blobUrl = URL.createObjectURL(file)
-        const a = document.createElement('a')
-        a.href = blobUrl
-        a.download = file.name
-        a.click()
-        URL.revokeObjectURL(blobUrl)
-      }
-
-      const url = shareUrls[app.name]
-      if (url) window.open(url, '_blank', 'noopener,noreferrer')
-      gooeyToast.success(`A abrir ${app.name}`, {
-        description: 'Imagem do bilhete descarregada. Anexe-a na conversa.',
-      })
-    } else {
-      const file = await generateTicketCardImage(qrDataUrl!, {
-        operatorName: schedule.operatorName,
-        origin: schedule.origin,
-        destination: schedule.destination,
-        departureDate: schedule.departureDate,
-        departureTime: schedule.departureTime,
-        arrivalTime: schedule.arrivalTime,
-        seatLabel,
-        passengerName,
-        ticketRef,
-        busPlate: schedule.busPlate,
-      })
-
-      if (file) {
-        try {
-          await navigator.clipboard.write([
-            new ClipboardItem({ 'image/png': file }),
-          ])
-          gooeyToast.success('Copiado', {
-            description: `Imagem do bilhete copiada. Abra o ${app.name} e cole na conversa.`,
-          })
-        } catch {
-          const blobUrl = URL.createObjectURL(file)
-          const a = document.createElement('a')
-          a.href = blobUrl
-          a.download = file.name
-          a.click()
-          URL.revokeObjectURL(blobUrl)
-          gooeyToast.success('Descarregado', {
-            description: `Imagem do bilhete descarregada. Abra o ${app.name} e anexe-a.`,
-          })
-        }
-      } else {
-        await navigator.clipboard.writeText(shareText)
-        gooeyToast.success('Copiado', {
-          description: `Texto copiado. Abra o ${app.name} e cole na conversa.`,
-        })
-      }
-    }
-    setIsShareOpen(false)
-    triggerRef.current?.focus()
-  }
-
   return (
     <div className="min-h-screen bg-[#F9FAFB] font-outfit flex flex-col">
-      <PageHeader title="Bilhete Confirmado" className='px-6 text-lg font-bold'
-     />
+      <PageHeader title="Bilhete Confirmado" className="px-6" />
 
-      <main className="flex flex-1 flex-col items-center gap-6 px-6 py-6 pb-[180px]">
+      <main className="flex flex-1 flex-col items-center gap-6 px-6 py-6 pb-[160px]">
         <div className="flex items-center justify-center gap-1 rounded-3xl bg-[#D1FAE5] px-3 py-1">
           <IconShieldCheckFilled className="h-2.5 w-3 text-[#10B981]" />
-          <span className="text-[11px] font-semibold text-[#10B981]">Disponivel OFFLINE</span>
+          <span className="text-[11px] font-semibold text-[#10B981]">Disponível offline</span>
         </div>
 
         <section
@@ -522,131 +115,74 @@ export default function TicketQrPage() {
         >
           <div className="flex items-center justify-between bg-[#1B7A3D1A] px-5 py-4">
             <div className="flex flex-col">
-              <span className="text-[12px] font-semibold text-[#1B7A3D] uppercase">{schedule.operatorName} TRANSPORTES</span>
+              {tripForSchedule?.company && (
+                <span className="text-[12px] font-semibold text-[#1B7A3D] uppercase">{tripForSchedule.company}</span>
+              )}
               <span className="text-lg text-[#111827] font-bold">
-                <RouteDisplay origin={schedule.origin} destination={schedule.destination} />
+                {tripForSchedule ? (
+                  <RouteDisplay origin={tripForSchedule.origin} destination={tripForSchedule.destination} />
+                ) : (
+                  'Bilhete'
+                )}
               </span>
             </div>
-           
           </div>
 
-          <div className=" py-4">
-            <div className="mt-4 flex flex-col items-center rounded-xl">
+          <div className="py-4">
+            <div className="mt-2 flex flex-col items-center">
               {qrDataUrl ? (
-                <img
-                  src={qrDataUrl}
-                  alt={`QR Code do bilhete ${ticketRef}, lugar ${seatLabel}`}
-                  className="h-48 w-48"
-                />
+                <img src={qrDataUrl} alt={`QR code do bilhete, lugar ${seatLabel}`} className="h-52 w-52" />
+              ) : error ? (
+                <div className="flex h-52 w-52 flex-col items-center justify-center gap-3 text-center">
+                  <p className="text-xs text-[#4B5563]">{error}</p>
+                  <button
+                    type="button"
+                    onClick={() => { setError(null); setAttempt((a) => a + 1) }}
+                    className="flex items-center gap-1.5 text-sm font-semibold text-[#1B7A3D]"
+                  >
+                    <IconRefresh className="size-4" />
+                    Tentar novamente
+                  </button>
+                </div>
               ) : (
-                <div className="h-48 w-48 animate-pulse rounded-lg " />
+                <div className="flex h-52 w-52 items-center justify-center">
+                  <IconLoader2 className="size-8 animate-spin text-gray-300" />
+                </div>
               )}
-              <p className='mt-5 text-xs text-[#4B5563] font-inter font-medium'>REF: {schedule.busPlate}</p>
+              {qrHash && <p className="mt-4 break-all px-6 text-center text-[11px] text-[#9CA3AF]">{qrHash}</p>}
             </div>
 
             <dl className="mt-4 flex flex-col gap-4 border-t border-[#E5E7EB] pt-5">
-              <div className='flex justify-between items-center px-5'>
-
-              <div className="flex flex-col gap-0.5">
-                <dt className="text-[11px] tracking-wide text-[#4B5563] font-inter">Passageiro</dt>
-                <dd className="truncate text-sm font-semibold text-[#111827] font-inter">{passengerName || ''}</dd>
-              </div>
-              <div className="flex flex-col">
-                <dt className="text-[11px]  tracking-wide text-[#4B5563] font-inter">Nº do Lugar</dt>
-                <dd className="text-[13px] font-bold text-[#1B7A3D] font-inter">Lugar {seatLabel}</dd>
-              </div>
-              </div>
-              <div className='flex justify-between items-center px-5'>
-
-              <div className="flex flex-col gap-0.5">
-                <dt className="text-[11px] capitalize tracking-wide  text-[#4B5563] font-inter font-normal">data da viagem</dt>
-                <dd className="truncate text-sm font-semibold text-[#111827] font-inter">{schedule.departureDate}</dd>
-              </div>
-              <div className="flex flex-col">
-                <dt className="text-[11px] capitalize tracking-wide text-[#4B5563] font-inter font-normal">hora da partida</dt>
-                <dd className="text-sm font-semibold text-[#111827] font-inter">{schedule.departureTime}</dd>
-              </div>
+              <div className="flex justify-between items-center px-5">
+                <div className="flex flex-col gap-0.5">
+                  <dt className="text-[11px] text-[#4B5563] font-inter">Lugar</dt>
+                  <dd className="text-[13px] font-bold text-[#1B7A3D] font-inter">Lugar {seatLabel}</dd>
+                </div>
+                {(tripForSchedule?.departureDate || tripForSchedule?.departureTime) && (
+                  <div className="flex flex-col text-right">
+                    <dt className="text-[11px] text-[#4B5563] font-inter">Partida</dt>
+                    <dd className="text-sm font-semibold text-[#111827] font-inter">
+                      {tripForSchedule?.departureDate} {tripForSchedule?.departureTime}
+                    </dd>
+                  </div>
+                )}
               </div>
             </dl>
           </div>
         </section>
-
-        <StickyFooter className="fixed bottom-0 inset-x-0">
-          <div className="flex items-center gap-4 w-full justify-center">
-            <button
-              ref={triggerRef}
-              onClick={() => void handleShare()}
-              disabled={!qrDataUrl || isSharing || isDownloading}
-              className="flex h-11 w-[176px] items-center justify-center gap-2 rounded-xl border-2
-              border-[#1B7A3D] text-[#1B7A3D] transition-colors hover:bg-[#1B7A3D]/5 disabled:opacity-50"
-            >
-              {isSharing ? <IconLoader2 className="h-5 w-5 animate-spin" /> : <IconShare2 className="h-5 w-5" />}
-              <p className="text-sm font-semibold">{isSharing ? 'A partilhar...' : 'Partilhar'}</p>
-            </button>
-            <button
-              onClick={() => void handleDownload()}
-              disabled={!qrDataUrl || isDownloading || isSharing}
-              className="flex h-11 w-[176px] items-center justify-center gap-2 rounded-xl border-2 border-[#1B7A3D]
-               text-[#1B7A3D] transition-colors hover:bg-[#1B7A3D]/5 disabled:opacity-50"
-            >
-              {isDownloading ? <IconLoader2 className="h-5 w-5 animate-spin" /> : <IconDownload className="h-5 w-5" />}
-              <p className="text-sm font-semibold">{isDownloading ? 'A baixar...' : 'Baixar'}</p>
-            </button>
-          </div>
-          <GradientButton onClick={() => navigate('/bookings')}>
-            Ver as Minhas Reservas
-          </GradientButton>
-        </StickyFooter>
       </main>
 
-      {isShareOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 px-4 pb-6 sm:items-center sm:pb-0"
-          onClick={() => setIsShareOpen(false)}
+      <StickyFooter className="fixed bottom-0 inset-x-0">
+        <button
+          onClick={() => void handleShare()}
+          disabled={!qrHash || isSharing || generating}
+          className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border-2 border-[#1B7A3D] text-[#1B7A3D] transition-colors hover:bg-[#1B7A3D]/5 disabled:opacity-50"
         >
-          <div
-            ref={dialogRef}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="share-modal-title"
-            className="w-full max-w-[350px] rounded-2xl bg-white p-6 shadow-xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="mb-4 flex items-center justify-between">
-              <h2 id="share-modal-title" className="text-base font-bold text-gray-900">
-                Partilhar bilhete
-              </h2>
-              <button
-                ref={closeButtonRef}
-          onClick={() => { setIsShareOpen(false); triggerRef.current?.focus() }}
-                aria-label="Fechar"
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 transition-colors hover:bg-gray-200"
-              >
-                <IconX className="h-4 w-4 text-gray-600" />
-              </button>
-            </div>
-            <ul className="grid grid-cols-3 gap-4">
-              {shareApps.map((app) => (
-                <li key={app.name}>
-                  <button
-                    type="button"
-                    onClick={() => void handleShareApp(app)}
-                    className="flex w-full flex-col items-center gap-2 rounded-xl px-1 py-2 transition-colors hover:bg-gray-50"
-                  >
-                    <span
-                      className="flex h-12 w-12 items-center justify-center rounded-full"
-                      style={{ backgroundColor: app.bg }}
-                    >
-                      <app.Icon className="h-6 w-6 text-white" />
-                    </span>
-                    <span className="text-center text-[11px] font-medium text-gray-600">{app.name}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      )}
+          {isSharing ? <IconLoader2 className="h-5 w-5 animate-spin" /> : <IconShare2 className="h-5 w-5" />}
+          <span className="text-sm font-semibold">{isSharing ? 'A partilhar...' : 'Partilhar'}</span>
+        </button>
+        <GradientButton onClick={() => navigate('/bookings')}>Ver as Minhas Reservas</GradientButton>
+      </StickyFooter>
     </div>
   )
 }
