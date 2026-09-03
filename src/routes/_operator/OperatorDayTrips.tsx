@@ -1,7 +1,5 @@
 import { useNavigate } from 'react-router'
-import { format } from 'date-fns'
-import { pt } from 'date-fns/locale/pt'
-import { IconMapPin, IconCalendarEvent, IconChevronRight, IconRefresh, IconCash, IconArmchair, IconClock } from '@tabler/icons-react'
+import { IconMapPin, IconClock, IconChevronRight, IconRefresh, IconCash } from '@tabler/icons-react'
 import { useOperatorSchedules } from '@/hooks/operator/useOperatorSchedules'
 import { useMySales } from '@/hooks/operator/useBoarding'
 import { useAuth } from '@/hooks/auth/useAuth'
@@ -10,6 +8,12 @@ import { formatKz } from '@/lib/format'
 import { Card, CardContent } from '@/components/ui/card'
 import RouteDisplay from '@/components/RouteDisplay'
 
+function formatToday(): string {
+  const now = new Date()
+  const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
+  return `hoje, ${now.getDate()} ${months[now.getMonth()]}`
+}
+
 function greeting(): string {
   const h = new Date().getHours()
   if (h < 12) return 'Bom dia'
@@ -17,20 +21,15 @@ function greeting(): string {
   return 'Boa noite'
 }
 
-function todayLabel(): string {
-  const s = format(new Date(), "EEEE, d 'de' MMMM", { locale: pt })
-  return s.charAt(0).toUpperCase() + s.slice(1)
-}
-
-const STATUS_STYLE: Record<string, { dot: string; badge: string; label: string }> = {
-  scheduled: { dot: 'bg-[#1D4ED8]', badge: 'bg-[#EFF6FF] text-[#1D4ED8]', label: 'A iniciar' },
-  boarding: { dot: 'bg-[#047857]', badge: 'bg-[#D1FAE5] text-[#047857]', label: 'Embarque' },
-  departed: { dot: 'bg-[#6B7280]', badge: 'bg-[#F3F4F6] text-[#6B7280]', label: 'Em rota' },
-  cancelled: { dot: 'bg-red-500', badge: 'bg-red-50 text-red-600', label: 'Cancelada' },
+const STATUS_STYLE: Record<string, { bg: string; text: string; label: string }> = {
+  scheduled: { bg: 'bg-[#EFF6FF]', text: 'text-[#1D4ED8]', label: 'A iniciar' },
+  boarding: { bg: 'bg-[#D1FAE5]', text: 'text-[#047857]', label: 'Embarque' },
+  departed: { bg: 'bg-[#F3F4F6]', text: 'text-[#6B7280]', label: 'Em rota' },
+  cancelled: { bg: 'bg-red-100', text: 'text-red-600', label: 'Cancelada' },
 }
 
 function statusStyle(status: string) {
-  return STATUS_STYLE[status] ?? { dot: 'bg-gray-400', badge: 'bg-[#F3F4F6] text-[#6B7280]', label: status }
+  return STATUS_STYLE[status] ?? { bg: 'bg-[#F3F4F6]', text: 'text-[#6B7280]', label: status }
 }
 
 export default function OperatorDayTrips() {
@@ -47,59 +46,73 @@ export default function OperatorDayTrips() {
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] font-outfit">
-      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white px-5 pb-4 pt-5">
-        <p className="text-[13px] font-medium text-[#6B7280]">
-          {greeting()}{firstName ? `, ${firstName}` : ''}
-        </p>
-        <h1 className="mt-0.5 text-[26px] font-extrabold tracking-tight text-[#111827]">Painel do Dia</h1>
-        <div className="mt-2 flex items-center gap-2 text-[12px] text-[#6B7280]">
-          <span className="inline-flex items-center gap-1">
-            <IconMapPin className="size-3.5 text-[#1B7A3D]" />
-            Terminal de Viana
-          </span>
-          <span className="size-1 rounded-full bg-gray-300" />
-          <span className="inline-flex items-center gap-1">
-            <IconCalendarEvent className="size-3.5 text-[#1B7A3D]" />
-            {todayLabel()}
-          </span>
+      <header className="relative overflow-hidden rounded-b-3xl px-5 pt-10 pb-6 min-h-[200px]">
+        {/* fundo sofisticado: base verde profunda + brilho suave + halos desfocados */}
+        <div
+          className="absolute inset-0"
+          style={{ background: 'linear-gradient(165deg, #1B7A3D 0%, #0E3D20 100%)' }}
+        />
+        <div
+          className="absolute inset-0"
+          style={{ background: 'radial-gradient(120% 80% at 88% -10%, rgba(74,222,128,0.35), transparent 60%)' }}
+        />
+        <div className="pointer-events-none absolute -right-16 -top-24 h-56 w-56 rounded-full bg-white/10 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-emerald-300/15 blur-3xl" />
+
+        <div className="relative flex flex-col gap-2 text-white">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1">
+              <IconMapPin className="size-4" />
+              <span className="text-[13px] font-semibold">Terminal de Viana</span>
+            </div>
+            <div className="flex items-center justify-center gap-1 rounded-full border border-white/15 bg-white/15 px-2.5 py-1.5 backdrop-blur-sm">
+              <IconClock className="size-3" />
+              <span className="text-xs font-semibold opacity-90">{formatToday()}</span>
+            </div>
+          </div>
+
+          <div className="mt-3">
+            <p className="text-sm font-medium text-white/75">
+              {greeting()}{firstName ? `, ${firstName}` : ''}
+            </p>
+            <h1 className="text-[32px] font-extrabold leading-tight">Painel do Dia</h1>
+            <div className="mt-1 flex items-end justify-between gap-3">
+              <span className="text-sm text-white/70 whitespace-nowrap">Visão geral das viagens de hoje</span>
+              <div className="h-px w-[100px] bg-white/40" />
+            </div>
+          </div>
         </div>
       </header>
 
-      <main className="px-5 py-5 pb-28">
+      <main className="px-5 py-6 pb-28">
         {mySales.data && (
-          <div className="mb-6 overflow-hidden rounded-2xl border border-[#E5E7EB] bg-white">
-            <div className="flex items-center gap-4 p-4">
-              <div className="flex size-12 items-center justify-center rounded-xl bg-[#1B7A3D]/10">
-                <IconCash className="size-5 text-[#1B7A3D]" />
-              </div>
-              <div className="flex-1">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-[#6B7280]">
-                  As minhas vendas de hoje
-                </p>
-                <p className="mt-0.5 text-2xl font-extrabold leading-none text-[#111827]">
-                  {formatKz(mySales.data.total)}
-                </p>
-              </div>
+          <div className="-mt-12 mb-6 flex items-center gap-3 rounded-2xl border border-[#E5E7EB] bg-white p-4 shadow-sm">
+            <div className="flex size-11 items-center justify-center rounded-full bg-[#1B7A3D]/10 shrink-0">
+              <IconCash className="size-5 text-[#1B7A3D]" />
             </div>
-            <div className="border-t border-gray-100 bg-gray-50/60 px-4 py-2 text-[12px] text-[#6B7280]">
-              {mySales.data.count} {mySales.data.count === 1 ? 'venda registada' : 'vendas registadas'}
+            <div className="flex-1">
+              <p className="text-[11px] font-medium text-[#4B5563] uppercase tracking-wide">As minhas vendas de hoje</p>
+              <p className="text-lg font-extrabold text-[#111827]">
+                {formatKz(mySales.data.total)}
+                <span className="ml-2 text-xs font-medium text-gray-400">
+                  {mySales.data.count} {mySales.data.count === 1 ? 'venda' : 'vendas'}
+                </span>
+              </p>
             </div>
           </div>
         )}
 
-        <div className="mb-4 flex items-baseline justify-between">
-          <h2 className="text-[15px] font-bold text-[#111827]">Partidas de hoje</h2>
+        <div className='flex items-center justify-between'>
+          <h2 className="text-[15px] font-bold text-[#111827] mb-4">Partidas de Hoje</h2>
           {!isLoading && !error && (
-            <span className="text-[13px] font-semibold text-[#1B7A3D]">
-              {schedules.length} {schedules.length === 1 ? 'autocarro' : 'autocarros'}
-            </span>
+            <p className='text-[13px] text-[#1B7A3D] font-semibold'>{schedules.length} Autocarros</p>
           )}
         </div>
 
         {isLoading && (
           <div className="flex flex-col gap-3">
             {[0, 1, 2].map((i) => (
-              <div key={i} className="h-32 animate-pulse rounded-2xl bg-gray-100" />
+              <div key={i} className="h-32 animate-pulse rounded-xl bg-gray-100" />
             ))}
           </div>
         )}
@@ -119,7 +132,7 @@ export default function OperatorDayTrips() {
         )}
 
         {!isLoading && !error && schedules.length === 0 && (
-          <div className="rounded-2xl border border-dashed border-gray-300 py-14 text-center text-sm text-gray-400">
+          <div className="text-center py-16 text-gray-400 text-sm">
             Não há viagens abertas para hoje.
           </div>
         )}
@@ -133,9 +146,9 @@ export default function OperatorDayTrips() {
                   key={schedule.schedule_id}
                   role="button"
                   tabIndex={0}
-                  className="group p-0 cursor-pointer border-[#E5E7EB] bg-white transition-all
-                  hover:border-[#1B7A3D]/40 hover:shadow-sm active:scale-[0.99]
-                  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1B7A3D] focus-visible:ring-offset-2"
+                  className="p-0 cursor-pointer bg-white hover:scale-[1.01] border-[#E5E7EB]
+                  active:scale-[0.99] transition-transform focus-visible:outline-none
+                  focus-visible:ring-2 focus-visible:ring-[#1B7A3D] focus-visible:ring-offset-2"
                   onClick={() => openManifest(schedule)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
@@ -145,34 +158,33 @@ export default function OperatorDayTrips() {
                   }}
                 >
                   <CardContent className="p-4">
-                    <div className="mb-3 flex items-center justify-between gap-2">
+                    <div className="flex items-center justify-between mb-2">
                       <RouteDisplay
                         origin={schedule.origin}
                         destination={schedule.destination}
                         className="text-base font-bold text-[#111827]"
-                        iconClassName="size-4"
+                        iconClassName="size-5"
                       />
-                      <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ${style.badge}`}>
-                        <span className={`size-1.5 rounded-full ${style.dot}`} />
+                      <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${style.bg} ${style.text}`}>
                         {style.label}
                       </span>
                     </div>
-
-                    <div className="flex items-center gap-5 text-[13px] text-[#4B5563]">
-                      <span className="inline-flex items-center gap-1.5">
-                        <IconClock className="size-4 text-gray-400" />
-                        <span className="font-semibold text-[#111827]">{schedule.departure_time}</span>
-                      </span>
-                      <span className="inline-flex items-center gap-1.5">
-                        <IconArmchair className="size-4 text-gray-400" />
-                        <span className="font-semibold text-[#111827]">{schedule.available_seats}</span>
-                        /{schedule.total_seats} livres
-                      </span>
+                    <div className='flex items-center gap-6 mb-2'>
+                      <div className='flex flex-col'>
+                        <span className='text-[11px] text-[#4B5563] font-medium'>Hora</span>
+                        <p className='text-[14px] text-[#111827] font-bold'>{schedule.departure_time}</p>
+                      </div>
+                      <div className='flex flex-col'>
+                        <span className='text-[11px] text-[#4B5563] font-medium'>Lugares</span>
+                        <p className='text-[14px] font-bold text-[#111827]'>
+                          {schedule.available_seats}/{schedule.total_seats} disponíveis
+                        </p>
+                      </div>
                     </div>
 
-                    <div className="mt-3 flex items-center justify-between border-t border-gray-100 pt-3">
-                      <span className="text-xs font-semibold text-[#1B7A3D]">Ver manifesto</span>
-                      <IconChevronRight className="size-4 text-[#1B7A3D] transition-transform group-hover:translate-x-0.5" />
+                    <div className="flex items-center justify-between border-t border-[#E5E7EB] pt-1">
+                      <p className='font-semibold text-xs text-[#1B7A3D]'>Ver Manifesto do Passageiro</p>
+                      <IconChevronRight className="size-5 text-[#1B7A3D]" />
                     </div>
                   </CardContent>
                 </Card>
