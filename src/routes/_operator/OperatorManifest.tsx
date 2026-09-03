@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react'
 import { useSearchParams, useNavigate } from 'react-router'
-import { IconArrowLeft, IconSearch, IconX, IconCheck, IconClock, IconRefresh } from '@tabler/icons-react'
-import type { ComponentType } from 'react'
+import { IconArrowLeft, IconSearch, IconX, IconCheck, IconRefresh, IconUsers } from '@tabler/icons-react'
+import { gooeyToast } from 'goey-toast'
 import { useManifest } from '@/hooks/operator/useManifest'
 import { useOperatorSchedules } from '@/hooks/operator/useOperatorSchedules'
+import { useBoardFromManifest, useBoardingSummary } from '@/hooks/operator/useBoarding'
 import type { ManifestItem } from '@/types/operator'
+import { formatKz } from '@/lib/format'
 import { Card, CardContent } from '@/components/ui/card'
 import RouteDisplay from '@/components/RouteDisplay'
 
@@ -14,34 +16,52 @@ function seatLabel(seat: number): string {
   return `${row}${String.fromCharCode(64 + col)}`
 }
 
-const STATUS_BADGE: Record<string, { bg: string; text: string; icon: ComponentType<{ className?: string }> }> = {
-  boarded: { bg: 'bg-[#D1FAE5]', text: 'text-[#10B981]', icon: IconCheck },
-  confirmed: { bg: 'bg-gray-100', text: 'text-[#4B5563]', icon: IconClock },
-}
-
-function isBoarded(item: ManifestItem) {
-  return item.status === 'boarded'
+function hasBoarded(item: ManifestItem) {
+  return item.boarded === true || item.status === 'boarded'
 }
 function isPending(item: ManifestItem) {
-  return item.status === 'confirmed' || item.status === 'pending'
+  return !hasBoarded(item) && (item.status === 'confirmed' || item.status === 'pending')
 }
 
-function PassengerCard({ item }: { item: ManifestItem }) {
-  const badge = STATUS_BADGE[isBoarded(item) ? 'boarded' : 'confirmed']
-  const Icon = badge.icon
+function PassengerCard({
+  item,
+  boarding,
+  onBoard,
+}: {
+  item: ManifestItem
+  boarding: boolean
+  onBoard: (item: ManifestItem) => void
+}) {
+  const boarded = hasBoarded(item)
   return (
-    <Card className="p-0 bg-white border h-[66px] border-[#E5E7EB] rounded-[10px]">
+    <Card className="p-0 bg-white border border-[#E5E7EB] rounded-[10px]">
       <CardContent className="p-3 flex items-center gap-3">
         <div className="size-9 rounded-xl bg-[#F9FAFB] flex items-center justify-center shrink-0">
           <span className="text-[13px] font-bold text-[#111827]">{seatLabel(item.seat)}</span>
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-[15px] font-semibold text-[#111827] truncate">Lugar {item.seat}</p>
-          <p className="text-[11px] text-gray-500">Reserva {item.booking_id.slice(0, 8)}</p>
+          <p className="text-[15px] font-semibold text-[#111827] truncate">
+            {item.passenger?.trim() || `Lugar ${item.seat}`}
+          </p>
+          <p className="text-[11px] text-gray-500">
+            {item.phone?.trim() || `Reserva ${item.booking_id.slice(0, 8)}`}
+          </p>
         </div>
-        <span className={`shrink-0 size-8 rounded-full flex items-center justify-center ${badge.bg} ${badge.text}`}>
-          <Icon className="size-5" />
-        </span>
+        {boarded ? (
+          <span className="shrink-0 flex items-center gap-1 rounded-full bg-[#D1FAE5] px-2.5 py-1 text-[11px] font-semibold text-[#10B981]">
+            <IconCheck className="size-3.5" />
+            Embarcou
+          </span>
+        ) : (
+          <button
+            type="button"
+            disabled={boarding}
+            onClick={() => onBoard(item)}
+            className="shrink-0 rounded-lg bg-[#1B7A3D] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#15632F] active:scale-95 transition disabled:opacity-50"
+          >
+            {boarding ? 'A embarcar…' : 'Embarcar'}
+          </button>
+        )}
       </CardContent>
     </Card>
   )
@@ -57,26 +77,52 @@ export default function OperatorManifest() {
 
   const { manifest, isLoading, error, refetch } = useManifest(scheduleId)
   const { schedules } = useOperatorSchedules(date)
+  const summary = useBoardingSummary(scheduleId)
+  const { board, isLoading: boarding } = useBoardFromManifest()
+  const [boardingId, setBoardingId] = useState<string | null>(null)
+
   const schedule = useMemo(
     () => schedules.find((s) => s.schedule_id === scheduleId),
     [schedules, scheduleId],
   )
 
-  const active = useMemo(() => manifest.filter((m) => m.status !== 'cancelled'), [manifest])
-  const boarded = active.filter(isBoarded)
-  const pending = active.filter(isPending)
-  const totalSeats = schedule?.total_seats ?? active.length
-  const boardingPercent = totalSeats > 0 ? Math.round((boarded.length / totalSeats) * 100) : 0
+  const active = useMemo(() => manifest.filter((m) => m.status !== 'cancelled' && m.status !== 'expired'), [manifest])
+  const boardedList = active.filter(hasBoarded)
+  const pendingList = active.filter(isPending)
+  const totalSeats = summary.data?.total_seats ?? schedule?.total_seats ?? active.length
+  const boardedCount = summary.data?.boarded ?? boardedList.length
+  const boardingPercent = totalSeats > 0 ? Math.round((boardedCount / totalSeats) * 100) : 0
 
-  const query = search.trim()
+  const query = search.trim().toLowerCase()
+  const matches = (m: ManifestItem) =>
+    !query ||
+    String(m.seat).includes(query) ||
+    (m.passenger ?? '').toLowerCase().includes(query)
+
   const visible = active.filter((m) => {
-    if (query && !String(m.seat).includes(query)) return false
-    if (activeTab === 'boarded') return isBoarded(m)
+    if (!matches(m)) return false
+    if (activeTab === 'boarded') return hasBoarded(m)
     if (activeTab === 'missing') return isPending(m)
     return true
   })
-  const visibleBoarded = visible.filter(isBoarded)
+  const visibleBoarded = visible.filter(hasBoarded)
   const visiblePending = visible.filter(isPending)
+
+  const handleBoard = async (item: ManifestItem) => {
+    setBoardingId(item.booking_id)
+    const res = await board(item.booking_id)
+    setBoardingId(null)
+    if (res) {
+      gooeyToast.success(
+        res.status === 'already_boarded' ? 'Já tinha embarcado' : 'Embarque registado',
+        { description: `${res.passenger} — Lugar ${res.seat}` },
+      )
+      void refetch()
+      void summary.refetch()
+    } else {
+      gooeyToast.error('Não foi possível embarcar', { description: 'Tente novamente.' })
+    }
+  }
 
   if (!scheduleId) {
     return (
@@ -125,21 +171,44 @@ export default function OperatorManifest() {
           </div>
           <div>
             <p className="text-base font-bold text-[#111827]">
-              {boarded.length} de {totalSeats} embarcados
+              {boardedCount} de {totalSeats} embarcados
             </p>
             <span className="text-[#4B5563] text-xs">
-              {pending.length > 0 ? `${pending.length} passageiros em falta` : 'Todos embarcados'}
+              {pendingList.length > 0 ? `${pendingList.length} passageiros em falta` : 'Todos embarcados'}
             </span>
           </div>
         </section>
       </header>
 
       <main className="px-5 py-5">
+        {summary.data && (
+          <div className="mb-4 grid grid-cols-4 gap-2 rounded-2xl border border-[#E5E7EB] bg-white p-3 text-center">
+            {[
+              { label: 'Vendidos', value: summary.data.tickets_sold },
+              { label: 'Embarcados', value: summary.data.boarded },
+              { label: 'No-shows', value: summary.data.no_show },
+              { label: 'Walk-ins', value: summary.data.walk_ins },
+            ].map((s) => (
+              <div key={s.label}>
+                <p className="text-lg font-extrabold text-[#111827]">{s.value}</p>
+                <p className="text-[10px] text-gray-500">{s.label}</p>
+              </div>
+            ))}
+            <div className="col-span-4 mt-2 flex items-center justify-between border-t border-gray-100 pt-2">
+              <span className="flex items-center gap-1.5 text-[11px] text-gray-500">
+                <IconUsers className="size-3.5" />
+                Receita confirmada
+              </span>
+              <span className="text-sm font-bold text-[#1B7A3D]">{formatKz(summary.data.revenue_confirmed)}</span>
+            </div>
+          </div>
+        )}
+
         <nav className="flex gap-2 mb-4" aria-label="Filtro de passageiros">
           {([
             { key: 'all', label: 'Todos', count: null },
-            { key: 'boarded', label: 'Embarcados', count: boarded.length },
-            { key: 'missing', label: 'Em falta', count: pending.length },
+            { key: 'boarded', label: 'Embarcados', count: boardedList.length },
+            { key: 'missing', label: 'Em falta', count: pendingList.length },
           ] as const).map((tab) => (
             <button
               key={tab.key}
@@ -164,10 +233,9 @@ export default function OperatorManifest() {
           <IconSearch className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#4B5563]" />
           <input
             type="text"
-            inputMode="numeric"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar por número de lugar"
+            placeholder="Buscar por nome ou lugar"
             className="w-full pl-9 pr-9 py-2.5 rounded-xl border border-gray-200 bg-white
              text-sm font-outfit placeholder:text-gray-400 focus:outline-none focus:ring-2
               focus:ring-[#1B7A3D]/30 focus:border-[#1B7A3D]"
@@ -208,6 +276,26 @@ export default function OperatorManifest() {
 
         {!isLoading && !error && (
           <>
+            {visiblePending.length > 0 && (
+              <section>
+                {activeTab !== 'all' && (
+                  <h2 className="text-xs font-bold text-[#6B7280] uppercase tracking-wide mb-2">
+                    Em falta ({visiblePending.length})
+                  </h2>
+                )}
+                <div className="flex flex-col gap-2 mb-5">
+                  {visiblePending.map((item) => (
+                    <PassengerCard
+                      key={item.booking_id}
+                      item={item}
+                      boarding={boarding && boardingId === item.booking_id}
+                      onBoard={handleBoard}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+
             {visibleBoarded.length > 0 && (
               <section>
                 {activeTab !== 'all' && (
@@ -217,22 +305,12 @@ export default function OperatorManifest() {
                 )}
                 <div className="flex flex-col gap-2 mb-5">
                   {visibleBoarded.map((item) => (
-                    <PassengerCard key={item.booking_id} item={item} />
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {visiblePending.length > 0 && (
-              <section>
-                {activeTab !== 'all' && (
-                  <h2 className="text-xs font-bold text-[#6B7280] uppercase tracking-wide mb-2">
-                    Confirmados ({visiblePending.length})
-                  </h2>
-                )}
-                <div className="flex flex-col gap-2 mb-5">
-                  {visiblePending.map((item) => (
-                    <PassengerCard key={item.booking_id} item={item} />
+                    <PassengerCard
+                      key={item.booking_id}
+                      item={item}
+                      boarding={false}
+                      onBoard={handleBoard}
+                    />
                   ))}
                 </div>
               </section>

@@ -279,6 +279,80 @@
         }
       }
     },
+    "/admin/payments/{payment_id}/refund": {
+      "post": {
+        "tags": [
+          "Administrator"
+        ],
+        "summary": "[ADMIN] Reembolsar pagamento",
+        "description": "Marca um pagamento confirmado como `refunded`, cancela a reserva associada e regista o evento no audit log. O reembolso efectivo (devolução do dinheiro) é feito pelo gateway quando integrado — aqui regista-se a autorização.",
+        "operationId": "refund_payment_admin_payments__payment_id__refund_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "payment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Payment Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefundPaymentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefundPaymentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Pagamento não está confirmado"
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "403": {
+            "description": "Sem permissão finance:refund"
+          },
+          "404": {
+            "description": "Pagamento não encontrado"
+          },
+          "409": {
+            "description": "Já reembolsado"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/admin/payments/summary": {
       "get": {
         "tags": [
@@ -506,6 +580,135 @@
           },
           "403": {
             "description": "Não é ADMIN"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/users/{user_id}": {
+      "get": {
+        "tags": [
+          "Administrator"
+        ],
+        "summary": "[ADMIN] Detalhe de um utilizador (diagnóstico)",
+        "description": "Estado completo: role, empresa (+ estado da empresa), roles RBAC e permissões efectivas.",
+        "operationId": "user_detail_admin_users__user_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminUserDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "403": {
+            "description": "Não é ADMIN"
+          },
+          "404": {
+            "description": "Utilizador não encontrado"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/users/{user_id}/reset-password": {
+      "post": {
+        "tags": [
+          "Administrator"
+        ],
+        "summary": "[ADMIN] Repor password de um utilizador",
+        "description": "Define uma nova password para qualquer conta (ex.: colaborador ou gestor trancado). Regista no audit log.",
+        "operationId": "reset_user_password_admin_users__user_id__reset_password_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "User Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResetPasswordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Password inválida"
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "403": {
+            "description": "Não é ADMIN"
+          },
+          "404": {
+            "description": "Utilizador não encontrado"
           },
           "422": {
             "description": "Validation Error",
@@ -1074,6 +1277,9 @@
           "403": {
             "description": "Conta desactivada"
           },
+          "429": {
+            "description": "Demasiadas tentativas"
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -1198,6 +1404,60 @@
         ]
       }
     },
+    "/auth/change-password": {
+      "post": {
+        "tags": [
+          "Passenger",
+          "Authentication"
+        ],
+        "summary": "Alterar password",
+        "description": "Altera a password do utilizador autenticado.",
+        "operationId": "change_password_auth_change_password_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Password actual incorrecta"
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/boarding/schedules": {
       "get": {
         "tags": [
@@ -1218,10 +1478,24 @@
             "required": false,
             "schema": {
               "type": "string",
-              "description": "Data (YYYY-MM-DD). Omitir = hoje.",
+              "description": "Data inicial (YYYY-MM-DD). Omitir = hoje.",
               "title": "Date"
             },
-            "description": "Data (YYYY-MM-DD). Omitir = hoje."
+            "description": "Data inicial (YYYY-MM-DD). Omitir = hoje."
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 14,
+              "minimum": 1,
+              "description": "Nº de dias a partir da data (1 = só esse dia)",
+              "default": 1,
+              "title": "Days"
+            },
+            "description": "Nº de dias a partir da data (1 = só esse dia)"
           }
         ],
         "responses": {
@@ -1314,6 +1588,62 @@
         ]
       }
     },
+    "/boarding/my-sales": {
+      "get": {
+        "tags": [
+          "Operator"
+        ],
+        "summary": "[VENDAS] Total de vendas do operador no dia",
+        "description": "Nº e total (Kz) das vendas ao balcão feitas por este operador. Filtro `date` (padrão: hoje).",
+        "operationId": "my_sales_boarding_my_sales_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Data (YYYY-MM-DD). Omitir = hoje.",
+              "title": "Date"
+            },
+            "description": "Data (YYYY-MM-DD). Omitir = hoje."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperatorSalesTotal"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "403": {
+            "description": "Perfil sem permissão"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/boarding/qr/reprint": {
       "post": {
         "tags": [
@@ -1372,9 +1702,59 @@
         "tags": [
           "Operator"
         ],
-        "summary": "Validar QR code de embarque",
-        "description": "Verifica se QR é válido, se já foi embarcado, ou se é inválido.",
+        "summary": "Validar QR code (sem registar)",
+        "description": "Só verifica: `allowed` / `already_boarded` / `invalid` (com `reason`). Não regista embarque — para isso usa /boarding/scan ou /boarding/record.",
         "operationId": "validate_qr_boarding_validate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidateQRRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidateQRResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/boarding/scan": {
+      "post": {
+        "tags": [
+          "Operator"
+        ],
+        "summary": "Scan de embarque (valida + regista num passo)",
+        "description": "O operador aponta a câmara ao QR e chama isto. Valida e, se estiver tudo bem, **regista o embarque na hora**. Devolve `boarded` (acabou de embarcar), `already_boarded` (já tinha embarcado — mostra a hora), ou `invalid` (com `reason`).",
+        "operationId": "scan_qr_boarding_scan_post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1422,8 +1802,8 @@
         "tags": [
           "Operator"
         ],
-        "summary": "Registar embarque",
-        "description": "Regista que o passageiro embarcou. Requer QR válido.",
+        "summary": "Registar embarque (fluxo em 2 passos)",
+        "description": "Regista o embarque de um QR já validado. Para o fluxo simples de um passo, usa /boarding/scan.",
         "operationId": "record_boarding_boarding_record_post",
         "requestBody": {
           "content": {
@@ -1447,10 +1827,13 @@
             }
           },
           "400": {
-            "description": "QR code não encontrado"
+            "description": "QR inválido"
           },
           "401": {
             "description": "Não autenticado"
+          },
+          "409": {
+            "description": "Passageiro já embarcou"
           },
           "422": {
             "description": "Validation Error",
@@ -1475,9 +1858,147 @@
         "tags": [
           "Operator"
         ],
-        "summary": "Manifesto de passageiros",
-        "description": "Lista todas as reservas de uma viagem (lugares e status).",
+        "summary": "Manifesto — pessoas de uma viagem",
+        "description": "Lista de passageiros da viagem, por lugar. Cada linha diz se a pessoa já embarcou (e a que horas). Por omissão só as reservas `confirmed` (quem deve entrar no autocarro); `status=all` mostra também canceladas/expiradas.",
         "operationId": "manifest_boarding_manifest_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "schedule_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Schedule Id"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "confirmed (default) | all | pending | cancelled | expired",
+              "default": "confirmed",
+              "title": "Status"
+            },
+            "description": "confirmed (default) | all | pending | cancelled | expired"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ManifestItem"
+                  },
+                  "title": "Response Manifest Boarding Manifest Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "403": {
+            "description": "Viagem não é da sua empresa"
+          },
+          "404": {
+            "description": "Viagem não encontrada"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/boarding/board/{booking_id}": {
+      "post": {
+        "tags": [
+          "Operator"
+        ],
+        "summary": "Embarcar uma pessoa a partir do manifesto",
+        "description": "O operador toca no nome no manifesto (sem scan de QR). Faz as mesmas validações que /boarding/scan. Útil quando o passageiro não tem o QR à mão.",
+        "operationId": "board_by_booking_boarding_board__booking_id__post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "booking_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Booking Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardByBookingResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Não pode embarcar (motivo no detail)"
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "403": {
+            "description": "Viagem não é da sua empresa"
+          },
+          "404": {
+            "description": "Reserva não encontrada"
+          },
+          "409": {
+            "description": "Já embarcou"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/boarding/summary": {
+      "get": {
+        "tags": [
+          "Operator"
+        ],
+        "summary": "Resumo de embarque de uma viagem",
+        "description": "Lugares, bilhetes confirmados, embarques, no-shows, walk-ins e receita confirmada da viagem.",
+        "operationId": "boarding_summary_boarding_summary_get",
         "security": [
           {
             "HTTPBearer": []
@@ -1501,17 +2022,16 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ManifestItem"
-                  },
-                  "title": "Response Manifest Boarding Manifest Get"
+                  "$ref": "#/components/schemas/BoardingSummaryResponse"
                 }
               }
             }
           },
           "401": {
             "description": "Não autenticado"
+          },
+          "403": {
+            "description": "Viagem não é da sua empresa"
           },
           "404": {
             "description": "Viagem não encontrada"
@@ -1529,31 +2049,56 @@
         }
       }
     },
-    "/bookings/": {
-      "get": {
+    "/boarding/walk-in": {
+      "post": {
         "tags": [
-          "Passenger"
+          "Operator"
         ],
-        "summary": "Minhas reservas",
-        "description": "Lista todas as reservas do passageiro autenticado, da mais recente.",
-        "operationId": "list_my_bookings_bookings__get",
+        "summary": "[VENDAS] Embarque walk-in (venda à porta)",
+        "description": "Cria reserva + pagamento confirmado + registo de embarque num só passo, para um passageiro sem reserva prévia que paga à porta. Não gera QR. Requer booking:sell.",
+        "operationId": "walk_in_boarding_boarding_walk_in_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WalkInBoardingRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
-          "200": {
+          "201": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/BookingItem"
-                  },
-                  "type": "array",
-                  "title": "Response List My Bookings Bookings  Get"
+                  "$ref": "#/components/schemas/WalkInBoardingResponse"
                 }
               }
             }
           },
+          "400": {
+            "description": "Viagem inválida, já partiu, ou valor errado"
+          },
           "401": {
             "description": "Não autenticado"
+          },
+          "403": {
+            "description": "Viagem não é da sua empresa"
+          },
+          "409": {
+            "description": "Lugar já ocupado"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1561,6 +2106,93 @@
             "HTTPBearer": []
           }
         ]
+      }
+    },
+    "/bookings/": {
+      "get": {
+        "tags": [
+          "Passenger"
+        ],
+        "summary": "Minhas reservas",
+        "description": "Lista as reservas do passageiro autenticado, da mais recente. Filtro `status` e paginação `limit`/`offset`.",
+        "operationId": "list_my_bookings_bookings__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "pending | confirmed | cancelled | expired",
+              "title": "Status"
+            },
+            "description": "pending | confirmed | cancelled | expired"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "exclusiveMinimum": 0,
+              "default": 100,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BookingItem"
+                  },
+                  "title": "Response List My Bookings Bookings  Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/bookings/{booking_id}": {
@@ -1907,7 +2539,7 @@
           "Passenger"
         ],
         "summary": "Reservar lugar e iniciar pagamento",
-        "description": "Verifica disponibilidade do lugar, cria a reserva e inicia o pagamento num único passo. Devolve referência de pagamento.",
+        "description": "Verifica disponibilidade do lugar, cria a reserva e inicia o pagamento num único passo. Devolve referência de pagamento. Por omissão (`PAYMENT_AUTO_CONFIRM=true`, enquanto não há gateway real), o pagamento já vem `confirmed` e o QR pode ser gerado de imediato. Com o gateway real, vem `pending` até o webhook confirmar.",
         "operationId": "initiate_payment_payments_initiate_post",
         "requestBody": {
           "content": {
@@ -2157,7 +2789,7 @@
             }
           },
           "400": {
-            "description": "Email já registado"
+            "description": "Email ou NIF já registado"
           },
           "422": {
             "description": "Validation Error",
@@ -2397,6 +3029,286 @@
           },
           "404": {
             "description": "Utilizador não encontrado"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/companies/bookings": {
+      "get": {
+        "tags": [
+          "Company Admin"
+        ],
+        "summary": "[GESTOR] Reservas da empresa",
+        "description": "Todas as reservas das viagens da empresa, da mais recente. Filtros: status, schedule_id, route_id, date_from/date_to (por data de partida), limit/offset.",
+        "operationId": "company_bookings_companies_bookings_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "pending | confirmed | cancelled | expired",
+              "title": "Status"
+            },
+            "description": "pending | confirmed | cancelled | expired"
+          },
+          {
+            "name": "schedule_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Schedule Id"
+            }
+          },
+          {
+            "name": "route_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Route Id"
+            }
+          },
+          {
+            "name": "date_from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Data de partida inicial (YYYY-MM-DD)",
+              "title": "Date From"
+            },
+            "description": "Data de partida inicial (YYYY-MM-DD)"
+          },
+          {
+            "name": "date_to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Data de partida final (YYYY-MM-DD)",
+              "title": "Date To"
+            },
+            "description": "Data de partida final (YYYY-MM-DD)"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "exclusiveMinimum": 0,
+              "default": 100,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CompanyBookingItem"
+                  },
+                  "title": "Response Company Bookings Companies Bookings Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "403": {
+            "description": "Perfil sem permissão"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/companies/dashboard": {
+      "get": {
+        "tags": [
+          "Company Admin"
+        ],
+        "summary": "[GESTOR] Dashboard da empresa",
+        "description": "Indicadores da empresa numa janela de `days` dias (por data de partida): viagens, lugares oferecidos, bilhetes vendidos e embarcados, taxa de ocupação, receita confirmada/pendente e receita por rota.",
+        "operationId": "company_dashboard_companies_dashboard_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 365,
+              "exclusiveMinimum": 0,
+              "description": "Janela em dias, para trás, por data de partida",
+              "default": 30,
+              "title": "Days"
+            },
+            "description": "Janela em dias, para trás, por data de partida"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyDashboardResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "403": {
+            "description": "Perfil sem permissão"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/companies/bookings/{booking_id}/cancel": {
+      "post": {
+        "tags": [
+          "Company Admin"
+        ],
+        "summary": "[GESTOR] Cancelar reserva de um passageiro",
+        "description": "A transportadora cancela uma reserva de uma das suas viagens (ex.: viagem alterada). Liberta o lugar, cancela o pagamento pendente e notifica o passageiro. Não faz reembolso de dinheiro já cobrado — para isso, o admin usa POST /admin/payments/{id}/refund.",
+        "operationId": "company_cancel_booking_companies_bookings__booking_id__cancel_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "booking_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Booking Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyCancelBookingResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "403": {
+            "description": "Reserva não é de uma viagem da empresa"
+          },
+          "404": {
+            "description": "Reserva não encontrada"
+          },
+          "409": {
+            "description": "Já cancelada ou passageiro já embarcou"
           },
           "422": {
             "description": "Validation Error",
@@ -3100,6 +4012,66 @@
             }
           }
         }
+      },
+      "delete": {
+        "tags": [
+          "Company Admin",
+          "Company Admin"
+        ],
+        "summary": "[GESTOR] Remover autocarro",
+        "description": "Remove um autocarro da empresa. Bloqueado se houver viagens agendadas futuras a usá-lo.",
+        "operationId": "delete_bus_fleet_buses__bus_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "bus_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Bus Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "403": {
+            "description": "Perfil sem permissão"
+          },
+          "404": {
+            "description": "Autocarro não encontrado"
+          },
+          "409": {
+            "description": "Autocarro em uso por viagens futuras"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/fleet/drivers/{driver_id}": {
@@ -3168,6 +4140,66 @@
             }
           }
         }
+      },
+      "delete": {
+        "tags": [
+          "Company Admin",
+          "Company Admin"
+        ],
+        "summary": "[GESTOR] Remover motorista",
+        "description": "Remove um motorista da empresa. Bloqueado se houver viagens agendadas futuras atribuídas a ele.",
+        "operationId": "delete_driver_fleet_drivers__driver_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "driver_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Driver Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "403": {
+            "description": "Perfil sem permissão"
+          },
+          "404": {
+            "description": "Motorista não encontrado"
+          },
+          "409": {
+            "description": "Motorista em uso por viagens futuras"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/marketplace/search": {
@@ -3176,7 +4208,7 @@
           "Public Consult"
         ],
         "summary": "Pesquisar viagens",
-        "description": "Público. Todos os filtros são opcionais. Sem filtros devolve todas as viagens disponíveis. Aceita city_id ou nome da cidade.",
+        "description": "Público. Todos os filtros são opcionais; sem filtros devolve todas as viagens futuras disponíveis. Aceita city_id ou nome da cidade. Datas: `date` (dia exacto) OU `date_from`/`date_to` (intervalo). Ordenado por partida; `sort=price` ordena por preço. Paginação com `limit`/`offset`.",
         "operationId": "search_marketplace_search_get",
         "parameters": [
           {
@@ -3192,10 +4224,46 @@
                   "type": "null"
                 }
               ],
-              "description": "Data (YYYY-MM-DD). Omitir = todas as datas futuras.",
+              "description": "Data exacta (YYYY-MM-DD). Ignora date_from/date_to.",
               "title": "Date"
             },
-            "description": "Data (YYYY-MM-DD). Omitir = todas as datas futuras."
+            "description": "Data exacta (YYYY-MM-DD). Ignora date_from/date_to."
+          },
+          {
+            "name": "date_from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Início do intervalo (YYYY-MM-DD). Default: hoje.",
+              "title": "Date From"
+            },
+            "description": "Início do intervalo (YYYY-MM-DD). Default: hoje."
+          },
+          {
+            "name": "date_to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Fim do intervalo (YYYY-MM-DD), inclusivo.",
+              "title": "Date To"
+            },
+            "description": "Fim do intervalo (YYYY-MM-DD), inclusivo."
           },
           {
             "name": "origin_city_id",
@@ -3264,6 +4332,24 @@
             }
           },
           {
+            "name": "company",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Nome (parcial) ou UUID da transportadora",
+              "title": "Company"
+            },
+            "description": "Nome (parcial) ou UUID da transportadora"
+          },
+          {
             "name": "max_price",
             "in": "query",
             "required": false,
@@ -3277,6 +4363,42 @@
                 }
               ],
               "title": "Max Price"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(departure|price)$",
+              "description": "departure | price",
+              "default": "departure",
+              "title": "Sort"
+            },
+            "description": "departure | price"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "exclusiveMinimum": 0,
+              "default": 100,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
             }
           }
         ],
@@ -3585,60 +4707,6 @@
         }
       }
     },
-    "/auth/change-password": {
-      "post": {
-        "tags": [
-          "Passenger",
-          "Authentication"
-        ],
-        "summary": "Alterar password",
-        "description": "Altera a password do utilizador autenticado.",
-        "operationId": "change_password_auth_change_password_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ChangePasswordRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Password actual incorrecta"
-          },
-          "401": {
-            "description": "Não autenticado"
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      }
-    },
     "/cities/": {
       "get": {
         "tags": [
@@ -3663,6 +4731,60 @@
             }
           }
         }
+      },
+      "post": {
+        "tags": [
+          "Administrator"
+        ],
+        "summary": "[ADMIN] Criar cidade",
+        "description": "Regista uma nova cidade (origem/destino possível para rotas). Apenas ADMIN.",
+        "operationId": "create_city_cities__post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CityCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CityResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Já existe cidade com esse nome"
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "403": {
+            "description": "Não é ADMIN"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/cities/{city_id}": {
@@ -3695,6 +4817,72 @@
                 }
               }
             }
+          },
+          "404": {
+            "description": "Cidade não encontrada"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Administrator"
+        ],
+        "summary": "[ADMIN] Actualizar cidade",
+        "description": "Actualiza nome, província ou o estado activo de uma cidade. Apenas ADMIN.",
+        "operationId": "update_city_cities__city_id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "city_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "City Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CityUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CityResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "403": {
+            "description": "Não é ADMIN"
           },
           "404": {
             "description": "Cidade não encontrada"
@@ -3856,6 +5044,72 @@
                 }
               }
             }
+          },
+          "404": {
+            "description": "Rota não encontrada"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Company Admin"
+        ],
+        "summary": "[GESTOR] Actualizar rota (preço / estado)",
+        "description": "Altera a tarifa da rota e/ou activa/desactiva. A tarifa é o único valor cobrado nas reservas e vendas.",
+        "operationId": "update_route_routes__route_id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "route_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Route Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RouteUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RouteUpdateResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "403": {
+            "description": "Perfil sem permissão"
           },
           "404": {
             "description": "Rota não encontrada"
@@ -4051,18 +5305,93 @@
           "Company Admin"
         ],
         "summary": "[GESTOR] Viagens da empresa",
-        "description": "Lista todas as viagens da empresa do gestor autenticado.",
+        "description": "Viagens da empresa, **da mais próxima para a mais distante** (data + hora). Por omissão só as de hoje em diante; `include_past=true` inclui as já passadas. Filtros: date_from/date_to, status. Paginação: limit/offset.",
         "operationId": "list_company_schedules_schedules_company_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "date_from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Data inicial (YYYY-MM-DD). Default: hoje.",
+              "title": "Date From"
+            },
+            "description": "Data inicial (YYYY-MM-DD). Default: hoje."
+          },
+          {
+            "name": "date_to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Data final (YYYY-MM-DD).",
+              "title": "Date To"
+            },
+            "description": "Data final (YYYY-MM-DD)."
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "scheduled | cancelled",
+              "title": "Status"
+            },
+            "description": "scheduled | cancelled"
+          },
+          {
+            "name": "include_past",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Incluir viagens já passadas",
+              "default": false,
+              "title": "Include Past"
+            },
+            "description": "Incluir viagens já passadas"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000,
+              "exclusiveMinimum": 0,
+              "default": 200,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
+                  "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/CompanyScheduleItem"
                   },
-                  "type": "array",
                   "title": "Response List Company Schedules Schedules Company Get"
                 }
               }
@@ -4073,13 +5402,18 @@
           },
           "403": {
             "description": "Perfil sem permissão"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       }
     },
     "/schedules/": {
@@ -4461,6 +5795,7 @@
           "infra"
         ],
         "summary": "Healthcheck",
+        "description": "Devolve `{\"status\": \"ok\"}` se a aplicação estiver de pé. Usado pelo healthcheck do deploy.",
         "operationId": "health_health_get",
         "responses": {
           "200": {
@@ -4642,6 +5977,98 @@
         ],
         "title": "AdminPaymentItem"
       },
+      "AdminUserDetail": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role",
+            "description": "Perfil (string na coluna users.role)"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "company_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Company Id",
+            "description": "Empresa associada"
+          },
+          "company_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Company Name"
+          },
+          "company_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Company Status",
+            "description": "pending | verified | rejected | suspended"
+          },
+          "roles": {
+            "items": {
+              "$ref": "#/components/schemas/AdminUserRoleRef"
+            },
+            "type": "array",
+            "title": "Roles",
+            "description": "Roles RBAC atribuídas"
+          },
+          "permissions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Permissions",
+            "description": "Permissões efectivas (códigos)"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "email",
+          "name",
+          "role",
+          "is_active",
+          "roles",
+          "permissions",
+          "created_at"
+        ],
+        "title": "AdminUserDetail"
+      },
       "AdminUserItem": {
         "properties": {
           "id": {
@@ -4685,6 +6112,40 @@
           "created_at"
         ],
         "title": "AdminUserItem"
+      },
+      "AdminUserRoleRef": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "is_system": {
+            "type": "boolean",
+            "title": "Is System"
+          },
+          "empresa_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Empresa Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "nome",
+          "is_system"
+        ],
+        "title": "AdminUserRoleRef"
       },
       "AssignRoleRequest": {
         "properties": {
@@ -4746,6 +6207,44 @@
         ],
         "title": "AuditLogItem"
       },
+      "BoardByBookingResponse": {
+        "properties": {
+          "booking_id": {
+            "type": "string",
+            "title": "Booking Id",
+            "description": "UUID da reserva"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "boarded | already_boarded"
+          },
+          "passenger": {
+            "type": "string",
+            "title": "Passenger",
+            "description": "Nome do passageiro"
+          },
+          "seat": {
+            "type": "integer",
+            "title": "Seat",
+            "description": "Número do lugar"
+          },
+          "boarded_at": {
+            "type": "string",
+            "title": "Boarded At",
+            "description": "Hora do embarque (ISO 8601)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "booking_id",
+          "status",
+          "passenger",
+          "seat",
+          "boarded_at"
+        ],
+        "title": "BoardByBookingResponse"
+      },
       "BoardingRecordResponse": {
         "properties": {
           "boarding_id": {
@@ -4765,6 +6264,68 @@
           "boarded_at"
         ],
         "title": "BoardingRecordResponse"
+      },
+      "BoardingSummaryResponse": {
+        "properties": {
+          "schedule_id": {
+            "type": "string",
+            "title": "Schedule Id",
+            "description": "UUID da viagem"
+          },
+          "departure_date": {
+            "type": "string",
+            "title": "Departure Date",
+            "description": "Data de partida (YYYY-MM-DD)"
+          },
+          "departure_time": {
+            "type": "string",
+            "title": "Departure Time",
+            "description": "Hora de partida (HH:MM)"
+          },
+          "total_seats": {
+            "type": "integer",
+            "title": "Total Seats",
+            "description": "Lugares no autocarro"
+          },
+          "tickets_sold": {
+            "type": "integer",
+            "title": "Tickets Sold",
+            "description": "Reservas confirmadas"
+          },
+          "boarded": {
+            "type": "integer",
+            "title": "Boarded",
+            "description": "Embarques registados"
+          },
+          "no_show": {
+            "type": "integer",
+            "title": "No Show",
+            "description": "Confirmados que não embarcaram"
+          },
+          "walk_ins": {
+            "type": "integer",
+            "title": "Walk Ins",
+            "description": "Embarques walk-in (venda à porta)"
+          },
+          "revenue_confirmed": {
+            "type": "number",
+            "title": "Revenue Confirmed",
+            "description": "Receita confirmada da viagem (Kz)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "schedule_id",
+          "departure_date",
+          "departure_time",
+          "total_seats",
+          "tickets_sold",
+          "boarded",
+          "no_show",
+          "walk_ins",
+          "revenue_confirmed"
+        ],
+        "title": "BoardingSummaryResponse"
       },
       "BookingDetailResponse": {
         "properties": {
@@ -4845,6 +6406,18 @@
             ],
             "title": "Guest Phone",
             "description": "Telefone do cliente (venda ao balcão)"
+          },
+          "guest_id_doc": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Guest Id Doc",
+            "description": "Documento de identificação (venda ao balcão)"
           }
         },
         "type": "object",
@@ -5097,6 +6670,48 @@
         ],
         "title": "ChangePasswordRequest"
       },
+      "ChangePasswordResponse": {
+        "properties": {
+          "detail": {
+            "type": "string",
+            "title": "Detail",
+            "description": "Mensagem de confirmação"
+          }
+        },
+        "type": "object",
+        "required": [
+          "detail"
+        ],
+        "title": "ChangePasswordResponse"
+      },
+      "CityCreateRequest": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "title": "Name",
+            "description": "Nome da cidade"
+          },
+          "province": {
+            "type": "string",
+            "minLength": 2,
+            "title": "Province",
+            "description": "Província"
+          },
+          "country": {
+            "type": "string",
+            "title": "Country",
+            "description": "País",
+            "default": "Angola"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "province"
+        ],
+        "title": "CityCreateRequest"
+      },
       "CityResponse": {
         "properties": {
           "id": {
@@ -5123,6 +6738,48 @@
         ],
         "title": "CityResponse"
       },
+      "CityUpdateRequest": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 2
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "province": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 2
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Province"
+          },
+          "is_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Active",
+            "description": "Cidade activa (aparece nas listagens)"
+          }
+        },
+        "type": "object",
+        "title": "CityUpdateRequest"
+      },
       "CompanyActionRequest": {
         "properties": {
           "company_id": {
@@ -5137,6 +6794,189 @@
           "company_id"
         ],
         "title": "CompanyActionRequest"
+      },
+      "CompanyBookingItem": {
+        "properties": {
+          "booking_id": {
+            "type": "string",
+            "title": "Booking Id",
+            "description": "UUID da reserva"
+          },
+          "schedule_id": {
+            "type": "string",
+            "title": "Schedule Id",
+            "description": "UUID da viagem"
+          },
+          "route": {
+            "type": "string",
+            "title": "Route",
+            "description": "Origem → destino"
+          },
+          "departure_date": {
+            "type": "string",
+            "title": "Departure Date",
+            "description": "Data de partida (YYYY-MM-DD)"
+          },
+          "departure_time": {
+            "type": "string",
+            "title": "Departure Time",
+            "description": "Hora de partida (HH:MM)"
+          },
+          "seat_number": {
+            "type": "integer",
+            "title": "Seat Number",
+            "description": "Número do lugar"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "pending | confirmed | cancelled | expired"
+          },
+          "payment_status": {
+            "type": "string",
+            "title": "Payment Status",
+            "description": "Estado do pagamento: no_payment | pending | confirmed | failed | cancelled"
+          },
+          "total_price": {
+            "type": "number",
+            "title": "Total Price",
+            "description": "Valor (Kz)"
+          },
+          "passenger": {
+            "type": "string",
+            "title": "Passenger",
+            "description": "Nome do passageiro (registado ou guest)"
+          },
+          "channel": {
+            "type": "string",
+            "title": "Channel",
+            "description": "online (passageiro) | balcao (venda por operador)"
+          },
+          "boarded": {
+            "type": "boolean",
+            "title": "Boarded",
+            "description": "Já embarcou?"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At",
+            "description": "Data de criação (ISO 8601)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "booking_id",
+          "schedule_id",
+          "route",
+          "departure_date",
+          "departure_time",
+          "seat_number",
+          "status",
+          "payment_status",
+          "total_price",
+          "passenger",
+          "channel",
+          "boarded",
+          "created_at"
+        ],
+        "title": "CompanyBookingItem"
+      },
+      "CompanyCancelBookingResponse": {
+        "properties": {
+          "booking_id": {
+            "type": "string",
+            "title": "Booking Id",
+            "description": "UUID da reserva"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "cancelled"
+          },
+          "seat_freed": {
+            "type": "integer",
+            "title": "Seat Freed",
+            "description": "Número do lugar libertado"
+          }
+        },
+        "type": "object",
+        "required": [
+          "booking_id",
+          "status",
+          "seat_freed"
+        ],
+        "title": "CompanyCancelBookingResponse"
+      },
+      "CompanyDashboardResponse": {
+        "properties": {
+          "period_days": {
+            "type": "integer",
+            "title": "Period Days",
+            "description": "Janela considerada (dias, por departure_date)"
+          },
+          "upcoming_trips": {
+            "type": "integer",
+            "title": "Upcoming Trips",
+            "description": "Viagens agendadas de hoje em diante"
+          },
+          "total_trips": {
+            "type": "integer",
+            "title": "Total Trips",
+            "description": "Viagens no período (qualquer estado)"
+          },
+          "seats_offered": {
+            "type": "integer",
+            "title": "Seats Offered",
+            "description": "Soma dos lugares das viagens agendadas no período"
+          },
+          "tickets_sold": {
+            "type": "integer",
+            "title": "Tickets Sold",
+            "description": "Bilhetes confirmados no período"
+          },
+          "tickets_boarded": {
+            "type": "integer",
+            "title": "Tickets Boarded",
+            "description": "Bilhetes com embarque registado"
+          },
+          "occupancy_rate": {
+            "type": "number",
+            "title": "Occupancy Rate",
+            "description": "tickets_sold / seats_offered (0–1)"
+          },
+          "revenue_confirmed": {
+            "type": "number",
+            "title": "Revenue Confirmed",
+            "description": "Receita já recebida no período (Kz)"
+          },
+          "revenue_pending": {
+            "type": "number",
+            "title": "Revenue Pending",
+            "description": "Pagamentos ainda por confirmar (Kz)"
+          },
+          "by_route": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardRouteRevenue"
+            },
+            "type": "array",
+            "title": "By Route",
+            "description": "Rotas ordenadas por receita (top 10)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "period_days",
+          "upcoming_trips",
+          "total_trips",
+          "seats_offered",
+          "tickets_sold",
+          "tickets_boarded",
+          "occupancy_rate",
+          "revenue_confirmed",
+          "revenue_pending",
+          "by_route"
+        ],
+        "title": "CompanyDashboardResponse"
       },
       "CompanyPendingItem": {
         "properties": {
@@ -5787,6 +7627,38 @@
         ],
         "title": "CreateTaskResponse"
       },
+      "DashboardRouteRevenue": {
+        "properties": {
+          "route": {
+            "type": "string",
+            "title": "Route",
+            "description": "Origem → destino"
+          },
+          "trips": {
+            "type": "integer",
+            "title": "Trips",
+            "description": "Nº de viagens no período"
+          },
+          "tickets": {
+            "type": "integer",
+            "title": "Tickets",
+            "description": "Bilhetes confirmados no período"
+          },
+          "revenue": {
+            "type": "number",
+            "title": "Revenue",
+            "description": "Receita confirmada (Kz)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "route",
+          "trips",
+          "tickets",
+          "revenue"
+        ],
+        "title": "DashboardRouteRevenue"
+      },
       "DeactivateRouteResponse": {
         "properties": {
           "id": {
@@ -5806,6 +7678,20 @@
           "is_active"
         ],
         "title": "DeactivateRouteResponse"
+      },
+      "DeleteResponse": {
+        "properties": {
+          "detail": {
+            "type": "string",
+            "title": "Detail",
+            "description": "Mensagem de confirmação"
+          }
+        },
+        "type": "object",
+        "required": [
+          "detail"
+        ],
+        "title": "DeleteResponse"
       },
       "DriverListItem": {
         "properties": {
@@ -6043,6 +7929,18 @@
             ],
             "title": "Expires At",
             "description": "Validade da referência (ISO 8601)"
+          },
+          "hold_expires_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hold Expires At",
+            "description": "Até quando o lugar fica reservado sem pagamento (ISO 8601). Passado este prazo, se o pagamento não confirmar, o lugar é libertado. Null quando o pagamento já vem confirmado."
           }
         },
         "type": "object",
@@ -6091,6 +7989,60 @@
             "type": "string",
             "title": "Status",
             "description": "Status da reserva"
+          },
+          "passenger": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Passenger",
+            "description": "Nome do passageiro (registado ou guest)"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone",
+            "description": "Telefone (para contactar um no-show)"
+          },
+          "id_doc": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id Doc",
+            "description": "Documento de identificação (venda ao balcão)"
+          },
+          "boarded": {
+            "type": "boolean",
+            "title": "Boarded",
+            "description": "Já embarcou?",
+            "default": false
+          },
+          "boarded_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Boarded At",
+            "description": "Hora do embarque (ISO 8601), se já embarcou"
           }
         },
         "type": "object",
@@ -6336,6 +8288,30 @@
             "title": "Passenger Name",
             "description": "Nome do passageiro"
           },
+          "passenger_phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Passenger Phone",
+            "description": "Telefone do passageiro"
+          },
+          "passenger_id_doc": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Passenger Id Doc",
+            "description": "Documento de identificação (BI/passaporte)"
+          },
           "seat_number": {
             "type": "integer",
             "title": "Seat Number",
@@ -6389,12 +8365,49 @@
         ],
         "title": "OperatorSaleResponse"
       },
+      "OperatorSalesTotal": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "title": "Date",
+            "description": "Dia (YYYY-MM-DD)"
+          },
+          "operator_id": {
+            "type": "string",
+            "title": "Operator Id",
+            "description": "UUID do operador"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "description": "Nº de vendas do operador nesse dia"
+          },
+          "total": {
+            "type": "number",
+            "title": "Total",
+            "description": "Total cobrado pelo operador nesse dia (Kz)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "date",
+          "operator_id",
+          "count",
+          "total"
+        ],
+        "title": "OperatorSalesTotal"
+      },
       "OperatorScheduleItem": {
         "properties": {
           "schedule_id": {
             "type": "string",
             "title": "Schedule Id",
             "description": "UUID da viagem"
+          },
+          "route_id": {
+            "type": "string",
+            "title": "Route Id",
+            "description": "UUID da rota"
           },
           "origin": {
             "type": "string",
@@ -6416,6 +8429,11 @@
             "title": "Departure Time",
             "description": "Hora de partida (HH:MM)"
           },
+          "price": {
+            "type": "number",
+            "title": "Price",
+            "description": "Preço da rota (Kz) — valor a cobrar na venda ao balcão"
+          },
           "total_seats": {
             "type": "integer",
             "title": "Total Seats",
@@ -6435,10 +8453,12 @@
         "type": "object",
         "required": [
           "schedule_id",
+          "route_id",
           "origin",
           "destination",
           "departure_date",
           "departure_time",
+          "price",
           "total_seats",
           "available_seats",
           "status"
@@ -6745,6 +8765,18 @@
             "title": "Count Cancelled",
             "description": "Nº de pagamentos cancelled"
           },
+          "total_refunded": {
+            "type": "number",
+            "title": "Total Refunded",
+            "description": "Soma dos pagamentos reembolsados (Kz)",
+            "default": 0
+          },
+          "count_refunded": {
+            "type": "integer",
+            "title": "Count Refunded",
+            "description": "Nº de pagamentos reembolsados",
+            "default": 0
+          },
           "by_day": {
             "items": {
               "$ref": "#/components/schemas/PeriodTotal"
@@ -6829,6 +8861,14 @@
             "type": "boolean",
             "title": "Is System",
             "description": "Permissão de sistema (não pode ser apagada)"
+          },
+          "implies": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Implies",
+            "description": "Códigos que são atribuídos automaticamente junto com este"
           }
         },
         "type": "object",
@@ -7017,6 +9057,50 @@
         ],
         "title": "QRResponse"
       },
+      "RefundPaymentRequest": {
+        "properties": {
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason",
+            "description": "Motivo do reembolso (fica no audit log)"
+          }
+        },
+        "type": "object",
+        "title": "RefundPaymentRequest"
+      },
+      "RefundPaymentResponse": {
+        "properties": {
+          "payment_id": {
+            "type": "string",
+            "title": "Payment Id",
+            "description": "UUID do pagamento"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "refunded"
+          },
+          "amount": {
+            "type": "number",
+            "title": "Amount",
+            "description": "Valor reembolsado (Kz)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "payment_id",
+          "status",
+          "amount"
+        ],
+        "title": "RefundPaymentResponse"
+      },
       "RegisterRequest": {
         "properties": {
           "email": {
@@ -7137,6 +9221,34 @@
           "booking_id"
         ],
         "title": "ReprintQRResponse"
+      },
+      "ResetPasswordRequest": {
+        "properties": {
+          "new_password": {
+            "type": "string",
+            "minLength": 6,
+            "title": "New Password",
+            "description": "Nova password (mín. 6 caracteres)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "new_password"
+        ],
+        "title": "ResetPasswordRequest"
+      },
+      "ResetPasswordResponse": {
+        "properties": {
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "detail"
+        ],
+        "title": "ResetPasswordResponse"
       },
       "RoleDetailItem": {
         "properties": {
@@ -7381,6 +9493,63 @@
           "stops"
         ],
         "title": "RouteListItem"
+      },
+      "RouteUpdateRequest": {
+        "properties": {
+          "price": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price",
+            "description": "Nova tarifa da rota (Kz)"
+          },
+          "is_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Active",
+            "description": "Activa/desactiva a rota"
+          }
+        },
+        "type": "object",
+        "title": "RouteUpdateRequest"
+      },
+      "RouteUpdateResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "UUID da rota"
+          },
+          "price": {
+            "type": "number",
+            "title": "Price",
+            "description": "Tarifa (Kz)"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active",
+            "description": "Rota activa?"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "price",
+          "is_active"
+        ],
+        "title": "RouteUpdateResponse"
       },
       "ScheduleActionRequest": {
         "properties": {
@@ -7717,10 +9886,15 @@
             "title": "Destination",
             "description": "Cidade de destino"
           },
+          "departure_date": {
+            "type": "string",
+            "title": "Departure Date",
+            "description": "Data de partida (YYYY-MM-DD)"
+          },
           "departure_time": {
             "type": "string",
             "title": "Departure Time",
-            "description": "Hora de partida (HH:MM)"
+            "description": "Hora de partida (HH:MM:SS)"
           },
           "price": {
             "type": "number",
@@ -7740,6 +9914,7 @@
           "company",
           "origin",
           "destination",
+          "departure_date",
           "departure_time",
           "price",
           "available_seats"
@@ -7978,6 +10153,19 @@
             "type": "string",
             "title": "Qr Hash",
             "description": "Hash do QR code (32 caracteres hex)"
+          },
+          "schedule_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Schedule Id",
+            "description": "ID da viagem que está a ser embarcada. Se fornecido, o QR só é aceite se pertencer a esta viagem (impede embarcar num autocarro errado com um bilhete de outra viagem)."
           }
         },
         "type": "object",
@@ -8069,6 +10257,134 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "WalkInBoardingRequest": {
+        "properties": {
+          "schedule_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Schedule Id",
+            "description": "ID da viagem"
+          },
+          "seat_number": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "title": "Seat Number",
+            "description": "Lugar a atribuir (livre)"
+          },
+          "passenger_name": {
+            "type": "string",
+            "minLength": 2,
+            "title": "Passenger Name",
+            "description": "Nome do passageiro"
+          },
+          "passenger_phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Passenger Phone",
+            "description": "Telefone (opcional)"
+          },
+          "passenger_id_doc": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Passenger Id Doc",
+            "description": "Documento de identificação — BI/passaporte (opcional)"
+          },
+          "total_price": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "title": "Total Price",
+            "description": "Valor pago (Kz)"
+          },
+          "payment_method": {
+            "type": "string",
+            "title": "Payment Method",
+            "description": "cash | pos",
+            "default": "cash"
+          }
+        },
+        "type": "object",
+        "required": [
+          "schedule_id",
+          "seat_number",
+          "passenger_name",
+          "total_price"
+        ],
+        "title": "WalkInBoardingRequest"
+      },
+      "WalkInBoardingResponse": {
+        "properties": {
+          "booking_id": {
+            "type": "string",
+            "title": "Booking Id",
+            "description": "UUID da reserva criada"
+          },
+          "boarding_id": {
+            "type": "string",
+            "title": "Boarding Id",
+            "description": "UUID do registo de embarque"
+          },
+          "seat_number": {
+            "type": "integer",
+            "title": "Seat Number",
+            "description": "Lugar atribuído"
+          },
+          "passenger_name": {
+            "type": "string",
+            "title": "Passenger Name",
+            "description": "Nome do passageiro"
+          },
+          "passenger_phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Passenger Phone",
+            "description": "Telefone"
+          },
+          "passenger_id_doc": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Passenger Id Doc",
+            "description": "Documento de identificação"
+          },
+          "boarded_at": {
+            "type": "string",
+            "title": "Boarded At",
+            "description": "Momento do embarque (ISO 8601)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "booking_id",
+          "boarding_id",
+          "seat_number",
+          "passenger_name",
+          "boarded_at"
+        ],
+        "title": "WalkInBoardingResponse"
       }
     },
     "securitySchemes": {

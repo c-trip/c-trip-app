@@ -1,7 +1,9 @@
 import { useNavigate } from 'react-router'
-import { IconMapPin, IconClock, IconChevronRight, IconRefresh } from '@tabler/icons-react'
+import { IconMapPin, IconClock, IconChevronRight, IconRefresh, IconCash } from '@tabler/icons-react'
 import { useOperatorSchedules } from '@/hooks/operator/useOperatorSchedules'
+import { useMySales } from '@/hooks/operator/useBoarding'
 import type { OperatorSchedule } from '@/types/operator'
+import { formatKz } from '@/lib/format'
 import { Card, CardContent } from '@/components/ui/card'
 import RouteDisplay from '@/components/RouteDisplay'
 
@@ -25,6 +27,7 @@ function statusStyle(status: string) {
 export default function OperatorDayTrips() {
   const navigate = useNavigate()
   const { schedules, isLoading, error, refetch } = useOperatorSchedules()
+  const mySales = useMySales()
 
   const openManifest = (schedule: OperatorSchedule) => {
     navigate(`/operator/manifest?schedule=${schedule.schedule_id}`)
@@ -59,6 +62,23 @@ export default function OperatorDayTrips() {
       </header>
 
       <main className="px-5 py-6 pb-28">
+        {mySales.data && (
+          <div className="-mt-12 mb-6 flex items-center gap-3 rounded-2xl border border-[#E5E7EB] bg-white p-4 shadow-sm">
+            <div className="flex size-11 items-center justify-center rounded-full bg-[#1B7A3D]/10 shrink-0">
+              <IconCash className="size-5 text-[#1B7A3D]" />
+            </div>
+            <div className="flex-1">
+              <p className="text-[11px] font-medium text-[#4B5563] uppercase tracking-wide">As minhas vendas de hoje</p>
+              <p className="text-lg font-extrabold text-[#111827]">
+                {formatKz(mySales.data.total)}
+                <span className="ml-2 text-xs font-medium text-gray-400">
+                  {mySales.data.count} {mySales.data.count === 1 ? 'venda' : 'vendas'}
+                </span>
+              </p>
+            </div>
+          </div>
+        )}
+
         <div className='flex items-center justify-between'>
           <h2 className="text-[15px] font-bold text-[#111827] mb-4">Partidas de Hoje</h2>
           {!isLoading && !error && (

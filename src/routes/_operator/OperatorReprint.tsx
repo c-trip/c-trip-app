@@ -24,8 +24,12 @@ export default function OperatorReprint() {
     () => manifest.filter((m) => m.status === 'confirmed' || m.status === 'boarded' || m.status === 'pending'),
     [manifest],
   )
-  const query = search.trim()
-  const filtered = query ? seats.filter((s) => String(s.seat).includes(query)) : seats
+  const query = search.trim().toLowerCase()
+  const filtered = query
+    ? seats.filter(
+        (s) => String(s.seat).includes(query) || (s.passenger ?? '').toLowerCase().includes(query),
+      )
+    : seats
 
   const handleReprint = async (seatNumber: number) => {
     if (!selected || reprinting) return
@@ -113,12 +117,11 @@ export default function OperatorReprint() {
             <div className="relative mb-4">
               <IconSearch className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
-                aria-label="Buscar por lugar"
+                aria-label="Buscar por nome ou lugar"
                 type="text"
-                inputMode="numeric"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Buscar por número de lugar"
+                placeholder="Buscar por nome ou lugar"
                 className="w-full pl-9 pr-9 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-outfit placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1B7A3D]/30 focus:border-[#1B7A3D]"
               />
               {search && (
@@ -164,8 +167,12 @@ export default function OperatorReprint() {
                         <IconUser className="size-4 text-gray-400" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-[#111827]">Lugar {item.seat}</p>
-                        <p className="text-[11px] text-gray-500 capitalize">{item.status}</p>
+                        <p className="text-sm font-semibold text-[#111827] truncate">
+                          {item.passenger?.trim() || `Lugar ${item.seat}`}
+                        </p>
+                        <p className="text-[11px] text-gray-500">
+                          Lugar {item.seat} · <span className="capitalize">{item.status}</span>
+                        </p>
                       </div>
                       <button
                         type="button"
