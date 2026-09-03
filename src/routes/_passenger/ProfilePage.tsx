@@ -14,6 +14,7 @@ import {
 } from '@tabler/icons-react'
 import { gooeyToast } from 'goey-toast'
 import { Card, CardContent } from '@/components/ui/card'
+import ConfirmDialog from '@/components/ConfirmDialog'
 import PageHeader from '@/components/PageHeader'
 import { useProfile } from '@/hooks/useProfile'
 import { useAuth } from '@/hooks/auth/useAuth'
@@ -36,6 +37,13 @@ export default function ProfilePage() {
   const [pwOpen, setPwOpen] = useState(false)
   const [currentPw, setCurrentPw] = useState('')
   const [newPw, setNewPw] = useState('')
+
+  const [logoutOpen, setLogoutOpen] = useState(false)
+
+  const handleLogout = () => {
+    logout()
+    navigate('/search')
+  }
 
   const handleChangePassword = async () => {
     if (newPw.length < 6) {
@@ -258,10 +266,7 @@ export default function ProfilePage() {
                 </button>
 
                 <button
-                  onClick={() => {
-                    logout()
-                    navigate('/welcome')
-                  }}
+                  onClick={() => setLogoutOpen(true)}
                   className="flex w-full items-center gap-3 px-4 py-3.5 text-left hover:bg-red-50 transition-colors"
                 >
                   <IconLogout className="size-5 text-red-500" />
@@ -272,6 +277,18 @@ export default function ProfilePage() {
           </>
         )}
       </main>
+
+      {logoutOpen && (
+        <ConfirmDialog
+          title="Terminar sessão"
+          message="Tem a certeza que quer terminar a sessão nesta conta?"
+          confirmLabel="Terminar"
+          cancelLabel="Cancelar"
+          destructive
+          onConfirm={handleLogout}
+          onClose={() => setLogoutOpen(false)}
+        />
+      )}
     </div>
   )
 }

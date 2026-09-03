@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router'
 import HeaderCarousel from '../../components/HeaderCarousel'
 import SearchCard from '../../components/SearchCard'
 import PopularRoutes from '../../components/PopularRoutes'
+import CitiesSection from '../../components/CitiesSection'
 import TripList from '../../components/TripList'
 import TripFilterSheet from '../../components/TripFilterSheet'
 import { countActiveFilters, type TripFilters } from '@/lib/tripFilters'
@@ -73,6 +74,7 @@ export default function SearchPage() {
 
       {showPopular && (
         <div className="px-4">
+          <CitiesSection />
           <PopularRoutes />
         </div>
       )}

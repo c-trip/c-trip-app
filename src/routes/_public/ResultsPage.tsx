@@ -34,7 +34,7 @@ export default function ResultsPage() {
 
       <main className="px-5 py-5">
         {isLoading && (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="h-20 animate-pulse rounded-xl bg-gray-100" />
             ))}
@@ -58,7 +58,7 @@ export default function ResultsPage() {
         {!isLoading && !error && byProvince.map(({ province, items }) => (
           <section key={province} className="mb-6">
             <h2 className="mb-3 text-sm font-semibold text-gray-500 uppercase tracking-wide">{province}</h2>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-3">
               {items.map((city) => (
                 <Card
                   key={city.name}
@@ -71,7 +71,7 @@ export default function ResultsPage() {
                       navigate(`/search-results/${encodeURIComponent(city.name)}`)
                     }
                   }}
-                  className="p-0 cursor-pointer border-[#E5E7EB] hover:scale-[1.01] active:scale-[0.99] transition-transform"
+                  className="w-full p-0 cursor-pointer border-[#E5E7EB] hover:scale-[1.01] active:scale-[0.99] transition-transform"
                 >
                   <CardContent className="p-4 flex items-center gap-2">
                     <IconMapPin className="size-4 text-[#1B7A3D] shrink-0" />

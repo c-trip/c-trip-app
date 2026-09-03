@@ -1,10 +1,8 @@
 import { useNavigate } from 'react-router'
-import { IconChevronRight } from '@tabler/icons-react'
 import DestinationCard from './DestinationCard'
 import { usePopular } from '@/hooks/catalog/useCatalog'
 
 interface PopularRoutesProps {
-  onViewAll?: () => void
   onSelectRoute?: (origin: string, destination: string) => void
 }
 
@@ -21,16 +19,11 @@ function formatKz(value: number): string {
   return `${Math.round(value).toLocaleString('pt-PT')} Kz`
 }
 
-export default function PopularRoutes({ onViewAll, onSelectRoute }: PopularRoutesProps) {
+export default function PopularRoutes({ onSelectRoute }: PopularRoutesProps) {
   const navigate = useNavigate()
-  const { data, isLoading, error } = usePopular(0, 6)
+  const { data, isLoading, error } = usePopular(0, 8)
 
   const routes = data?.popular_routes ?? []
-
-  const handleViewAll = () => {
-    if (onViewAll) onViewAll()
-    else navigate('/search/results')
-  }
 
   const handleSelectRoute = (origin: string, destination: string) => {
     if (onSelectRoute) onSelectRoute(origin, destination)
@@ -41,15 +34,8 @@ export default function PopularRoutes({ onViewAll, onSelectRoute }: PopularRoute
 
   return (
     <section className="mt-8">
-      <div className="mb-4 flex items-center justify-between px-1">
+      <div className="mb-4 px-1">
         <h2 className="text-lg font-bold text-gray-900">Rotas populares</h2>
-        <button
-          onClick={handleViewAll}
-          className="flex items-center gap-1 text-sm font-medium text-green-gradient-end hover:underline"
-        >
-          Ver tudo
-          <IconChevronRight className="h-4 w-4" />
-        </button>
       </div>
 
       {isLoading ? (

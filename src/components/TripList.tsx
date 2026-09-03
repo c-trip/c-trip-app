@@ -1,4 +1,5 @@
-import { IconBus, IconRefresh } from '@tabler/icons-react'
+import { useEffect, useRef, useState } from 'react'
+import { IconBus, IconRefresh, IconLoader2 } from '@tabler/icons-react'
 import TripCard from './TripCard'
 import type { SearchResultItem } from '@/types/catalog'
 
@@ -9,6 +10,8 @@ interface TripListProps {
   onRetry: () => void
   onSelect: (trip: SearchResultItem) => void
   emptyLabel?: string
+  /** Nº de cards por página ao fazer scroll infinito. */
+  pageSize?: number
 }
 
 export default function TripList({
@@ -18,7 +21,43 @@ export default function TripList({
   onRetry,
   onSelect,
   emptyLabel = 'Nenhuma viagem encontrada',
+  pageSize = 10,
 }: TripListProps) {
+  const [visibleCount, setVisibleCount] = useState(pageSize)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const sentinelRef = useRef<HTMLDivElement>(null)
+
+  // Reajusta a paginação quando a lista muda (nova pesquisa / filtro).
+  const resetKey = `${trips.length}:${trips[0]?.schedule_id ?? ''}:${trips[trips.length - 1]?.schedule_id ?? ''}`
+  const [prevKey, setPrevKey] = useState(resetKey)
+  if (resetKey !== prevKey) {
+    setPrevKey(resetKey)
+    setVisibleCount(pageSize)
+    setLoadingMore(false)
+  }
+
+  const hasMore = visibleCount < trips.length
+
+  useEffect(() => {
+    const el = sentinelRef.current
+    if (!el) return
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (!entries[0].isIntersecting) return
+        setLoadingMore(true)
+        window.setTimeout(() => {
+          setVisibleCount((c) => Math.min(c + pageSize, trips.length))
+          setLoadingMore(false)
+        }, 350)
+      },
+      { rootMargin: '240px' },
+    )
+
+    io.observe(el)
+    return () => io.disconnect()
+  }, [trips.length, pageSize])
+
   if (isLoading) {
     return (
       <div className="flex flex-col gap-4">
@@ -59,9 +98,20 @@ export default function TripList({
 
   return (
     <div className="flex flex-col gap-4">
-      {trips.map((trip) => (
+      {trips.slice(0, visibleCount).map((trip) => (
         <TripCard key={trip.schedule_id} trip={trip} onSelect={onSelect} />
       ))}
+
+      {hasMore && (
+        <div ref={sentinelRef} className="flex items-center justify-center gap-2 py-6 text-sm text-gray-400">
+          <IconLoader2 className={`size-4 ${loadingMore ? 'animate-spin' : ''}`} />
+          A carregar mais resultados…
+        </div>
+      )}
+
+      {!hasMore && trips.length > pageSize && (
+        <p className="py-6 text-center text-xs text-gray-400">Chegou ao fim — {trips.length} viagens</p>
+      )}
     </div>
   )
 }
