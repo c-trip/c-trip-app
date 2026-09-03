@@ -49,7 +49,7 @@ O único 🟡 é **`GET /auth/my-permissions`** — `authApi.myPermissions` est�
 | --- | --- | --- | --- |
 | `GET` | `/marketplace/search` | `useSearchTrips` | `SearchPage` (lista todas as viagens + filtro texto), `OperatorsPage` (`/search-results/:origin/:destination`) |
 | `GET` | `/marketplace/popular` | `usePopular` | `PopularRoutes` (na `SearchPage`, só sem pesquisa/filtros) |
-| `GET` | `/cities/` | `useCities` | `ResultsPage` (agrupado por província), `TripFilterSheet` (selectores) |
+| `GET` | `/cities/` | `useCities` | `ResultsPage` (agrupado por província), `CitiesSection` (SearchPage), `TripFilterDialog` (selectores) |
 | `GET` | `/cities/{city_id}` | `useCity` | disponível; sem uso directo |
 | `GET` | `/routes/` | `useRoutes` | disponível |
 | `GET` | `/routes/{route_id}` | `useRoute` | disponível |
@@ -58,8 +58,8 @@ O único 🟡 é **`GET /auth/my-permissions`** — `authApi.myPermissions` est�
 | `GET` | `/schedules/{schedule_id}/seats` | `useScheduleSeats` | `SchedulePage` (grelha de lugares) |
 
 **Notas:**
-- `SearchPage` reformulada: barra de pesquisa compacta (`SearchCard` = input + botão de filtro com badge) sobre o carrossel, `PopularRoutes` só quando não há pesquisa/filtros, e a lista de viagens (`TripList`) por baixo — carrega já todas as viagens de `/marketplace/search` sem filtros. Filtro de texto é client-side (companhia/origem/destino); o `TripFilterSheet` (bottom sheet) aplica `date`/`origin`/`destination`/`max_price` server-side.
-- Componentes partilhados novos: `TripCard`, `TripList`, `TripFilterSheet` (+ `src/lib/tripFilters.ts`, `src/lib/format.ts`). `OperatorsPage` também passou a usar `TripList`.
+- `SearchPage` reformulada: barra de pesquisa compacta (`SearchCard` = input + botão de filtro com badge) sobre o carrossel, secções `CitiesSection` (cards com imagem) e `PopularRoutes` só quando não há pesquisa/filtros, e a lista de viagens (`TripList`, scroll infinito de 10 em 10) por baixo — carrega já todas as viagens de `/marketplace/search` sem filtros. Filtro de texto é client-side (companhia/origem/destino); o `TripFilterDialog` (modal centrado) aplica `date`/`origin`/`destination`/`max_price` server-side.
+- Componentes partilhados novos: `TripCard`, `TripList`, `TripFilterDialog`, `CityCard`, `CitiesSection`, `ConfirmDialog` (+ `src/lib/tripFilters.ts`, `src/lib/format.ts`, `src/data/cityImages.ts`). `OperatorsPage` também passou a usar `TripList`.
 - `ResultsPage` deixou de ser a grelha de províncias mock — agora lista cidades de `/cities/` agrupadas por província.
 - `/schedules/{id}/seats` só devolve `available[]`/`occupied[]` (sem `reserved[]`).
 

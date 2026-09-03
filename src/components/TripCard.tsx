@@ -1,4 +1,4 @@
-import { IconBus, IconArmchair } from '@tabler/icons-react'
+import { IconArmchair } from '@tabler/icons-react'
 import { Card, CardContent } from '@/components/ui/card'
 import RouteDisplay from '@/components/RouteDisplay'
 import { formatKz } from '@/lib/format'
@@ -26,8 +26,8 @@ export default function TripCard({ trip, onSelect }: TripCardProps) {
       <CardContent className="p-4">
         <div className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#1B7A3D]/10">
-              <IconBus className="h-5 w-5 text-[#1B7A3D]" />
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#1B7A3D]/50">
+              {/* <IconBus className="h-5 w-5 text-[#1B7A3D]" /> */}
             </div>
             <div>
               <h3 className="text-sm font-bold text-[#111827]">{trip.company}</h3>

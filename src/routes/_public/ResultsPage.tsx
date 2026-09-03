@@ -1,28 +1,20 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router'
-import { IconMapPin, IconRefresh } from '@tabler/icons-react'
+import { IconRefresh } from '@tabler/icons-react'
 import PageHeader from '@/components/PageHeader'
-import { Card, CardContent } from '@/components/ui/card'
+import CityCard from '@/components/CityCard'
 import { useCities } from '@/hooks/catalog/useCatalog'
 
 export default function ResultsPage() {
   const navigate = useNavigate()
   const { data: cities, isLoading, error, refetch } = useCities()
 
-  const byProvince = useMemo(() => {
-    const groups = new Map<string, { name: string }[]>()
-    for (const city of cities ?? []) {
-      const list = groups.get(city.province) ?? []
-      list.push({ name: city.name })
-      groups.set(city.province, list)
-    }
-    return [...groups.entries()]
-      .map(([province, list]) => ({
-        province,
-        items: list.sort((a, b) => a.name.localeCompare(b.name, 'pt')),
-      }))
-      .sort((a, b) => a.province.localeCompare(b.province, 'pt'))
-  }, [cities])
+  const sorted = useMemo(
+    () => [...(cities ?? [])].sort((a, b) => a.name.localeCompare(b.name, 'pt')),
+    [cities],
+  )
+
+  const goToCity = (name: string) => navigate(`/search-results/${encodeURIComponent(name)}`)
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] font-outfit">
@@ -34,9 +26,9 @@ export default function ResultsPage() {
 
       <main className="px-5 py-5">
         {isLoading && (
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="h-20 animate-pulse rounded-xl bg-gray-100" />
+          <div className="grid grid-cols-2 gap-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="h-32 animate-pulse rounded-2xl bg-gray-100" />
             ))}
           </div>
         )}
@@ -55,33 +47,18 @@ export default function ResultsPage() {
           </div>
         )}
 
-        {!isLoading && !error && byProvince.map(({ province, items }) => (
-          <section key={province} className="mb-6">
-            <h2 className="mb-3 text-sm font-semibold text-gray-500 uppercase tracking-wide">{province}</h2>
-            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-3">
-              {items.map((city) => (
-                <Card
-                  key={city.name}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => navigate(`/search-results/${encodeURIComponent(city.name)}`)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault()
-                      navigate(`/search-results/${encodeURIComponent(city.name)}`)
-                    }
-                  }}
-                  className="w-full p-0 cursor-pointer border-[#E5E7EB] hover:scale-[1.01] active:scale-[0.99] transition-transform"
-                >
-                  <CardContent className="p-4 flex items-center gap-2">
-                    <IconMapPin className="size-4 text-[#1B7A3D] shrink-0" />
-                    <span className="text-sm font-semibold text-[#111827] truncate">{city.name}</span>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </section>
-        ))}
+        {!isLoading && !error && (
+          <div className="grid grid-cols-2 gap-3">
+            {sorted.map((city) => (
+              <CityCard
+                key={city.id}
+                name={city.name}
+                province={city.province}
+                onClick={() => goToCity(city.name)}
+              />
+            ))}
+          </div>
+        )}
       </main>
     </div>
   )

@@ -2,41 +2,62 @@ import { useEffect, useState } from 'react'
 import { IconX } from '@tabler/icons-react'
 import { useCities } from '@/hooks/catalog/useCatalog'
 import type { TripFilters } from '@/lib/tripFilters'
+import FieldSelect from '@/components/ui/FieldSelect'
+import FieldDate from '@/components/ui/FieldDate'
 
-interface TripFilterSheetProps {
+interface TripFilterDialogProps {
   value: TripFilters
   onApply: (filters: TripFilters) => void
   onClose: () => void
 }
 
-export default function TripFilterSheet({ value, onApply, onClose }: TripFilterSheetProps) {
+type OpenField = 'date' | 'origin' | 'destination' | null
+
+function startOfToday(): Date {
+  const d = new Date()
+  d.setHours(0, 0, 0, 0)
+  return d
+}
+
+/**
+ * Modal centrado com os filtros de pesquisa de viagens.
+ * Renderizar condicionalmente pelo pai (`{open && <TripFilterDialog .../>}`).
+ */
+export default function TripFilterDialog({ value, onApply, onClose }: TripFilterDialogProps) {
   const { data: cities, isLoading } = useCities()
   const [draft, setDraft] = useState<TripFilters>(value)
+  const [openField, setOpenField] = useState<OpenField>(null)
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape') {
+        if (openField) setOpenField(null)
+        else onClose()
+      }
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [onClose])
+  }, [onClose, openField])
 
   const cityOptions = (cities ?? []).map((c) => c.name).sort((a, b) => a.localeCompare(b, 'pt'))
 
   const set = <K extends keyof TripFilters>(key: K, val: TripFilters[K]) =>
     setDraft((d) => ({ ...d, [key]: val || undefined }))
 
-  const selectClass =
-    'w-full h-11 rounded-xl border border-gray-200 bg-gray-50 px-3 text-sm text-gray-800 outline-none focus:border-green-500'
+  const toggle = (field: Exclude<OpenField, null>) => (open: boolean) =>
+    setOpenField(open ? field : null)
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-6 font-outfit"
+      onClick={onClose}
+    >
       <div
         role="dialog"
         aria-modal="true"
         aria-label="Filtros de pesquisa"
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-lg rounded-t-3xl bg-white p-6 pb-8 font-outfit shadow-xl animate-slide-up"
+        className="max-h-[85vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-6 shadow-xl animate-scale-in"
       >
         <div className="mb-5 flex items-center justify-between">
           <h2 className="text-lg font-bold text-[#111827]">Filtrar viagens</h2>
@@ -51,53 +72,37 @@ export default function TripFilterSheet({ value, onApply, onClose }: TripFilterS
         </div>
 
         <div className="flex flex-col gap-4">
-          <div>
-            <label htmlFor="filter-date" className="mb-1.5 block text-xs font-bold text-[#6B7280] uppercase tracking-wide">
-              Data
-            </label>
-            <input
-              id="filter-date"
-              type="date"
-              value={draft.date ?? ''}
-              onChange={(e) => set('date', e.target.value)}
-              className={selectClass}
-            />
-          </div>
+          <FieldDate
+            label="Data"
+            value={draft.date}
+            onChange={(v) => set('date', v)}
+            fromDate={startOfToday()}
+            isOpen={openField === 'date'}
+            onOpenChange={toggle('date')}
+          />
 
           <div className="flex gap-3">
             <div className="flex-1">
-              <label htmlFor="filter-origin" className="mb-1.5 block text-xs font-bold text-[#6B7280] uppercase tracking-wide">
-                Origem
-              </label>
-              <select
-                id="filter-origin"
+              <FieldSelect
+                label="Origem"
                 value={draft.origin ?? ''}
+                onChange={(v) => set('origin', v)}
+                options={cityOptions}
                 disabled={isLoading}
-                onChange={(e) => set('origin', e.target.value)}
-                className={selectClass}
-              >
-                <option value="">Qualquer</option>
-                {cityOptions.map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
+                isOpen={openField === 'origin'}
+                onOpenChange={toggle('origin')}
+              />
             </div>
             <div className="flex-1">
-              <label htmlFor="filter-destination" className="mb-1.5 block text-xs font-bold text-[#6B7280] uppercase tracking-wide">
-                Destino
-              </label>
-              <select
-                id="filter-destination"
+              <FieldSelect
+                label="Destino"
                 value={draft.destination ?? ''}
+                onChange={(v) => set('destination', v)}
+                options={cityOptions}
                 disabled={isLoading}
-                onChange={(e) => set('destination', e.target.value)}
-                className={selectClass}
-              >
-                <option value="">Qualquer</option>
-                {cityOptions.map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
+                isOpen={openField === 'destination'}
+                onOpenChange={toggle('destination')}
+              />
             </div>
           </div>
 
@@ -114,7 +119,7 @@ export default function TripFilterSheet({ value, onApply, onClose }: TripFilterS
               value={draft.maxPrice ?? ''}
               onChange={(e) => set('maxPrice', e.target.value ? Number(e.target.value) : undefined)}
               placeholder="Sem limite"
-              className={selectClass}
+              className="h-11 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 text-sm text-gray-800 outline-none focus:border-[#1B7A3D]"
             />
           </div>
         </div>
@@ -126,7 +131,7 @@ export default function TripFilterSheet({ value, onApply, onClose }: TripFilterS
               onApply({})
               onClose()
             }}
-            className="flex-1 h-12 rounded-xl border border-gray-200 bg-white text-sm font-semibold text-[#4B5563] hover:bg-gray-50"
+            className="flex-1 h-11 rounded-xl border border-gray-200 bg-white text-sm font-semibold text-[#4B5563] hover:bg-gray-50"
           >
             Limpar
           </button>
@@ -136,7 +141,7 @@ export default function TripFilterSheet({ value, onApply, onClose }: TripFilterS
               onApply(draft)
               onClose()
             }}
-            className="flex-1 h-12 rounded-xl bg-gradient-to-r from-green-gradient-start to-green-gradient-end text-sm font-bold text-white hover:opacity-90"
+            className="flex-1 h-11 rounded-xl bg-gradient-to-r from-green-gradient-start to-green-gradient-end text-sm font-bold text-white hover:opacity-90"
           >
             Aplicar
           </button>

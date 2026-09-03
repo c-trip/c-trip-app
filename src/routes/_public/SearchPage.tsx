@@ -5,7 +5,7 @@ import SearchCard from '../../components/SearchCard'
 import PopularRoutes from '../../components/PopularRoutes'
 import CitiesSection from '../../components/CitiesSection'
 import TripList from '../../components/TripList'
-import TripFilterSheet from '../../components/TripFilterSheet'
+import TripFilterDialog from '../../components/TripFilterDialog'
 import { countActiveFilters, type TripFilters } from '@/lib/tripFilters'
 import { useSearchTrips } from '@/hooks/catalog/useCatalog'
 import { useBookingFlowStore } from '@/stores/bookingFlowStore'
@@ -101,7 +101,7 @@ export default function SearchPage() {
       </main>
 
       {filtersOpen && (
-        <TripFilterSheet
+        <TripFilterDialog
           value={filters}
           onApply={setFilters}
           onClose={() => setFiltersOpen(false)}

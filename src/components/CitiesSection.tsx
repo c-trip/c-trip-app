@@ -47,12 +47,14 @@ export default function CitiesSection() {
       ) : (
         <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
           {cities.map((city) => (
-            <CityCard
-              key={city.id}
-              name={city.name}
-              province={city.province}
-              onClick={() => navigate(`/search-results/${encodeURIComponent(city.name)}`)}
-            />
+            <div key={city.id} className="w-[150px] shrink-0">
+              <CityCard
+                name={city.name}
+                province={city.province}
+                onClick={() => navigate(`/search-results/${encodeURIComponent(city.name)}`)}
+                className="h-40"
+              />
+            </div>
           ))}
         </div>
       )}
