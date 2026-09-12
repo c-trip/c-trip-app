@@ -4,8 +4,10 @@ import QRCode from 'qrcode'
 import { IconShare2, IconLoader2, IconShieldCheckFilled, IconRefresh } from '@tabler/icons-react'
 import { gooeyToast } from 'goey-toast'
 import { getSeatLabel } from '@/lib/seats'
+import { buildTicketPdf } from '@/lib/ticketPdf'
 import { useGenerateQr } from '@/hooks/passenger/usePassenger'
 import { useBookingFlowStore } from '@/stores/bookingFlowStore'
+import { useAuthStore } from '@/stores/authStore'
 import RouteDisplay from '@/components/RouteDisplay'
 import StickyFooter from '@/components/StickyFooter'
 import GradientButton from '@/components/GradientButton'
@@ -16,6 +18,7 @@ export default function TicketQrPage() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const trip = useBookingFlowStore((s) => s.trip)
+  const passengerName = useAuthStore((s) => s.user?.name)
 
   const seatParam = searchParams.get('seat')
   const seatNum = /^\d+$/.test(seatParam ?? '') ? parseInt(seatParam!, 10) : NaN
@@ -65,14 +68,43 @@ export default function TicketQrPage() {
     .filter(Boolean)
     .join('\n')
 
+  const downloadFile = (file: File) => {
+    const url = URL.createObjectURL(file)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = file.name
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(url)
+  }
+
   const handleShare = async () => {
+    if (!qrHash || !qrDataUrl) return
     setIsSharing(true)
     try {
-      if (navigator.share) {
+      const file = buildTicketPdf({
+        company: tripForSchedule?.company,
+        origin: tripForSchedule?.origin ?? '—',
+        destination: tripForSchedule?.destination ?? '—',
+        departureDate: tripForSchedule?.departureDate,
+        departureTime: tripForSchedule?.departureTime,
+        seatLabel,
+        price: tripForSchedule?.price,
+        passengerName,
+        qrHash,
+        qrDataUrl,
+      })
+
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ title: 'Bilhete C-Trip', text: shareText, files: [file] })
+      } else if (navigator.share) {
+        // Não suporta partilhar ficheiros: partilha o texto e garante o PDF por download.
         await navigator.share({ title: 'Bilhete C-Trip', text: shareText })
+        downloadFile(file)
       } else {
-        await navigator.clipboard.writeText(shareText)
-        gooeyToast.success('Copiado', { description: 'Detalhes do bilhete copiados.' })
+        downloadFile(file)
+        gooeyToast.success('Bilhete descarregado', { description: 'O PDF do bilhete foi guardado.' })
       }
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') return
@@ -175,7 +207,7 @@ export default function TicketQrPage() {
       <StickyFooter className="fixed bottom-0 inset-x-0">
         <button
           onClick={() => void handleShare()}
-          disabled={!qrHash || isSharing || generating}
+          disabled={!qrHash || !qrDataUrl || isSharing || generating}
           className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border-2 border-[#1B7A3D] text-[#1B7A3D] transition-colors hover:bg-[#1B7A3D]/5 disabled:opacity-50"
         >
           {isSharing ? <IconLoader2 className="h-5 w-5 animate-spin" /> : <IconShare2 className="h-5 w-5" />}
